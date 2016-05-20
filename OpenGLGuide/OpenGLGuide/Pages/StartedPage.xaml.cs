@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using Xamarin.Forms;
 using OpenGLGuide.ViewModels;
 
-namespace OpenGLGuide.Views
+namespace OpenGLGuide.Pages
 {
     public partial class StartedPage : ContentPage
     {

@@ -1,6 +1,8 @@
 ﻿using System;
 
 using Xamarin.Forms;
+using FreshMvvm;
+using OpenGLGuide.ViewModels;
 
 namespace OpenGLGuide
 {
@@ -9,17 +11,10 @@ namespace OpenGLGuide
         public App()
         {
             // The root page of your application
-            MainPage = new ContentPage {
-                Content = new StackLayout {
-                    VerticalOptions = LayoutOptions.Center,
-                    Children = {
-                        new Label {
-                            XAlign = TextAlignment.Center,
-                            Text = "Welcome to Xamarin Forms!"
-                        }
-                    }
-                }
-            };
+
+            var page = FreshPageModelResolver.ResolvePageModel<StartedViewModel>();
+            var basicNavContainer = new FreshNavigationContainer(page);
+            MainPage = basicNavContainer;
         }
 
         protected override void OnStart()

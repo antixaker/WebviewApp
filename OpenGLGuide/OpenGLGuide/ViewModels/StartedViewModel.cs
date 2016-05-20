@@ -8,11 +8,11 @@ using PropertyChanged;
 namespace OpenGLGuide.ViewModels
 {
     [ImplementPropertyChanged]
-    public class StartedPageModel : FreshBasePageModel
+    public class StartedViewModel : FreshBasePageModel
     {
         private Command _openPage;
 
-        public StartedPageModel()
+        public StartedViewModel()
         {
             MenuItems = new List<string>(){ "Уроки по OpenGL", "Лабораторные работы" };
         }
