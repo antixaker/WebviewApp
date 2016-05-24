@@ -1,0 +1,982 @@
+<!doctype html public "-//w3c//dtd html 3.2 final//ru">
+<html>
+
+<head>
+<meta http-equiv="Content-Type"
+content="text/html; charset=windows-1251">
+<meta name="description"
+content="Переводы по OpenGL, трехмерная графика, игры, мультимедия
+Translations Russian OpenGL
+">
+<meta name="keyword"
+content="Программирование,игры,3D,трехмерная графика,OpenGL,NeHe">
+<meta name="keyword"
+content="programming,C,C++,game,graphics">
+<title>Урок 41. Объемный туман и загрузка изображений через интерфейс IPicture</title>
+<link rel="stylesheet" href="pmg.css" type="text/css">
+</head>
+
+<body bgcolor="#b2d3e1" link="#800080" vlink="#800080">
+<script src='nehe.js' language="javascript">
+<!--
+//-->
+</script>
+
+<center>
+<div id="top">
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+        <td width="20%" align="center" valign="center">
+        <img src="nehelogo.jpg" align="left" hspace="0" width="125" height="50" alt="NeHe Tutorials">
+        </td>
+        <td width="60%" align="center">
+	<a href="index.html"
+	onmouseover=" return event_over(this,'NeHe Ru.')  "
+        onmouseout=" return event_out(this) ">
+        <font class="linksbig">
+        Народный учебник по OpenGL</font></a><br>
+        </td>
+        <td width="20%" align="center" valign="center">
+        <img src="nehe41.jpg" align="right" hspace="0" width="80" height="60" alt="Урок 41. OpenGL">
+        </td>
+    </tr>
+</table>
+</div>
+
+<div id="head">
+<p class="head1">
+Урок 41. Объемный туман и загрузка изображений через интерфейс IPicture</p>
+</div>
+<div id="main" bgcolor="#ADADFF">
+<p class="textnoalign" align="left">
+
+<a href="http://nehe.gamedev.net/data/lessons/lesson.asp?lesson=41" target="_blank"
+onmouseover=" return event_over(this,this)  "
+onmouseout=" return event_out(this) ">
+<font class="link"><b>Volumetric Fog & IPicture Image Loading</b></font></a>
+<br>
+</p><p class=textword>&nbsp;  </p>
+<p class=textword>Вашему вниманию предлагается еще один занимательный урок. На 
+  этот раз я буду пытаться объяснить, что такое <i>объемный туман</i>, используя 
+  расширение glFogCoordf. Чтобы запустить эту демонстрационную 
+  версию, ваша видео плата должна поддержать расширение &quot;GL_EXT_FOG_COORD&quot;. 
+  Если Вы не уверены, поддерживает ли ваша плата это расширение, у вас есть два 
+  пути: Первое скачать исходники на VC++, и посмотреть, выполняется ли он. Второе скачать урок 24, 
+  и просмотреть список расширений, поддерживаемых вашей видео платой. </p>
+<p class=textword> &nbsp; </p>
+<p class=textword>В этом уроке я познакомлю вас с кодом NeHe IPicture, который способен 
+  загружать BMP, EMF, GIF, 
+  ICO, JPG и WMF файлы с вашего компьютера 
+  или web-странички. Вы также узнаете, как использовать расширение &quot;GL_EXT_FOG_COORD&quot;, 
+  чтобы создавать круто смотрящийся  <b><i>объемный</i> т<i>уман</i></b><i> </i>(туман, 
+  который может перемещаться в замкнутом пространстве, не изменяя остальную  часть 
+  сцены).</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Если этот урок не работает на вашей машине, первом делом, вы 
+  должны проверить, что у вас стоит самый свежий видеодрайвер. Если же у вас драйвер 
+  самый новый, а демка по-прежнему не работает, то … вы может быть захотите купить 
+  новую видео плату. Начиная с GeForce 2 все будет прекрасно 
+  работать, и стоит не дорого. Если ваша плата не поддерживает расширение для 
+  вывода объемного тумана, кто говорит, что она не поддерживает и другие расширения?</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Те из вас, кто не смог запустить демку, 
+  и чувствует себя обделенным … помните следующее: каждый день я получаю по крайней 
+  мере 1 письмо, в котором 
+  от меня требуют написать новый урок. Многие из уроков, 
+  которые Вы просили уже в сети! Люди не читают все, что уже есть в сети, а останавливаются 
+  на той теме, которой они больше всего заинтересовались. Некоторые уроки слишком 
+  сложные, и потребовали бы от меня несколько недель программирования. Наконец, 
+  есть уроки, которые я смог бы написать, но обычно избегаю этого, потому что 
+  я знаю, что они не будут выполняться на всех видюхах. Теперь, когда платы типа 
+  GeForce достаточно дешевы, чтобы любой со скидкой может позволить 
+  себе одну из них, я больше не могу не писать такие уроки. Честно говоря, если 
+  ваша видео плата поддерживает только базовые расширения, вы многое теряете! 
+  И если я буду продолжать пропускать такие темы как <i>расширения, </i>то уроки 
+  будут запаздывать!</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Сказано – сделано! Давайте проштудируем кое-какой код!!!</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Начало кода очень похоже на основу старого, и почти идентично 
+  новому коду NeHeGL. Единственное отличие - дополнительная 
+  строка кода, подключающая библиотеку OLECTL. Этот заголовочный 
+  файл должен быть включен, если Вы хотите, чтобы код IPicture 
+  функционировал. Если Вы не напишете эту строчку, то у вас возникнут ошибки при 
+  попытке использовать IPicture, OleLoadPicturePath и IID_IPicture.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Точно так же как и в базовом коде NeHeGL, 
+  мы используем комментарий *pragma (lib...) чтобы автоматически 
+  включить требуемые библиотечные файлы! Заметьте, нам не надо больше включать 
+  glaux библиотеку (я – уверен, многие из вас сейчас улыбаются).</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Следующие три строчки кода проверяют, определено ли значение 
+  CDS_FULLSCREEN. Если нет (что верно для большинства трансляторов), мы задаем 
+  ему значение 4. Я знаю, что многие из вас писали мне об этом по электронной 
+  почте, чтобы узнать о причине ошибок при  компилировании кода, используя CDS_FULLSCREEN 
+  в DEV C ++. Добавьте эти три строки, и ошибок у вас 
+  не будет!</p>
+<p class=textword> &nbsp; </p>
+<p class=textpreword>#include &lt;windows.h&gt;         // Заголовочный 
+  файл Windows</p>
+<p class=textpreword>#include &lt;gl\gl.h&gt;           // Заголовочный файл библиотеки 
+  OpenGL32</p>
+<p class=textpreword>#include &lt;gl\glu.h&gt;          // Заголовочный файл библиотеки 
+  Glu32</p>
+<p class=textpreword>#include &lt;vfw.h&gt;             // Заголовочный файл для 
+  «Видео для Windows»</p>
+<p class=textpreword>#include &quot;NeHeGL.h&quot;          // Заголовочный файл 
+  NeHeGL.h</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>#include &lt;olectl.h&gt;          // Заголовочный файл для 
+  библиотеки</p>
+<p class=textpreword>                             // управляющих элементов OLE 
+  (используется в BuildTexture)</p>
+<p class=textpreword>#include &lt;math.h&gt;            // Заголовочный файл для 
+  математической библиотеки</p>
+<p class=textpreword>                             // (используется в BuildTexture)</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>#pragma comment( lib, &quot;opengl32.lib&quot; ) // Искать 
+  OpenGL32.lib при линковке</p>
+<p class=textpreword>#pragma comment( lib, &quot;glu32.lib&quot; )    // Искать 
+  GLu32.lib при линковке</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>#ifndef CDS_FULLSCREEN        // CDS_FULLSCREEN не определяется 
+  некоторыми</p>
+<p class=textpreword>#define CDS_FULLSCREEN 4      // компиляторами. Определяем 
+  эту константу</p>
+<p class=textpreword>#endif                        // Таким образом мы можем избежать 
+  ошибок </p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>GL_Window*  g_window;                 // структура окна</p>
+<p class=textpreword>Keys*    g_keys;                      // клава</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>В следующей части кода, мы устанавливаем цвет нашего тумана. 
+  В данном случае мы хотим, чтобы он был темно-оранжевого цвета. Небольшое количество 
+  красного (0.6f), смешанного с еще меньшим количеством зеленого (0.3f) даст нам 
+  цвет, который мы хотим.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Переменная camz типа Glfloat 
+  будет использована позже, чтобы определять позицию нашей камеры внутри длинного 
+  и темного коридора! Мы будем перемешаться вперед и назад вдоль коридора, выполняя 
+  преобразования на оси Z, перед тем как выполнить рисование.</p>
+<p class=textword> &nbsp; </p>
+<p class=textpreword>// Наши переменныеs</p>
+<p class=textpreword>GLfloat  fogColor[4] = {0.6f, 0.3f, 0.0f, 1.0f}; // цвет 
+  тумана </p>
+<p class=textpreword>GLfloat camz;                                    // «глубина» 
+  камеры по Z</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Точно так же как CDS_FULLSCREEN имеет предопределенное значение 
+  4, переменные GL_FOG_COORDINATE_SOURCE_EXT и GL_FOG_COORDINATE_EXT также имеют предопределенные значения. 
+  Как упомянуто в комментариях, значения были взяты из заголовочного файла GLEXT. 
+  Его можно свободно скачать из сети. Огромное спасибо Льву Повалаеву за создания 
+  такого ценного заголовочного файла! Эти значения должны быть установлены, если 
+  вы хотите, чтобы код компилировался! Результатом является то, что, мы имеем 
+  два новых списка перечислений (GL_FOG_COORDINATE_SOURCE_EXT и GL_FOG_COORDINATE_EXT).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Чтобы использовать функцию glFogCoordfExt, 
+  мы должны объявить прототип функции через typedef, чтобы 
+  наша функция соответствовала точке входа расширения. А если по-русски, то нам 
+  надо сообщить нашей программе число параметров и тип каждого параметра, которые 
+  подаются на вход функции glFogCoordfExt. В данном случае, мы передаем один параметр для 
+  этой функции, и это - переменная с плавающей точкой.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Затем мы должны объявить глобальную переменную нашего типа (<b>PFNGLFOGCOORDFEXTPROC</b><b>)</b>. 
+  Это - первый шаг создания нашей новой функции (glFogCoordfEXT). Эта переменная 
+  объявлена глобальной, для того чтобы мы смогли использовать команду где - угодно 
+  в нашем коде. Название, которое мы используем, должно точно соответствовать 
+  фактическому имени расширения. Фактическое имя расширения - glFogCoordfEXT и 
+  название, которое мы используем - также glFogCoordfEXT.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Однажды использовав wglGetProcAddress, 
+  чтобы присвоить переменной определенного выше типа адрес функции расширения 
+  драйвера OpenGL, мы можем вызывать glFogCoordfExt, как если бы это была обычная функция. Подробнее 
+  об этом после!</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Последняя строка подготавливает все необходимое для нашей единственной 
+  текстуры.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Так, что пока мы имеем вот что ...</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Мы знаем, что PFNGLFOGCOORDFEXTPROC 
+  принимает одно значение с плавающей точкой (GLfloat 
+  coord). Поскольку glFogCoordfExt – имеет тип PFNGLFOGCOORDFEXTPROC, 
+  то вызов этой функции будет выглядеть вот так: glFogCoordfEXT 
+  (GLfloat coord). Наша функция определена, но 
+  не будет ничего делать, потому что glFogCoordfExt – NULL (мы по-прежнему 
+  должны прикрутить glFogCoordfExt к адресу функции расширения 
+  OpenGL драйвера).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Надеюсь, что это понятно… на самом деле, все очень просто, когда 
+  вы уже знаете, как это работает... но описывать это чрезвычайно трудно (по крайней 
+  мере, для меня, это так). Если кто-либо может переписать этот раздел урока, 
+  используя простую и не сложную формулировку, пришлите ее мне! Единственный способ, 
+  с помощью которого я смог объяснить это лучше использовать иллюстрации, но сейчас 
+  я спешу выложить этот урок в сеть!</p>
+<p class=textword> &nbsp; </p>
+<p class=textpreword>// переменные необходимые для FogCoordfEXT</p>
+<p class=textpreword>#define GL_FOG_COORDINATE_SOURCE_EXT  0x8450          // 
+  значение из GLEXT.H</p>
+<p class=textpreword>#define GL_FOG_COORDINATE_EXT    0x8451               
+  // значение из GLEXT.H</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>typedef void (APIENTRY * PFNGLFOGCOORDFEXTPROC) (GLfloat 
+  coord); // прототип функции</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>PFNGLFOGCOORDFEXTPROC glFogCoordfEXT = NULL; // наша функция 
+  glFogCoordfEXT </p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>GLuint  texture[1]; // единственная текстура для стен</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Ну, а теперь, чтобы было веселее, фактический код, который превращает 
+  изображение в текстуру, использует волшебство IPicture :).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Эта функция требует путь (путь к фактическому изображению, которое 
+  мы хотим загрузить, или имя файла, или URL в сети) и идентификатор текстуры 
+  (например... texture [0]).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Мы должны создать контекст устройства для нашего временного 
+  растра. Нам также необходимо иметь указатель на место в памяти для хранения 
+  растра (hbmpTemp), в указетель на интерфейс IPicture, 
+  а также строковую переменную для хранения пути (до файла или URL). 
+  Еще нам понадобится по 2 переменных для хранения ширины и высоты изображения. 
+  Переменные lwidth и lheight хранят фактическую 
+  ширину и высоту изображения. Переменные lwidthpixels 
+  и lheightpixels хранят ширину и высоту в пикселях, откорректированных, 
+  чтобы исправить максимальный размер текстуры, который может отобразить видеокарта. 
+  Максимальный размер текстуры будет храниться в glMaxTexDim.</p>
+<p class=textword> &nbsp; </p>
+<p class=textpreword>int BuildTexture(char *szPathName, GLuint 
+  &amp;texid)</p>
+<p class=textpreword>   // читаем изображение и преобразуем 
+  его в текстуру</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  HDC    hdcTemp;                        // DC для растра</p>
+<p class=textpreword>  HBITMAP    hbmpTemp;            // иногда храним в ней 
+  растр</p>
+<p class=textpreword>  IPicture  *pPicture;            // интерфейс IPicture </p>
+<p class=textpreword>  OLECHAR    wszPath[MAX_PATH+1]; // полный путь до картинки 
+  (WCHAR)</p>
+<p class=textpreword>  char    szPath[MAX_PATH+1];     // полный путь до картинки</p>
+<p class=textpreword> long    lWidth;                  // ширина в логических 
+  единицах</p>
+<p class=textpreword>  long    lHeight;                // высота в логических 
+  единицах</p>
+<p class=textpreword>  long    lWidthPixels;           // ширина в пикселях</p>
+<p class=textpreword>  long    lHeightPixels;          // высота в пикселях</p>
+<p class=textpreword>  GLint    glMaxTexDim ;          // максимальный размер 
+  текстуры</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Следующий раздел кода берет имя файла и проверяет его, является 
+  ли он URL’ом или путем до файла. Мы делаем 
+  это, путем проверки, содержит ли имя файла http://. Если имя файла - URL, мы копируем имя в szPath.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Если имя файла не содержит URL, мы получаем текущий каталог. 
+  Если вы сохранили демонстрационную версию в C:\wow\lesson41, и пробовали загружать 
+  data\wall.bmp, программе нужно знать полный путь до 
+  wall.bmp файла, а не только то, что bmp файл 
+  сохранен в папке ‘data’. GetCurrentDirectory 
+  найдет текущий путь, т.е. путь до папки, где лежит .EXE 
+  файл и  папка 'data'.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Если .exe был сохранен в &quot;c:\wow\lesson41&quot;, то текущая директория 
+  была бы &quot;c:\wow\lesson41&quot;. Мы должны добавить &quot;\\&quot; к концу 
+  пути до текущего каталога, а затем &quot;data\wall.bmp&quot;. 
+  &quot;\\&quot;  - это просто &quot;\&quot;. Если мы все это соединим &quot;c:\wow\lesson41&quot; 
+  + &quot;\&quot; + &quot;data\wall.bmp&quot;, то у нас получится &quot;c:\wow\lesson41\data\wall.bmp&quot;. 
+  Теперь понятнее?</p>
+<p class=textword> &nbsp; </p>
+<p class=textpreword>  if (strstr(szPathName, &quot;http://&quot;)) // Если путь 
+  содержит http:// то...</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    strcpy(szPath, szPathName); // прикрутить PathName к 
+  szPath</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>  else // иначе загрузить из файла</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    GetCurrentDirectory(MAX_PATH, szPath); // дайте каталог, 
+  где мы сидим</p>
+<p class=textpreword>    strcat(szPath, &quot;\\&quot;);                  // добавим 
+  к концу пути ‘\’ </p>
+<p class=textpreword>    strcat(szPath, szPathName);            
+  // приклеим PathName</p>
+<p class=textpreword>  }</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Так что у нас есть сейчас полный путь в переменной szPath. Теперь нам надо его перекинуть из ASCII в Unicode 
+  так, чтобы OleLoadPicturePath воспринял его. Первая 
+  строчка кода делает это за нас. Результат сохраняется в wszPath.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>CP_ACP означает кодовую страницу ANSI. Второй параметр определяет 
+  обработку не отображаемых символов (далее по коду мы его игнорируем). Символы 
+  в строке szPath будут конвертированы в расширенные  
+  символы. 4-ый параметр – длина строки с расширенными  символами. Если это значение 
+  установлено в -1, то считается, что строка заканчивается нулевым символом (NULL). 
+  wszPath – то место, куда будет сохранена сконвертированная 
+  строка, и MAX_PATH - максимальный размер пути до файла (256 символов).</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>После преобразования пути в Unicode, 
+  мы попытаемся загрузить изображение, используя OleLoadPicturePath. 
+  Если все хорошо, то pPicture будет указывать на данные изображения, и код результата 
+  будет сохранен в hr.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Если загрузка не пройдет, то программа прекратит свою работу.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  MultiByteToWideChar(CP_ACP, 0, szPath, 
+  -1, wszPath, MAX_PATH);</p>
+<p class=textpreword>  // преобразуем к юникоду</p>
+<p class=textpreword>  HRESULT hr = OleLoadPicturePath(wszPath, 0, 0, 0, IID_IPicture, 
+  (void**)&amp;pPicture);</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  if(FAILED(hr))  // Если загрузка не удачна</p>
+<p class=textpreword>    return FALSE; // вернем False</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Теперь мы должны создать временный контекст устройства. Если 
+  все пройдет нормально, hdcTemp будет содержать совместимый 
+  контекст устройства. Если программа не может получить совместимый контекст устройства, 
+  pPicture освобождается и программа вылетает (завершается).</p>
+<p class=textword> &nbsp; </p>
+<p class=textpreword>  hdcTemp = CreateCompatibleDC(GetDC(0)); 
+  // создать совместимый с устройством Windows контекст </p>
+<p class=textpreword>  if(!hdcTemp)            // ну что, 
+  создали?</p>
+<p class=textpreword>  {                       // не-а… :(</p>
+<p class=textpreword>    pPicture-&gt;Release();  // уменьшение счетчика ссылок 
+  на IPicture </p>
+<p class=textpreword>    return FALSE;         // солгать</p>
+<p class=textpreword>  }</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Теперь пришло время допросить видеокарту, чтобы выяснить какой 
+  максимальный размер текстуры она поддерживает. <b>Этот код важен</b>, потому 
+  что это он будет стараться сделать изображение хорошего качества на всех видюхах. 
+  Он не только изменит размер текстуры, кратный степени 2. Он сделает так, чтобы 
+  ваш рисунок хорошо вписался в память видео платы. Это позволит вам загружать 
+  изображения любой ширины или высоты. Единственный недостаток состоит в том, 
+  что пользователи с плохими видео платами утратят много деталей при попытке просмотра 
+  изображения с высоким разрешением.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Что касается кода, мы используем glGetIntegerv 
+  (...), чтобы получить максимальное разрешение текстуры (256, 512, 1024, и т.д.) 
+  поддерживаемое конкретной видеокартой. Затем мы проверяем фактический размер 
+  изображения с помощью: pPicture-&gt; get_width (&amp;lwidth).</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Мы используем причудливые вычисления, чтобы преобразовать ширину 
+  изображения в пиксели. Результат хранится в lwidthpixels. 
+  Тоже самое делаем с высотой. Мы получаем высоту изображения от pPicture и сохраняем значения пикселя в lheightpixels.</p>
+<p class=textword> &nbsp; </p>
+<p class=textpreword>  // получить максимально возможное разрешение изображения</p>
+<p class=textpreword>  glGetIntegerv(GL_MAX_TEXTURE_SIZE, &amp;glMaxTexDim);</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>  pPicture-&gt;get_Width(&amp;lWidth); // 
+  получить ширину изображения</p>
+<p class=textpreword>  lWidthPixels  = MulDiv(lWidth, 
+  GetDeviceCaps(hdcTemp, LOGPIXELSX), 2540);</p>
+<p class=textpreword>  pPicture-&gt;get_Height(&amp;lHeight); // получить высоту 
+  изображения</p>
+<p class=textpreword>  lHeightPixels  = MulDiv(lHeight, GetDeviceCaps(hdcTemp, 
+  LOGPIXELSY), 2540);</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Затем мы проверяем, что ширина изображения в пикселях меньше 
+  чем максимальная ширина, поддерживаемая видео платой.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Если ширина изображения в пикселях - меньше чем максимальная 
+  поддерживаемая ширина, мы делаем размер изображения кратной степени двойки, 
+  исходя из текущей ширины изображения в пикселях. Мы добавляем 0.5f, чтобы изображение 
+  всегда было больше, если его размер близок к следующему размеру. Например, если 
+  наша ширина изображения была 400, и видео плата поддержала максимальную ширину 
+  512, то было бы лучше сделать ширину 512. Если бы мы сделали ширину 256, то 
+  изображение бы многое утратило, но подробнее об этом позже.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Если размер изображения больше максимального, поддерживаемого 
+  нашей видео платой, то мы делаем размер изображения максимально возможным.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>То же самое повторяем и для высоты. В итоге ширина и высота 
+  изображения будут сохранены в lwidthpixels и lheightpixels.</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // преобразовать изображение к ближайшей степени двойки</p>
+<p class=textpreword>  if (lWidthPixels &lt;= glMaxTexDim)</p>
+<p class=textpreword>  // если ширина изображения меньше либо равна максимально-допустимому 
+  пределу карточки</p>
+<p class=textpreword>    lWidthPixels = 1 &lt;&lt; (int)floor((log((double)lWidthPixels)/log(2.0f)) 
+  + 0.5f); </p>
+<p class=textpreword>  else</p>
+<p class=textpreword>    // иначе установить размер равный максимальной степени 
+  двойки,</p>
+<p class=textpreword>    // которую поддерживает карточка</p>
+<p class=textpreword>    lWidthPixels = glMaxTexDim;</p>
+<p class=textpreword>  // то же самое повторяется для высоты</p>
+<p class=textpreword>  if (lHeightPixels 
+  &lt;= glMaxTexDim)</p>
+<p class=textpreword>    lHeightPixels = 1 &lt;&lt; (int)floor((log((double)lHeightPixels)/log(2.0f)) 
+  + 0.5f);</p>
+<p class=textpreword>  else</p>
+<p class=textpreword>    lHeightPixels = glMaxTexDim;</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Теперь, когда мы загрузили данные изображения, и знаем высоту 
+  и ширину, которая нам нужна, мы должны создать временный растр. Переменная bi будет содержать заголовочную информацию растра, а pBits 
+  будет хранить фактические данные изображения. Мы хотим создать  32-х битный 
+  растр с шириной lwidthpixels и высотой lheightpixels., 
+  а также, чтобы изображения было в формате RGB, и чтобы изображение имело одну битовую плоскость.</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // создать временный растр</p>
+<p class=textpreword>  BITMAPINFO  bi = {0}; // нужный нам тип растра</p>
+<p class=textpreword>  DWORD    *pBits = 0;  // указатель на биты растра</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  bi.bmiHeader.biSize     = sizeof(BITMAPINFOHEADER); // 
+  размер структуры</p>
+<p class=textpreword>  bi.bmiHeader.biBitCount = 32; // 32 бита</p>
+<p class=textpreword>  bi.bmiHeader.biWidth    = lWidthPixels;  
+  // ширина кратная степени двойки</p>
+<p class=textpreword>  // Сделаем изображение расположенным вверх (положительное 
+  направление оси Y)</p>
+<p class=textpreword>  bi.bmiHeader.biHeight   = lHeightPixels;</p>
+<p class=textpreword>  bi.bmiHeader.biCompression  = BI_RGB;    
+  // RGB формат</p>
+<p class=textpreword>  bi.bmiHeader.biPlanes    = 1;            
+  // 1 битовая плоскость </p>
+<p class=textword> &nbsp; </p>
+<p class=textword>MSDN сообщает: функция CreateDIBSection 
+  создает DIB (независимый от устройства растр), куда программы могут писать напрямую. 
+  Функция возвращает вам указатель на память, где хранятся битовые значения растра. 
+  Вы можете позволить системе выделить память для растра.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>hdcTemp - наш временный контекст устройства. 
+  bi - наша инфа о растре (информация заголовка). DIB_RGB_COLORS 
+  говорит нашей программе: “Мы хотим хранить RGB данные, 
+  а не индексы в логической палитре!” (каждый пиксель будут иметь красное, зеленое 
+  и синее значения).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>pBits - то, куда данные изображения 
+  будут сохранены (указывает на данные изображения). Последние два параметра можно 
+  опустить.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Если программа не смогла создать временный растр, мы “заметаем 
+  следы” (чистим память) и возвращаем ЛОЖЬ, чтобы завершилась программа.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Если все тип-топ, то мы сводим счеты с временным растром. Мы 
+  используем SelectObject, чтобы прикрутить растр к временному 
+  контексту устройства.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  // создавая растр, таким образом, мы можем установить глубину 
+  цвета,</p>
+<p class=textpreword>  // а также получить прямой доступ к битам.</p>
+<p class=textpreword>  hbmpTemp = CreateDIBSection (hdcTemp, &amp;bi, DIB_RGB_COLORS, 
+  (void**)&amp;pBits, 0, 0);</p>
+<p class=textpreword>  </p>
+<p class=textpreword>  if(!hbmpTemp)        // создали?</p>
+<p class=textpreword>  {                    // сам вижу что нет</p>
+<p class=textpreword>   DeleteDC(hdcTemp);  // убить контекст устройства</p>
+<p class=textpreword>  pPicture-&gt;Release(); // уменьшить счетчик количества 
+  интерфейсов IPicture </p>
+<p class=textpreword>    return FALSE;      // вернуть ЛОЖЬ</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>  // есть растр!</p>
+<p class=textpreword>  SelectObject(hdcTemp, hbmpTemp); // загрузить описатель 
+  временного растра</p>
+<p class=textpreword>                                   // в описатель временного 
+  контекста устройства </p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Теперь нам надо заполнить наш растр данными нашего изображения. 
+  pPicture-&gt;Render сделает 
+  это для нас. При этом также изменятся размеры изображения к любому размеру, 
+  который мы пожелаем (в этом случае lwidthpixels на lheightpixels).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>hdcTemp - наш временный контекст устройства. 
+  Первые два параметра после hdcTemp - горизонтальное 
+  и вертикальное смещение (число пустых пикселей слева и сверху). Мы хотим, чтобы 
+  изображение заполнило растр полностью, так что мы выбираем 0 для горизонтального 
+  смещения и 0 для вертикального смещения.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Четвертый параметр - горизонтальное разрешение растра, а пятый 
+  параметр - вертикальное разрешение. Эти параметры контролируют, насколько изображение 
+  растянуто или сжато, чтобы соответствовать разрешению, которое мы хотим.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Следующий параметр (равный нулю) - горизонтальное смещение, 
+  от которого мы хотим читать исходные данные. Мы рисуем слева направо, так что 
+  смещение равно нулю. Это станет понятным после того, как вы увидите, что мы 
+  делаем с вертикальным смещением (будем надеяться, по крайней мере).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Параметр lHeight - вертикальное смещение. Мы будем читать данные снизу 
+  исходного изображения до верха, используя смещение lHeight, 
+  мы начинам с самого нижнего края исходного изображения.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>lWidth – количество бит, которые нужно 
+  скопировать из исходного изображения. Мы хотим копировать все данные в горизонтальном 
+  направлении из исходного изображения. lWidth охватывает 
+  все данные слева направо.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Предпоследний параметр немного отличается от других. У него 
+  отрицательное значение. (lHeight, чтобы быть точным). Это значит, что мы хотим копировать 
+  все данные вертикально снизу до верху. Таким образом, изображение будет перевернуто 
+  и скопировано в результирующий растр.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Последний параметр не используется.</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // отрисовка IPicture в растр</p>
+<p class=textpreword>  pPicture-&gt;Render(hdcTemp, 0, 0, lWidthPixels, lHeightPixels, 
+  0, lHeight, lWidth, -lHeight, 0);</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Теперь у нас есть растр с шириной lWidthpixels 
+  и высотой lHeightpixels. Новый растр был зеркально перевернут.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>К сожалению, данные сохранены в формате BGR. 
+  Так что мы должны поменять <i>красные</i> и <i>синие</i> пиксели, чтобы создать 
+  растр и изображение RGB. В то же самое время, мы устанавливаем 
+  значение альфа-канала в 255. Вы можете изменить это значение на что угодно.</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>  // преобразовать из BGR в RGB формат и устанавливаем значение 
+</p>
+<p class=textpreword>  // Alpha = 255</p>
+<p class=textpreword>  for(long i = 0; i &lt; lWidthPixels * 
+  lHeightPixels; i++) // Цикл по всем пикселям</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    BYTE* pPixel  = (BYTE*)(&amp;pBits[i]); // берем текущий 
+  пиксель</p>
+<p class=textpreword>    BYTE  temp  = pPixel[0];            // сохраняем первый 
+  цвет в  переменной</p>
+<p class=textpreword>                                        // Temp (Синий)</p>
+<p class=textpreword>    pPixel[0]  = pPixel[2];             // ставим  Красный 
+  на место (в первую позицию)</p>
+<p class=textpreword>    pPixel[2]  = temp;                  // ставим значение 
+  Temp в третий параметр (3rd)</p>
+<p class=textpreword>    pPixel[3]  = 255;                   // установить значение 
+  alpha =255</p>
+<p class=textpreword>  }</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Наконец, после всей этой работы, у нас есть растр, который может 
+  использоваться как текстура. Мы связываем его с texid, 
+  и генерируем текстуру. Мы хотим использовать линейную фильтрацию для min и mag фильтров (классно смотрится).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Мы получаем данные изображения от pBits. 
+  При создании текстуры, мы используем lwidthpixels и 
+  lheightpixels в последний раз, чтобы установить ширину 
+  и высоту текстуры.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>После того, как 2D текстура была сгенерирована, 
+  мы можем освободить память. Нам больше не нужен ни временный растр, ни временный 
+  контекст устройства. Удаляем их. А еще мы можем освободить pPicture! 
+  Еууу! :)))</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  glGenTextures(1, &amp;texid); //  создаем 
+  текстуру</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>  // типичная генерация текстуры, используя 
+  данные из растра</p>
+<p class=textpreword>  glBindTexture(GL_TEXTURE_2D, texid); // делаем 
+  привязку к texid</p>
+<p class=textpreword>  // (измените для нужного вам типа фильтрации)</p>
+<p class=textpreword>  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);</p>
+<p class=textpreword>  // (измените, если хотите использовать мипмап-фильтрацию)  
+</p>
+<p class=textpreword>  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>  // (мипмап - множественное отображение (последовательность 
+  текстур одного</p>
+<p class=textpreword>  //  и того же изображения с уменьшающимся 
+  разрешением по мере удаления отображаемого</p>
+<p class=textpreword>  // объекта от наблюдателя))</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>  glTexImage2D(GL_TEXTURE_2D, 0, 3, lWidthPixels, 
+  lHeightPixels, 0, GL_RGBA,</p>
+<p class=textpreword>               GL_UNSIGNED_BYTE, pBits);</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>  DeleteObject(hbmpTemp); // удаляем 
+  объект</p>
+<p class=textpreword>  DeleteDC(hdcTemp);      // удаляем контекст 
+  устройства</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>  pPicture-&gt;Release();    //уменьшает 
+  счетчик IPicture </p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>  return TRUE;            // вернуть ПРАВДУ 
+  (все ОК)</p>
+<p class=textpreword>}</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textword>Следующий код проверяет, поддерживает ли пользовательская видео 
+  плата расширение EXT_FOG_coord. Этот код может вызываться 
+  ТОЛЬКО после того, как ваша OpenGL программа имеет контекст 
+  для визуализации. Если Вы попробуете вызвать это раньше, чем вы создадите окно, 
+  то у вас будут ошибки.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Первое, что мы делаем - создаем строку с именем нашего расширения.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Затем мы выделяем достаточное количество памяти, чтобы хранить 
+  список OpenGL расширений, поддерживаемых пользовательской 
+  видеоплатой. Список поддерживаемых расширений - извлекается командой glGetString 
+  (GL_EXTENSIONS). Возвращенная информация копируется в glextstring.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Как только мы получаем список поддерживаемых расширений, мы 
+  используем strstr, чтобы определить, находится ли наше 
+  расширение (Extension_Name) в списке поддерживаемых расширений (glextstring).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Если расширение не поддерживается, возвращаем FALSE, и программа завершается. Если все идет хорошо, мы освобождаем 
+  glextstring (мы больше не нуждаемся в списке поддерживаемых 
+  расширений).</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>int Extension_Init()</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  char Extension_Name[] = &quot;EXT_fog_coord&quot;;</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // выделяем память для строки расширения</p>
+<p class=textpreword>  char*glextstring=(char*)malloc(strlen((char*)glGetString(GL_EXTENSIONS))+1);</p>
+<p class=textpreword>  // копируем список расширений в glextstring</p>
+<p class=textpreword>  strcpy (glextstring,(char *)glGetString(GL_EXTENSIONS));</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  if (!strstr(glextstring,Extension_Name)) // поддерживается 
+  ли расширение??</p>
+<p class=textpreword>    return FALSE; // если нет – то вернуть FALSE</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  free(glextstring); // иначе освобождаем память</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textword>В самом начале этой программы мы определили glFogCoordfExt. 
+  Однако команда не будет работать, пока мы не присоединим функцию к фактическому 
+  OpenGL расширению. Мы делаем это, передавая glFogCoordfExt 
+  адрес расширения тумана OpenGL. Когда мы вызываем  glFogCoordfExt, 
+  фактический код расширения выполнится, и мы получим параметр, переданный glFogCoordfExt.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Мне приходиться с сожалением признать, что это та часть кода, 
+  которую  сложно описать в простых терминах (по крайней мере, для меня).</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>  // устанавливаем и активируем glFogCoordEXT</p>
+<p class=textpreword>  glFogCoordfEXT = (PFNGLFOGCOORDFEXTPROC) wglGetProcAddress(&quot;glFogCoordfEXT&quot;);</p>
+<p class=textpreword>  return TRUE;</p>
+<p class=textpreword>}</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textword>В коде функции инициализации мы, прежде всего, проверяем, поддерживается 
+  ли расширение, загружаем нашу текстуру, и настраиваем OpenGL.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>До этого наша программа должна иметь RC 
+  (контекст рендеринга). Это <b>важно</b>, потому что вы должны иметь контекст 
+  рендеринга прежде, чем вы можете проверить, поддерживаться ли расширение конкретной 
+  видеоплатой.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Поэтому мы вызываем Extension_Init () чтобы определить, поддерживает 
+  ли плата расширение. Если расширение не поддерживается, Extension_Init () возвращает 
+  ложь и это приводит к завершению программы. Если вам нужно отобразить какое-либо 
+  сообщение, вы можете это сделать. Сейчас программа просто не запуститься.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Если расширение поддерживается, мы попытаемся загрузить нашу 
+  текстуру wall.bmp. Идентификатором для этой текстуры 
+  будет texture[0]. Если по каким-либо причинам текстура 
+  не загружается, программа завершится.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Инициализация проста. Мы активизируем двухмерное наложение текстуры 
+  и задаем черный цвет очистки экрана. Очищаем буфер глубин 1.0f. Мы задаем тест 
+  глубины типа «меньше или равно» и разрешаем тест глубины. Модель закрашивания 
+  устанавливаем равным плавному закрашиванию, и мы выбираем наилучшую коррекцию 
+  перспективы.</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>BOOL Initialize (GL_Window* window, Keys* keys) </p>
+<p class=textpreword>     // код инициализации </p>
+<p class=textpreword>{</p>
+<p class=textpreword>  g_window  = window; // параметры 
+  окна</p>
+<p class=textpreword>  g_keys    = keys;   // ключевые значения</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // начало пользовательской инициализации</p>
+<p class=textpreword>  // проверяем и активизируем расширение тумана, если оно 
+  доступно</p>
+<p class=textpreword>  if (!Extension_Init()) </p>
+<p class=textpreword>    return FALSE; // вернуть False если расширение не поддерживается</p>
+<p class=textpreword>  if (!BuildTexture(&quot;data/wall.bmp&quot;, 
+  texture[0])) // загрузить текстуру стены</p>
+<p class=textpreword>    return FALSE; // вернуть False если загрузка не прошла</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  glEnable(GL_TEXTURE_2D);   // вкл отображение текстуры</p>
+<p class=textpreword>  glClearColor (0.0f, 0.0f, 0.0f, 0.5f); // черный фон</p>
+<p class=textpreword>  glClearDepth (1.0f);       // установить глубину буфера</p>
+<p class=textpreword>  glDepthFunc (GL_LEQUAL);   // тип теста глубины</p>
+<p class=textpreword>  glEnable (GL_DEPTH_TEST);  // вкл 
+  тест глубины</p>
+<p class=textpreword>  glShadeModel (GL_SMOOTH);  // выбрать плавное закрашивание</p>
+<p class=textpreword>  // установить вычисления перспективы к максимально 
+  точными</p>
+<p class=textpreword>  glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textword>Ну, а, теперь можно по-прикалываться. Мы должны задать туман. 
+  Начинаем с активизации тумана. Режим визуализации, который мы используем, линейный. 
+  Цвет тумана установлен с помощью fogColor (оранжевый).</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Затем мы должны установить стартовую позицию тумана. Это - наименее 
+  плотная часть тумана. Для простоты, мы будем использовать 1.0f как наименьшее 
+  значение плотности (FOG_START). Мы будем использовать 0.0f как наибольшее значение 
+  плотности тумана (FOG_END).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Согласно документации, которую я прочел, настраивая туман, используя 
+  GL_NICEST, он будет отображаться по-пиксельно. При использовании 
+  GL_FASTEST туман будет выводиться по <b><i>вершинам</i></b>. 
+  Лично я не вижу никакой разницы.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Последняя  команда glFogi (...) сообщает OpenGL, что мы 
+  хотим установить наш туман, используя координаты вершин. Это позволяет устанавливать 
+  туман в любом месте нашей сцены ни влияя на всю сцену (улет!).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Мы устанавливаем начальное значение camz 
+  в -19.0f. Коридор на самом деле имеет длину 30 единиц. Поэтому -19.0f перемещает 
+  нас, почти в начало коридора (коридор визуализируется от -15.0f до +15.0f по 
+  оси Z).</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // устанавливаем туман</p>
+<p class=textpreword>  glEnable(GL_FOG);                // активизируем туман</p>
+<p class=textpreword>  glFogi(GL_FOG_MODE, GL_LINEAR);  // затенение линейно</p>
+<p class=textpreword>  glFogfv(GL_FOG_COLOR, fogColor); // устанавливаем цвет 
+  тумана</p>
+<p class=textpreword>  glFogf(GL_FOG_START,  0.0f);     // устанавливаем начальную 
+  плотность тумана</p>
+<p class=textpreword>  glFogf(GL_FOG_END,    1.0f);     // устанавливаем конечную 
+  плотность тумана</p>
+<p class=textpreword>  glHint(GL_FOG_HINT, GL_NICEST);  // вычисляем туман по 
+  пикселям</p>
+<p class=textpreword>  // делаем туман на координатах вершин</p>
+<p class=textpreword>  glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FOG_COORDINATE_EXT);</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>  camz =  -19.0f; // устанавливаем значение камеры по оси 
+  Z = -19.0f</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  return TRUE;    // возвращаем TRUE (инициализация прошла 
+  успешно)</p>
+<p class=textpreword>}</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textword>Эта часть кода вызывается всякий раз, когда пользователь выходит 
+  из программы. Мусора у нас нет, поэтому и кода нет :-).</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>void Deinitialize (void)              // код выхода</p>
+<p class=textpreword>{</p>
+<p class=textpreword>}</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textword>Тут мы обрабатываем клавиатуру. Подобно всем предыдущим урокам, 
+  мы проверяем, нажата ли кнопка ESC. Если да, то приложение закрывается. Если 
+  нажата клавиша F1, мы переключаемся из полноэкранного режима в  оконный  режим 
+  или из оконного в полноэкранный.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Другие две кнопки, которые мы проверяем – это стрелки «вверх» 
+  и «вниз». Если кнопка «вверх» нажата, и значение camz 
+  - меньше чем 14.0f, мы увеличиваем camz. При этом наблюдатель 
+  будет перемещаться вперед по коридору. Если бы значение было больше 14.0f, мы 
+  бы прошли через заднюю стену. Но мы не хотим, чтобы это произошло :).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Если нажата кнопка «вниз», и значение camz 
+  большее чем -19.0f, мы уменьшаем camz. 
+  При этом наблюдатель будет  перемещаться назад по коридору. Если бы  значение 
+  было меньше -19.0f, коридор был бы слишком далек от экрана, и виден был бы только 
+  вход в коридор. Опять же... Это было бы не хорошо!</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Значение camz увеличивается и уменьшается 
+  на число прошедших миллисекунд, деленных на 100.0f. Это должно заставить программу 
+  выполняться с одинаковой скоростью на всех типах процессоров.</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>void Update (DWORD milliseconds)     // выполняем обновление 
+  движения</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  if (g_keys-&gt;keyDown [VK_ESCAPE])   
+  // ESC нажата?</p>
+<p class=textpreword>    TerminateApplication (g_window); // 
+  прекращаем работу</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>  if (g_keys-&gt;keyDown [VK_F1])   //  
+  F1 нажата?</p>
+<p class=textpreword>    ToggleFullscreen (g_window); 
+  // переход в полноэкранный режим или в оконный</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  if (g_keys-&gt;keyDown [VK_UP] &amp;&amp; camz&lt;14.0f) 
+  // стрелка вверх нажата?</p>
+<p class=textpreword>    camz+=(float)(milliseconds)/100.0f;     
+  // приближаем объект</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>  if (g_keys-&gt;keyDown [VK_DOWN] &amp;&amp; 
+  camz&gt;-19.0f) // стрелка вниз нажата?</p>
+<p class=textpreword>    camz-=(float)(milliseconds)/100.0f;         
+  // отдаляем объект</p>
+<p class=textpreword>}</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textword>Я уверен, что вы готовы умереть, чтобы получить визуализацию, 
+  но нам надо кое-что еще сделать, чтобы отобразить коридор. Сначала мы должны 
+  очистить экран и буфер глубины. Мы сбрасываем матрицу вида модели и сдвигаем 
+  камеру на значение camz.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Увеличивая или уменьшая значение camz, 
+  коридор станет ближе или дальше от наблюдателя. Это создаст впечатление, что 
+  наблюдатель двигается вперед или назад через коридор. Все гениальное просто!</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>void Draw (void)</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // 
+  очищаем экран и буфер глубины</p>
+<p class=textpreword>  glLoadIdentity (); // сбрасываем матрицу вида модели </p>
+<p class=textpreword>  glTranslatef(0.0f, 0.0f, camz); // устанавливаем Z координату 
+  камеры</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textword>Камера установлена, теперь пришло время визуализировать первый 
+  квадрат. Это будет задняя стенка (стенка в конце коридора).</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Мы хотим, чтобы эта стенка была в самом плотном слое тумана. 
+  Если Вы взглянете на код инициализации, вы увидите, что GL_FOG_END 
+  - наиболее плотная часть тумана... и значение его 1.0f.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Туман устанавливается тем же самым способом, каким вы управляете 
+  координатами текстуры. Значение GL_FOG_END является 
+  самым плотным туманом и имеет значение 1.0f. Поэтому для вершин нашего первого 
+  полигона мы передаем в glFogCoordfExt значение 1.0f. 
+  Этот полигон задает самую дальнюю стену (стену, которую вы будете наблюдать 
+  в конце тоннеля) координаты по осям X и Y 
+  равны -2.5f. Там будет наиболее плотный туман.</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  glBegin(GL_QUADS); // задняя стена</p>
+<p class=textpreword>    glFogCoordfEXT(1.0f); glTexCoord2f(0.0f, 
+  0.0f); glVertex3f(-2.5f,-2.5f,-15.0f);</p>
+<p class=textpreword>    glFogCoordfEXT(1.0f); glTexCoord2f(1.0f, 
+  0.0f); glVertex3f( 2.5f,-2.5f,-15.0f);</p>
+<p class=textpreword>    glFogCoordfEXT(1.0f); glTexCoord2f(1.0f, 
+  1.0f); glVertex3f( 2.5f, 2.5f,-15.0f);</p>
+<p class=textpreword>    glFogCoordfEXT(1.0f); glTexCoord2f(0.0f, 
+  1.0f); glVertex3f(-2.5f, 2.5f,-15.0f);</p>
+<p class=textpreword>  glEnd();</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textword>Теперь у нас имеется задняя стена с наложенной на нее текстурой 
+  в плотном тумане. Нарисуем пол. Тут есть небольшое отличие, но как только вы 
+  поймете принцип, вам все станет ясно. </p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Подобно всем квадратам, пол имеет 4 точки. Значение Y всегда 
+  равно -2.5f. Значение по оси X левой вершины равно -2.5f, 
+  а правой вершины -2.5f, и пол рисуется по оси Z от  -15.0f до +15.0f.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Нам нужно, чтобы дальняя часть пола находилась в тумане. Снова 
+  присвоим вершинам glFogCoordfExt значение 1.0f. Заметьте, 
+  что любая вершина, нарисованная со значением по оси Z 
+  равным -15.0f имеет значение glFogCoordfExt равным 1.0f...?!</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Часть пола, ближайшая к наблюдателю (+15.0f) будет иметь наименьшую 
+  плотность тумана. GL_START_FOG - наименее плотный туман 
+  и имеет значение 0.0f. Так что, для этих точек присвоим  переменой glFogCoordfExt  
+  значение 0.0f.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>То, что вы должны видеть, когда запустите программу, это на 
+  самом деле плотный туман на полу возле задней части и светлый туман спереди. 
+  Туман недостаточно густой, чтобы заполнить весь коридор. В действительности, 
+  он рассеивается где-то в середине коридора, даже если GL_START_FOG 
+  = 0.0f.</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  glBegin(GL_QUADS); // пол</p>
+<p class=textpreword>    glFogCoordfEXT(1.0f); glTexCoord2f(0.0f, 
+  0.0f); glVertex3f(-2.5f,-2.5f,-15.0f);</p>
+<p class=textpreword>    glFogCoordfEXT(1.0f); glTexCoord2f(1.0f, 
+  0.0f); glVertex3f( 2.5f,-2.5f,-15.0f);</p>
+<p class=textpreword>    glFogCoordfEXT(0.0f); glTexCoord2f(1.0f, 
+  1.0f); glVertex3f( 2.5f,-2.5f, 15.0f);</p>
+<p class=textpreword>    glFogCoordfEXT(0.0f); glTexCoord2f(0.0f, 
+  1.0f); glVertex3f(-2.5f,-2.5f, 15.0f);</p>
+<p class=textpreword>  glEnd();</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textword>Потолок выводится так же, как и пол, с единственным отличием 
+  в том, что потолок рисуется по оси Y со значением координаты равным 2.5f.</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  glBegin(GL_QUADS); // потолок</p>
+<p class=textpreword>    glFogCoordfEXT(1.0f); glTexCoord2f(0.0f, 
+  0.0f); glVertex3f(-2.5f, 2.5f,-15.0f);</p>
+<p class=textpreword>    glFogCoordfEXT(1.0f); glTexCoord2f(1.0f, 
+  0.0f); glVertex3f( 2.5f, 2.5f,-15.0f);</p>
+<p class=textpreword>    glFogCoordfEXT(0.0f); glTexCoord2f(1.0f, 
+  1.0f); glVertex3f( 2.5f, 2.5f, 15.0f);</p>
+<p class=textpreword>    glFogCoordfEXT(0.0f); glTexCoord2f(0.0f, 
+  1.0f); glVertex3f(-2.5f, 2.5f, 15.0f);</p>
+<p class=textpreword>  glEnd();</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textword>Правая стенка рисуется точно также. Только по оси X значение 
+  всегда 2.5f. Самые дальние точки на оси Z по-прежнему устанавливаются равными 
+  glFogCoordfExt (1.0f), а самые близкие по оси Z равны glFogCoordfExt 
+  (0.0f).</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>  glBegin(GL_QUADS); // правая стена</p>
+<p class=textpreword>    glFogCoordfEXT(0.0f); glTexCoord2f(0.0f, 
+  0.0f); glVertex3f( 2.5f,-2.5f, 15.0f);</p>
+<p class=textpreword>    glFogCoordfEXT(0.0f); glTexCoord2f(0.0f, 
+  1.0f); glVertex3f( 2.5f, 2.5f, 15.0f);</p>
+<p class=textpreword>    glFogCoordfEXT(1.0f); glTexCoord2f(1.0f, 
+  1.0f); glVertex3f( 2.5f, 2.5f,-15.0f);</p>
+<p class=textpreword>    glFogCoordfEXT(1.0f); glTexCoord2f(1.0f, 
+  0.0f); glVertex3f( 2.5f,-2.5f,-15.0f);</p>
+<p class=textpreword>  glEnd();</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textword>Будем надеяться, теперь вы понимаете, как все это работает. 
+  Все что находится на расстоянии должно иметь значение 1.0f. Все что ближе - 
+  должно быть равно 0.0f.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>В любом случае, вы можете поэкспериментировать со значениями 
+  GL_FOG_START и GL_FOG_END, чтобы увидеть, 
+  как они влияют на сцену.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Эффект не выглядит убедительным, если Вы поменяете начальные 
+  и конечные значения. Иллюзия создается задней стеной, которая является  полностью 
+  оранжевой! Эффект смотрится лучше всего в тупиках или узких углах, где игрок 
+  не может отвернуться от тумана!</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Этот тип тумана смотрится лучше всего, когда игрок может видеть 
+  комнату с туманом, но фактически не может войти в нее. Хорошим примером может 
+  быть глубокая яма, закрытая чем-то наподобие решетки. Игрок может смотреть вниз, 
+  но не может попасть туда.</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  glBegin(GL_QUADS); // левая стена</p>
+<p class=textpreword>    glFogCoordfEXT(0.0f); glTexCoord2f(0.0f, 
+  0.0f); glVertex3f(-2.5f,-2.5f, 15.0f);</p>
+<p class=textpreword>    glFogCoordfEXT(0.0f); glTexCoord2f(0.0f, 
+  1.0f); glVertex3f(-2.5f, 2.5f, 15.0f);</p>
+<p class=textpreword>    glFogCoordfEXT(1.0f); glTexCoord2f(1.0f, 
+  1.0f); glVertex3f(-2.5f, 2.5f,-15.0f);</p>
+<p class=textpreword>    glFogCoordfEXT(1.0f); glTexCoord2f(1.0f, 
+  0.0f); glVertex3f(-2.5f,-2.5f,-15.0f);</p>
+<p class=textpreword>  glEnd();</p>
+<p class=textpreword>  glFlush ();</p>
+<p class=textpreword>}</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textword>Я надеюсь, вам понравился этот урок. Он был создан в течение 
+  3 дней... по 4 часа в день. Большинство времени было потрачено на написание 
+  текста, который Вы в данный момент читаете.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Я хотел сделать трехмерную комнату с туманом в одном углу. К 
+  сожалению, у меня, было, очень мало времени, чтобы поработать с кодом.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Даже при том, что коридор в этом уроке очень прост, фактический 
+  эффект тумана довольно крут! Чтобы использовать данный эффект в ваших собственных 
+  проектах потребуется совсем немного изменений.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Эти урок показывает Вам, как использовать glFogCoordfExt. 
+  Это быстро, круто и легко! Стоит обратить внимание, что это - только ОДИН из 
+  многих различных способов создать объемный туман. Тот же самый эффект может 
+  быть создан, используя смешивание, частицы, маски, и т.д.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Как всегда... Если вы нашли ошибки в этом уроке, сообщите мне. 
+  Если Вы считаете, что Вы можете описать часть кода лучше (моя формулировка не 
+  всегда понятна), намыльте мне : ) !</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Много текста было написано поздно ночью, и хотя это не оправдание, 
+  но мой текст становится от этого немного хуже, поскольку я сонный в это время. 
+  Пожалуйста, присылайте мне по электронной почте письма, если вы нашли в тексте повторяющиеся слова, ошибки в правописании и т.п.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Первоначальная идея для этого урока была послана мне довольно 
+  давно. С тех пор я потерял это письмо. Тому, кто послал мне это письмо хочу 
+  сказать …  спасибо!</p>
+
+<p class="textnoalign" align="right">
+<font color="#0000A0"><b>Jeff Molofee (NeHe)</a></b></font>
+</p>  
+
+</div>
+<div id="end">
+
+          <p><a href="http://pmg.org.ru/"
+			onmouseover=" return event_over(this,'Программирование магических игр')  "
+			onmouseout=" return event_out(this) "><font class="link"><b>PMG</b></font></a> 
+            <font class="comment">&nbsp;27 апреля 2004&nbsp;(c)&nbsp;</font> 
+        <a href="mailto:sonnson@rambler.ru"
+	onmouseover=" return event_over(this,'Почта переводчику')  " 
+	onmouseout=" return event_out(this) "> <font class="link"><b>Алексей Граков</b></font></a> 
+          </p>
+</div>
+</center>
+
+<script language="JavaScript">
+<!--
+form_print();
+//-->
+</script>
+
+</body>
+</html>

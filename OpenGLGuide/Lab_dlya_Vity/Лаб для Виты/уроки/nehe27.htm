@@ -1,0 +1,845 @@
+<!doctype html public "-//w3c//dtd html 3.2 final//ru">
+<html>
+
+<head>
+<meta http-equiv="Content-Type"
+content="text/html; charset=windows-1251">
+<meta name="description"
+content="Переводы по OpenGL, трехмерная графика, игры, мультимедия
+Translations Russian OpenGL
+">
+<meta name="keyword"
+content="Программирование,игры,3D,трехмерная графика,OpenGL,NeHe">
+<meta name="keyword"
+content="programming,C,C++,game,graphics">
+<title>Урок 27. Тени</title>
+<link rel="stylesheet" href="pmg.css" type="text/css">
+</head>
+
+<body bgcolor="#b2d3e1" link="#800080" vlink="#800080">
+<script src='nehe.js' language="javascript">
+<!--
+//-->
+</script>
+
+<center>
+<div id="top">
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+        <td width="20%" align="center" valign="center">
+        <img src="nehelogo.jpg" align="left" hspace="0" width="125" height="50" alt="NeHe Tutorials">
+        </td>
+        <td width="60%" align="center">
+	<a href="index.html"
+	onmouseover=" return event_over(this,'NeHe Ru.')  "
+        onmouseout=" return event_out(this) ">
+        <font class="linksbig">
+        Народный учебник по OpenGL</font></a><br>
+        </td>
+        <td width="20%" align="center" valign="center">
+        <img src="nehe27.jpg" align="right" hspace="0" width="80" height="60" alt="Урок 27. OpenGL">
+        </td>
+    </tr>
+</table>
+</div>
+
+<div id="head">
+<p class="head1">
+Урок 27. Тени</p>
+</div>
+<div id="main" bgcolor="#ADADFF">
+<p class="textnoalign" align="left">
+
+<a href="http://nehe.gamedev.net/data/lessons/lesson.asp?lesson=27" target="_blank"
+onmouseover=" return event_over(this,this)  "
+onmouseout=" return event_out(this) ">
+<font class="link"><b>Shadows</b></font></a>
+<br>
+</p><p class=textword>&nbsp;  </p>
+<p class=textword>Добро пожаловать на довольно сложный урок, посвященный отбрасыванию 
+  теней. Вы увидите невероятный эффект, который создает программа этого урока. 
+  Тени, которые вытягиваются, сгибаются и окутывают объекты и падают на стенки. 
+  Можно перемещаться по сцене в 3D, используя клавиатуру.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>На этом уроке предполагается, что Вы имеет уже достаточно много 
+  знаний об OpenGL. Вы должны знать, как работает буфер трафарета, и основы инициализации 
+  OpenGL. Иначе освежите свои знания и почитайте более 
+  ранние уроки. Функции типа CreateGLWindow и WinMain не будут объясняться в этом уроке. Дополнительно, необходимо 
+  знать азы 3D, поэтому возьмите в руки хороший учебник 
+  по трехмерной графике! (Я использовал мои лекции по математике с первого курса 
+  университета - я знал, что они мне пригодятся! :)</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Сначала мы определим значение БЕСКОНЕЧНОСТИ, которое задает, 
+  как далеко, простираются теневые объемы от многоугольников (это объясним позже). 
+  Если Вы используете большую или меньшую систему координат, скорректируете это 
+  значение соответственно.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>// определим Of &quot;БЕСКОНЕЧНОСТЬ&quot; 
+  для вычисления вектора расширения теневого объема</p>
+<p class=textpreword>#define INFINITY  100</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Затем - определение структур объектов.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Структура Point3f содержит значения координат точки в 3D пространстве. Она может использоваться для вершин или векторов.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>// Структура описания вершины в объекте</p>
+<p class=textpreword>struct Point3f</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  GLfloat x, y, z;</p>
+<p class=textpreword>};</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textword>Структура Plane содержит 4 значения, которые необходимы для 
+  формирования уравнения плоскости. Эти плоскости задают лицевые стороны объектов 
+  (их грани).</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>// Структура описания плоскости, в формате: ax + by + cz 
+  + d = 0</p>
+<p class=textpreword>struct Plane</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  GLfloat a, b, c, d;</p>
+<p class=textpreword>};</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textword>Структура Face содержит всю информацию, необходимую для задания 
+  треугольника для отбрасывания тени. Индексы задают порядок задания вершин.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Нормали вершин (vertexIndices) используются, 
+  чтобы вычислить ориентацию лицевых граней в 3D, с помощью 
+  них можно определить, с какой стороны находится источник света с лицевой или 
+  с обратной, по отношению к грани.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Уравнение плоскости (planeEquation) 
+  описывает плоскость, в которой этот треугольник находится в 3D.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Индексы соседей (neighbourIndices) - 
+  индексы в массиве граней объекта. Это позволяет Вам определить, как грань соединена 
+  с другими гранями на каждой стороне треугольника.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Параметр видимости (visible) используется, 
+  чтобы определить, является ли грань &quot;видимой&quot; источнику света, который 
+  отбрасывает тени.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>// Структура описания грани объекта</p>
+<p class=textpreword>struct Face</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  int vertexIndices[3]; // Индекс каждой вершины в объекте, которые 
+  задают треугольник грани</p>
+<p class=textpreword>  Point3f normals[3];   // Нормаль 
+  каждой вершины</p>
+<p class=textpreword>  Plane planeEquation;  // Уравнение плоскости с треугольником</p>
+<p class=textpreword>  int neighbourIndices[3]; // Индекс 
+  каждой грани, которая является соседом в этом объекте</p>
+<p class=textpreword>  bool visible;         // Свет видит эту грань?</p>
+<p class=textpreword>};</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textword>Наконец, структура ShadowedObject содержит все вершины и грани 
+  объекта. Память для каждого из массивов выделяется динамически, когда объект 
+  загружается.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>struct ShadowedObject</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  int nVertices;</p>
+<p class=textpreword>  Point3f *pVertices; // Динамически 
+  выделяется</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  int nFaces;</p>
+<p class=textpreword>  Face *pFaces;       // Динамически 
+  выделяется</p>
+<p class=textpreword>};</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Действия функции readObject понятны 
+  из ее названия. В ней происходит заполнение структуры значениями из файла, выделение 
+  памяти для вершин и граней. Индексы соседних граней инициализируются значением 
+  –1, что означает, что их нет. Они будут рассчитаны позже.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>bool readObject( const char *filename, ShadowedObject&amp; 
+  object )</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  FILE *pInputFile;</p>
+<p class=textpreword>  int i;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  pInputFile = fopen( filename, &quot;r&quot; 
+  );</p>
+<p class=textpreword>  if ( pInputFile == NULL )</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    cerr &lt;&lt; &quot;Не могу открыть файл объекта: &quot; &lt;&lt; 
+  filename &lt;&lt; endl;</p>
+<p class=textpreword>    return false;</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Читать вершины</p>
+<p class=textpreword>  fscanf( pInputFile, &quot;%d&quot;, &amp;object.nVertices 
+  );</p>
+<p class=textpreword>  object.pVertices = new Point3f[object.nVertices];</p>
+<p class=textpreword>  for ( i = 0; i &lt; object.nVertices; 
+  i++ )</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    fscanf( pInputFile, &quot;%f&quot;, 
+  &amp;object.pVertices[i].x );</p>
+<p class=textpreword>    fscanf( pInputFile, &quot;%f&quot;, 
+  &amp;object.pVertices[i].y );</p>
+<p class=textpreword>    fscanf( pInputFile, &quot;%f&quot;, 
+  &amp;object.pVertices[i].z );</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Читать грани</p>
+<p class=textpreword>  fscanf( pInputFile, &quot;%d&quot;, &amp;object.nFaces 
+  );</p>
+<p class=textpreword>  object.pFaces = new Face[object.nFaces];</p>
+<p class=textpreword>  for ( i = 0; i &lt; object.nFaces; i++ 
+  )</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    int j;</p>
+<p class=textpreword>    Face *pFace = &amp;object.pFaces[i];</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>    for ( j = 0; j &lt; 3; j++ )</p>
+<p class=textpreword>      pFace-&gt;neighbourIndices[j] = -1; 
+  // Нет соседей</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>    for ( j = 0; j &lt; 3; j++ )</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      fscanf( pInputFile, &quot;%d&quot;, 
+  &amp;pFace-&gt;vertexIndices[j] );</p>
+<p class=textpreword>      pFace-&gt;vertexIndices[j]--; 
+  // В файле индексы начинают с 1, а в массиве с 0</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>    for ( j = 0; j &lt; 3; j++ )</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      fscanf( pInputFile, &quot;%f&quot;, 
+  &amp;pFace-&gt;normals[j].x );</p>
+<p class=textpreword>      fscanf( pInputFile, &quot;%f&quot;, 
+  &amp;pFace-&gt;normals[j].y );</p>
+<p class=textpreword>      fscanf( pInputFile, &quot;%f&quot;, 
+  &amp;pFace-&gt;normals[j].z );</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>  return true;</p>
+<p class=textpreword>}</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textword>Аналогично, действия killObject очевидны 
+  – в ней удаляется выделенная память, и обнуляются указатели. Обратите внимание, 
+  что, строка добавлена в KillGLWindow для вызова этой функции с указанным объектом.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>void killObject( ShadowedObject&amp; object 
+  )</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  delete[] object.pFaces;</p>
+<p class=textpreword>  object.pFaces = NULL;</p>
+<p class=textpreword>  object.nFaces = 0;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  delete[] object.pVertices;</p>
+<p class=textpreword>  object.pVertices = NULL;</p>
+<p class=textpreword>  object.nVertices = 0;</p>
+<p class=textpreword>}</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textword>Теперь интереснее, рассмотрим функцию setConnectivity. 
+  Эта функция вычисляет все соседние грани для всех граней в данном объекте. Вот 
+  ее псевдокод:</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>Для каждой грани (A) в объекте</p>
+<p class=textpreword>  Для каждой стороны в грани A</p>
+<p class=textpreword>    Если мы не знаем эти грани еще как соседи</p>
+<p class=textpreword>      Для каждой грани (B) в объекте 
+  (не включая грань A)</p>
+<p class=textpreword>        Для каждой стороны в B</p>
+<p class=textpreword>          Если сторона в A совпадает 
+  со стороной B, тогда они соседи по этой стороне</p>
+<p class=textpreword>            Задать свойство связанности каждой из граней 
+  A и B,</p>
+<p class=textpreword>            Затем перейти на следующую сторону в A</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Последние две строки связаны со следующим кодом. Получаем индексы 
+  двух смежных вершин грани A и грани B, 
+  которые находятся на одной стороне грани. Так как у грани 3 вершины, то (edgeA+1) 
+  %3 дает индекс следующей вершины. Затем надо проверить, совпадают ли вершины 
+  (порядок следования индексов вершин может быть различным).</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  int vertA1 = pFaceA-&gt;vertexIndices[edgeA];</p>
+<p class=textpreword>  int vertA2 = pFaceA-&gt;vertexIndices[( 
+  edgeA+1 )%3];</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  int vertB1 = pFaceB-&gt;vertexIndices[edgeB];</p>
+<p class=textpreword>  int vertB2 = pFaceB-&gt;vertexIndices[( 
+  edgeB+1 )%3];</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Проверить если они соседи, т.е. 
+  одинаковые стороны</p>
+<p class=textpreword>  if (( vertA1 == vertB1 &amp;&amp; vertA2 
+  == vertB2 ) || ( vertA1 == vertB2 &amp;&amp; vertA2 == vertB1 ))</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    pFaceA-&gt;neighbourIndices[edgeA] = 
+  faceB;</p>
+<p class=textpreword>    pFaceB-&gt;neighbourIndices[edgeB] = 
+  faceA;</p>
+<p class=textpreword>    edgeFound = true;</p>
+<p class=textpreword>    break;</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textword>К счастью, следующая функция очень проста, в то время как Вы 
+  усиленно дышите. Функция drawObject визуализирует каждую 
+  грань объекта.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>// Нарисовать объект, просто нарисовать каждую треугольную 
+  грань</p>
+<p class=textpreword>void drawObject( const ShadowedObject&amp; 
+  object )</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  glBegin( GL_TRIANGLES );</p>
+<p class=textpreword>  for ( int i = 0; i &lt; object.nFaces; 
+  i++ )</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    const Face&amp; face = object.pFaces[i];</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>    for ( int j = 0; j &lt; 3; j++ )</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      const Point3f&amp; vertex = object.pVertices[face.vertexIndices[j]];</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>      glNormal3f( face.normals[j].x, face.normals[j].y, 
+  face.normals[j].z );</p>
+<p class=textpreword>      glVertex3f( vertex.x, vertex.y, vertex.z 
+  );</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>  glEnd();</p>
+<p class=textpreword>}</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textword>Вычисление уравнения плоскости выглядит мерзко, но это только 
+  простая математическая формула, которую надо взять из учебника, который Вам 
+  необходим.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>void calculatePlane( const ShadowedObject&amp; 
+  object, Face&amp; face )</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  // Упростить обращение к вершинам 
+  объектов</p>
+<p class=textpreword>  const Point3f&amp; v1 = object.pVertices[face.vertexIndices[0]];</p>
+<p class=textpreword>  const Point3f&amp; v2 = object.pVertices[face.vertexIndices[1]];</p>
+<p class=textpreword>  const Point3f&amp; v3 = object.pVertices[face.vertexIndices[2]];</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  face.planeEquation.a = v1.y*(v2.z-v3.z) 
+  + v2.y*(v3.z-v1.z) + v3.y*(v1.z-v2.z);</p>
+<p class=textpreword>  face.planeEquation.b = v1.z*(v2.x-v3.x) 
+  + v2.z*(v3.x-v1.x) + v3.z*(v1.x-v2.x);</p>
+<p class=textpreword>  face.planeEquation.c = v1.x*(v2.y-v3.y) 
+  + v2.x*(v3.y-v1.y) + v3.x*(v1.y-v2.y);</p>
+<p class=textpreword>  face.planeEquation.d = -( v1.x*( v2.y*v3.z 
+  - v3.y*v2.z ) +</p>
+<p class=textpreword>        v2.x*(v3.y*v1.z - v1.y*v3.z) +</p>
+<p class=textpreword>        v3.x*(v1.y*v2.z - v2.y*v1.z) );</p>
+<p class=textpreword>}</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textword>Вы восстановили свое дыхание? Отлично! Потому что далее идет 
+  код отбрасывания тени! Функция castShadow делает все 
+  необходимые настройки OpenGL, и вызывает doShadowPass 
+  для двухпроходной визуализации.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Сначала, мы определяем, какая поверхность обращена к свету. 
+  Это можно понять при помощи определения, с какой стороны поверхности находится 
+  свет. Подставим позицию света в уравнение плоскости. Если мы получили значение 
+  больше чем 0, тогда совпадает с направлением нормали плоскости, и свет видим. 
+  Если нет, то свет не видим. (Снова, обратитесь к хорошему учебнику по математике, 
+  если Вам, что-то не понятно).</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>void castShadow( ShadowedObject&amp; object, 
+  GLfloat *lightPosition )</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  // Определим, какие плоскости видят свет.</p>
+<p class=textpreword>  for ( int i = 0; i &lt; object.nFaces; 
+  i++ )</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    const Plane&amp; plane = object.pFaces[i].planeEquation;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>    GLfloat side = plane.a*lightPosition[0]+</p>
+<p class=textpreword>      plane.b*lightPosition[1]+</p>
+<p class=textpreword>      plane.c*lightPosition[2]+</p>
+<p class=textpreword>      plane.d;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>    if ( side &gt; 0 )</p>
+<p class=textpreword>      object.pFaces[i].visible = true;</p>
+<p class=textpreword>    else</p>
+<p class=textpreword>      object.pFaces[i].visible = false;</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textword>Следующий раздел задает настройки OpenGL 
+  для визуализации теней.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Сначала, мы помещаем в стек все атрибуты, которые будут изменены. 
+  Это делает восстановление их намного проще.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Освещение отключено, потому что мы не будем что-либо выводить 
+  в буфер цвета, только в буфер трафарета. По той же самой причине, маска цвета 
+  выключает все цветные компоненты (поэтому отрисовка полигонов не влияет на выходной 
+  буфер).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Хотя тест глубины используется, мы не хотим, чтобы тени проявлялись 
+  себя, как сплошные объекты в буфере глубины, поэтому задана такая маска глубины, 
+  чтобы избежать этого.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Буфер трафарета включен, так как именно в него и будут рисоваться 
+  тени.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  glPushAttrib( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT 
+  |</p>
+<p class=textpreword>                GL_ENABLE_BIT | GL_POLYGON_BIT 
+  | GL_STENCIL_BUFFER_BIT );</p>
+<p class=textpreword>  glDisable( GL_LIGHTING );    // Выключим 
+  свет</p>
+<p class=textpreword>  glDepthMask( GL_FALSE );     // Выключим 
+  запись в буфер глубины</p>
+<p class=textpreword>  glDepthFunc( GL_LEQUAL );</p>
+<p class=textpreword>  glEnable( GL_STENCIL_TEST ); // Включим 
+  тест буфера трафарета</p>
+<p class=textpreword>  glColorMask( GL_FALSE, GL_FALSE, GL_FALSE, 
+  GL_FALSE ); // Не рисовать в буфер цвета</p>
+<p class=textpreword>  glStencilFunc( GL_ALWAYS, 1, 0xFFFFFFFFL 
+  );</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textword>Отлично, сейчас непосредственно возьмемся за визуализацию теней. 
+  Мы еще вернемся к этому моменту, когда будем рассматривать функцию doShadowPass. Тени визуализируются в два прохода, как Вы можете 
+  видеть, на первом проходе происходит инкремент буфера трафарета на лицевых гранях 
+  (отбрасывающих тень), на втором декремент буфера трафарета на невидимых гранях 
+  (&quot;выключающий&quot; тень между объектом и любыми другими поверхностями).</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  // Первый проход увеличение значения трафарета в тени</p>
+<p class=textpreword>  glFrontFace( GL_CCW );</p>
+<p class=textpreword>  glStencilOp( GL_KEEP, GL_KEEP, GL_INCR 
+  );</p>
+<p class=textpreword>  doShadowPass( object, lightPosition );</p>
+<p class=textpreword>  // Второй проход уменьшение значения трафарета в тени</p>
+<p class=textpreword>  glFrontFace( GL_CW );</p>
+<p class=textpreword>  glStencilOp( GL_KEEP, GL_KEEP, GL_DECR 
+  );</p>
+<p class=textpreword>  doShadowPass( object, lightPosition );</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textword>Чтобы понять как, работает второй проход, лучше всего закомментировать 
+  его и выполнить программу. Вот примерно, что Вы можете получить:</p>
+<p class=textword>&nbsp; </p>
+<p class=textword><img width=200 height=150  src="pass11.png">                    <img width=200
+height=150 src="pass21.png"></p>
+<p class=textword>Рисунок 1: Первый проход              Рисунок 2: Второй проход</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>В конце этой функции, выводится со смешением один прямоугольник 
+  на весь экран, для того чтобы отбросить тень. Чем более темным Вы сделаете этот 
+  прямоугольник, тем более темными будут тени. Поэтому, чтобы изменить свойства 
+  тени, измените значения цветовых компонент в glColor4f. При более высоких значениях 
+  альфа-канала тени будут более темными. Или Вы можете сделать их красными, зелеными, 
+  фиолетовыми...!</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  glFrontFace( GL_CCW );</p>
+<p class=textpreword>  // Включить визуализацию цветового буфера для всех компонент</p>
+<p class=textpreword>  glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, 
+  GL_TRUE );</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Нарисовать теневой прямоугольник 
+  на весь экран</p>
+<p class=textpreword>  glColor4f( 0.0f, 0.0f, 0.0f, 0.4f );</p>
+<p class=textpreword>  glEnable( GL_BLEND );</p>
+<p class=textpreword>  glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA 
+  );</p>
+<p class=textpreword>  glStencilFunc( GL_NOTEQUAL, 0, 0xFFFFFFFFL 
+  );</p>
+<p class=textpreword>  glStencilOp( GL_KEEP, GL_KEEP, GL_KEEP 
+  );</p>
+<p class=textpreword>  glPushMatrix();</p>
+<p class=textpreword>  glLoadIdentity();</p>
+<p class=textpreword>  glBegin( GL_TRIANGLE_STRIP );</p>
+<p class=textpreword>    glVertex3f(-0.1f, 0.1f,-0.10f);</p>
+<p class=textpreword>    glVertex3f(-0.1f,-0.1f,-0.10f);</p>
+<p class=textpreword>    glVertex3f( 0.1f, 0.1f,-0.10f);</p>
+<p class=textpreword>    glVertex3f( 0.1f,-0.1f,-0.10f);</p>
+<p class=textpreword>  glEnd();</p>
+<p class=textpreword>  glPopMatrix();</p>
+<p class=textpreword>  glPopAttrib();</p>
+<p class=textpreword>}</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textword>Отлично, далее рассмотрим, как рисуются теневые четырехугольники. 
+  Как это работает? Что происходит, когда вы проходите каждую грань, и если она 
+  видимая, тогда вы проверяете все ее стороны. Если у стороны нет соседа, или 
+  соседняя грань не видима, тогда эта сторона отбрасывает тень. Если Вы как следует, 
+  обдумаете эти два варианта, тогда Вы поймете, что так оно и есть на самом деле. 
+  Рисуя четырехугольник (как два треугольника), который включает в себя точки 
+  стороны, и точки проекции стороны в “бесконечность”, Вы получаете тень, отбрасываемую 
+  этой стороной.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Здесь используется простой и прямолинейный подход для рисования 
+  в &quot;бесконечность&quot;, каждый теневой многоугольник необходимо отсечь 
+  относительно всех многоугольников, с которыми он сталкивается. Это может вызвать 
+  &quot;стресс&quot; у видеокарты. В быстродействующей модификации этого алгоритма, 
+  Вы должны отсечь многоугольник по объектам позади него. Это намного сложнее 
+  и в этом алгоритме есть проблемы, но если вы хотите сделать это, то найдите 
+  статью на Gamasutra об этом.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Код реализации этого алгоритма более прост, чем рассуждения 
+  о нем. Вот начальный фрагмент кода, который надо повторить по всем объектам 
+  для получения тени. В конце этого фрагмента мы получаем номер края - j, и номер 
+  ее соседней грани - neighbourIndex.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>void doShadowPass( ShadowedObject&amp; object, 
+  GLfloat *lightPosition )</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  for ( int i = 0; i &lt; object.nFaces; 
+  i++ )</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    const Face&amp; face = object.pFaces[i];</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>    if ( face.visible )</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      // Для каждого края</p>
+<p class=textpreword>      for ( int j = 0; j &lt; 3; j++ )</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        int neighbourIndex = face.neighbourIndices[j];</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textword>Затем, идет проверка, видима ли соседняя грань, если нет, то 
+  этот край отбрасывает тень.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>        // Если нет соседа, или сосед не виден, тогда край 
+  отбрасывает тень</p>
+<p class=textpreword>        if ( neighbourIndex == -1 || object.pFaces[neighbourIndex].visible 
+  == false )</p>
+<p class=textpreword>        {</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textword>В следующем сегменте кода вычисляются две вершины текущего края 
+  - v1 и v2. Затем вычисляются вершины v3 и v4, которые получаются из проекции 
+  вдоль вектора между источником света и первым краем. Они масштабируются к БЕСКОНЕЧНОСТИ, 
+  которая была задана как очень большое значение.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>          // Взять точки на стороне</p>
+<p class=textpreword>          const Point3f&amp; v1 = object.pVertices[face.vertexIndices[j]];</p>
+<p class=textpreword>          const Point3f&amp; v2 = object.pVertices[face.vertexIndices[( 
+  j+1 )%3]];</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>          // Вычислить две вершины 
+  на расстоянии</p>
+<p class=textpreword>          Point3f v3, v4;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>          v3.x = ( v1.x-lightPosition[0] 
+  )*INFINITY;</p>
+<p class=textpreword>          v3.y = ( v1.y-lightPosition[1] 
+  )*INFINITY;</p>
+<p class=textpreword>          v3.z = ( v1.z-lightPosition[2] 
+  )*INFINITY;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>          v4.x = ( v2.x-lightPosition[0] 
+  )*INFINITY;</p>
+<p class=textpreword>          v4.y = ( v2.y-lightPosition[1] 
+  )*INFINITY;</p>
+<p class=textpreword>          v4.z = ( v2.z-lightPosition[2] 
+  )*INFINITY;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textword>Я думаю, что Вы поймете следующий раздел, в нем только выводится 
+  четырехугольник, заданный теми четырьмя точками:</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>          // Нарисовать четырехугольник (как полоску из треугольников)</p>
+<p class=textpreword>          glBegin( GL_TRIANGLE_STRIP );</p>
+<p class=textpreword>            glVertex3f( v1.x, v1.y, v1.z 
+  );</p>
+<p class=textpreword>            glVertex3f( v1.x+v3.x, v1.y+v3.y, 
+  v1.z+v3.z );</p>
+<p class=textpreword>            glVertex3f( v2.x, v2.y, v2.z 
+  );</p>
+<p class=textpreword>            glVertex3f( v2.x+v4.x, v2.y+v4.y, 
+  v2.z+v4.z );</p>
+<p class=textpreword>          glEnd();</p>
+<p class=textpreword>        }</p>
+<p class=textpreword>      }</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>}</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textword>На этом, секция отбрасывания тени завершена. Но мы еще не закончили! 
+  Что там в drawGLScene? Начнем с простых вещей: очистка 
+  буферов, позиционирование источника света, и отрисовка сферы:</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>bool drawGLScene()</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  GLmatrix16f Minv;</p>
+<p class=textpreword>  GLvector4f wlp, lp;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Очистка буфера цвета, глубины и трафарета</p>
+<p class=textpreword>  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT 
+  | GL_STENCIL_BUFFER_BIT);</p>
+<p class=textpreword>  </p>
+<p class=textpreword>  glLoadIdentity(); // Сброс матрицы 
+  вида модели</p>
+<p class=textpreword>  glTranslatef(0.0f, 
+  0.0f, -20.0f); // Наезд в экран 
+  на 20 единиц</p>
+<p class=textpreword>  glLightfv(GL_LIGHT1, GL_POSITION, LightPos); 
+  // Позиция Света1</p>
+<p class=textpreword>  glTranslatef(SpherePos[0], SpherePos[1], 
+  SpherePos[2]);// Позиция сферы</p>
+<p class=textpreword>  gluSphere(q, 
+  1.5f, 32, 16); // Отрисовать сферу</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Затем, мы должны вычислить позицию источника света относительно 
+  локальной системы координат объекта. В комментариях каждый шаг объяснен подробнее. 
+  В Minv хранится матрица преобразования объекта, однако 
+  вращения и сдвиг сделаны с отрицательными аргументами, поэтому это фактически 
+  инверсия матрицы преобразования. Затем lp создается 
+  как копия позиции света, и умноженная на матрицу. Таким образом, lp - позиция света в системе координат объекта.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  glLoadIdentity(); // Сброс матрицы</p>
+<p class=textpreword>  glRotatef(-yrot, 
+  0.0f, 1.0f, 0.0f);        
+  // Вращение на -yrot по оси Y</p>
+<p class=textpreword>  glRotatef(-xrot, 
+  1.0f, 0.0f, 0.0f);        
+  // Вращение на -xrot по оси X</p>
+<p class=textpreword>  glTranslatef(-ObjPos[0], 
+  -ObjPos[1], -ObjPos[2]); // 
+  Сдвинуть в противоположном направлении по всем осям исходя из значений ObjPos[] 
+  (X, Y, Z)</p>
+<p class=textpreword>  glGetFloatv(GL_MODELVIEW_MATRIX,Minv); // Получить матрицу</p>
+<p class=textpreword>  lp[0] = LightPos[0];            
+  // Сохранить позицию света X в lp[0]</p>
+<p class=textpreword>  lp[1] = LightPos[1];            
+  // Сохранить позицию света Y в lp[1]</p>
+<p class=textpreword>  lp[2] = LightPos[2];            
+  // Сохранить позицию света Z в lp[2]</p>
+<p class=textpreword>  lp[3] = LightPos[3];            
+  // Сохранить позицию света в lp[3]</p>
+<p class=textpreword>  VMatMult(Minv, 
+  lp);             // Сохраним преобразованный вектор 
+  в массиве 'lp'</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Теперь забабахаем работу по выводу комнаты, и объекта. Вызов 
+  castShadow выводит тень объекта.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  glLoadIdentity();          // Сброс 
+  матрицы</p>
+<p class=textpreword>  glTranslatef(0.0f, 
+  0.0f, -20.0f); // Наезд на 20 
+  единиц в экран</p>
+<p class=textpreword>  DrawGLRoom();              // Отрисовка 
+  комнаты</p>
+<p class=textpreword>  glTranslatef(ObjPos[0], ObjPos[1], ObjPos[2]); 
+  // Позиция объекта</p>
+<p class=textpreword>  glRotatef(xrot, 
+  1.0f, 0.0f, 0.0f);        
+  // Вращение по оси X на xrot</p>
+<p class=textpreword>  glRotatef(yrot, 
+  0.0f, 1.0f, 0.0f);  
+        // Вращение по оси Y на yrot</p>
+<p class=textpreword>  drawObject(obj);           
+  // Процедура для рисования загруженного объекта</p>
+<p class=textpreword>  castShadow(obj, 
+  lp);       // Процедура для отбрасывания тени используя 
+  силуэт объекта</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Следующие несколько линии выводят небольшой оранжевый круг, 
+  обозначая место света:</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  glColor4f(0.7f, 
+  0.4f, 0.0f, 1.0f);// Оранжевый цвет</p>
+<p class=textpreword>  glDisable(GL_LIGHTING);           // Отключить 
+  свет</p>
+<p class=textpreword>  glDepthMask(GL_FALSE);            // Отключить 
+  маску глубины</p>
+<p class=textpreword>  glTranslatef(lp[0], 
+  lp[1], lp[2]);// Перенос позиции 
+  света</p>
+<p class=textpreword>                  // Отмечу, что мы все еще в локальной системе 
+  координат</p>
+<p class=textpreword>  gluSphere(q, 
+  0.2f, 16, 8);        // Нарисовать маленькую оранжевую 
+  сферу</p>
+<p class=textpreword>  glEnable(GL_LIGHTING);            // Разрешение 
+  света</p>
+<p class=textpreword>  glDepthMask(GL_TRUE);            
+   // Разрешение маски глубины</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>В конце меняем позицию объекта и выход.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  xrot += xspeed;              
+  // Увеличим xrot на xspeed</p>
+<p class=textpreword>  yrot += yspeed;              
+  // Увеличим yrot на yspeed</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  glFlush();                // Сброс OpenGL</p>
+<p class=textpreword>  return TRUE;              // Скажем 
+  OK</p>
+<p class=textpreword>}</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textword>Реализуем функцию DrawGLRoom, и в ней выводится пучок прямоугольников, 
+  чтобы на них падали тени:</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>void DrawGLRoom()               // Нарисовать 
+  комнату</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  glBegin(GL_QUADS);            
+  // Рисовать прямоугольники</p>
+<p class=textpreword>    // Пол</p>
+<p class=textpreword>    glNormal3f(0.0f, 1.0f, 0.0f);        
+  // Нормаль вверх</p>
+<p class=textpreword>    glVertex3f(-10.0f,-10.0f,-20.0f);      
+  // Лево Назад</p>
+<p class=textpreword>    glVertex3f(-10.0f,-10.0f, 20.0f);      
+  // Лево Перед</p>
+<p class=textpreword>    glVertex3f( 10.0f,-10.0f, 20.0f);      
+  // Право Перед</p>
+<p class=textpreword>    glVertex3f( 10.0f,-10.0f,-20.0f);      
+  // Право Назад </p>
+<p class=textpreword>    // Потолок</p>
+<p class=textpreword>    glNormal3f(0.0f,-1.0f, 0.0f);        
+  // Нормаль вниз</p>
+<p class=textpreword>    glVertex3f(-10.0f, 10.0f, 20.0f);      
+  // Лево Перед </p>
+<p class=textpreword>    glVertex3f(-10.0f, 10.0f,-20.0f);      
+  // Лево Назад </p>
+<p class=textpreword>    glVertex3f( 10.0f, 10.0f,-20.0f);      
+  // Назад Право </p>
+<p class=textpreword>    glVertex3f( 10.0f, 10.0f, 20.0f);      
+  // Право Верх</p>
+<p class=textpreword>    // Передняя стена</p>
+<p class=textpreword>    glNormal3f(0.0f, 
+  0.0f, 1.0f);        // Нормаль 
+  вдаль от зрителя</p>
+<p class=textpreword>    glVertex3f(-10.0f, 10.0f,-20.0f);      // Лево Верх</p>
+<p class=textpreword>    glVertex3f(-10.0f,-10.0f,-20.0f);      
+  // Лево Низ</p>
+<p class=textpreword>    glVertex3f( 10.0f,-10.0f,-20.0f);      
+  // Право Низ </p>
+<p class=textpreword>    glVertex3f( 10.0f, 10.0f,-20.0f);      
+  // Право Верх </p>
+<p class=textpreword>    // Задняя стена </p>
+<p class=textpreword>    glNormal3f(0.0f, 
+  0.0f,-1.0f);        // Нормаль на зрителя</p>
+<p class=textpreword>    glVertex3f( 10.0f, 10.0f, 20.0f);      // Право Верх 
+  </p>
+<p class=textpreword>    glVertex3f( 10.0f,-10.0f, 20.0f);      
+  // Право Низ </p>
+<p class=textpreword>    glVertex3f(-10.0f,-10.0f, 20.0f);      
+  // Лево Низ </p>
+<p class=textpreword>    glVertex3f(-10.0f, 10.0f, 20.0f);      
+  // Лево Верх </p>
+<p class=textpreword>    // Левая стена </p>
+<p class=textpreword>    glNormal3f(1.0f, 
+  0.0f, 0.0f);        // Нормаль 
+  вправо</p>
+<p class=textpreword>    glVertex3f(-10.0f, 10.0f, 20.0f);      
+  // Верх Перед </p>
+<p class=textpreword>    glVertex3f(-10.0f,-10.0f, 20.0f);      
+  // Низ Перед </p>
+<p class=textpreword>    glVertex3f(-10.0f,-10.0f,-20.0f);      
+  // Назад Низ </p>
+<p class=textpreword>    glVertex3f(-10.0f, 10.0f,-20.0f);      
+  // Назад Перед </p>
+<p class=textpreword>    // Правая стена </p>
+<p class=textpreword>    glNormal3f(-1.0f, 
+  0.0f, 0.0f);        // Нормаль 
+  влево</p>
+<p class=textpreword>    glVertex3f( 10.0f, 10.0f,-20.0f);      // Назад Верх 
+  </p>
+<p class=textpreword>    glVertex3f( 10.0f,-10.0f,-20.0f);      
+  // Назад Низ </p>
+<p class=textpreword>    glVertex3f( 10.0f,-10.0f, 20.0f);      
+  // Низ Перед </p>
+<p class=textpreword>    glVertex3f( 10.0f, 10.0f, 20.0f);      
+  // Верх Перед </p>
+<p class=textpreword>  glEnd();              // Конец 
+  рисования</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>И прежде, чем я забыл, вот код функции VMatMult, 
+  которая умножает вектор на матрицу:</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>void VMatMult(GLmatrix16f M, GLvector4f 
+  v)</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  GLfloat res[4];           // Сохранить вычисленный результат</p>
+<p class=textpreword>  res[0]=M[ 0]*v[0]+M[ 4]*v[1]+M[ 8]*v[2]+M[12]*v[3];</p>
+<p class=textpreword>  res[1]=M[ 1]*v[0]+M[ 5]*v[1]+M[ 9]*v[2]+M[13]*v[3];</p>
+<p class=textpreword>  res[2]=M[ 2]*v[0]+M[ 6]*v[1]+M[10]*v[2]+M[14]*v[3];</p>
+<p class=textpreword>  res[3]=M[ 3]*v[0]+M[ 7]*v[1]+M[11]*v[2]+M[15]*v[3];</p>
+<p class=textpreword>  v[0]=res[0];              
+  // Результат сохранен обратно в v[]</p>
+<p class=textpreword>  v[1]=res[1];</p>
+<p class=textpreword>  v[2]=res[2];</p>
+<p class=textpreword>  v[3]=res[3];              // Гомогенные 
+  координаты</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Функция для загрузки объекта очень проста в ней только вызов 
+  readObject, и вычисление связанности и уравнений плоскости для 
+  каждой грани.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>int InitGLObjects()          // Инициализация 
+  объектов</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  if (!readObject(&quot;Data/Object2.txt&quot;, 
+  obj)) // Чтение Object2 в obj</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    return FALSE;            // Если 
+  сбой вернем False</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  setConnectivity(obj);      
+  // Зададим связанность грань к грани</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  for ( int 
+  i=0;i &lt; obj.nFaces;i++)    // Цикл по всем граням</p>
+<p class=textpreword>    calculatePlane(obj, obj.pFaces[i]);// 
+  Уравнение плоскости</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  return TRUE;               // Вернем True</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Наконец, вспомогательная функция KillGLObjects 
+  для уничтожения всех объектов.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>void KillGLObjects()</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  killObject( obj );  </p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Все другие функции не требуют никакого дополнительного объяснения. 
+  Я не опустил стандартный код уроков NeHe, и все определения 
+  переменных и функцию обработки клавиатуры. Комментариев в них достаточно.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Я хотел бы обратить Ваше внимание на некоторое вещи:</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Сфера не отбрасывает тень на стенку. В реальности, сфера должна 
+  также отбрасывать тень.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Если Вы наблюдаете, резкое падение чистоты смены кадров, пробуйте 
+  переключить в полноэкранный режим, или задать вашу цветовую глубину экрана в 
+  32bpp.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Arseny L. пишет: Если Вы имеете проблемы 
+  с видеокартами TNT2 в оконном режиме, проверьте, что ваша цветовая глубина экрана 
+  не задана в 16bit. В 16bit цветном режиме, буфер трафарета эмулируется, что 
+  приводит к вялой производительности. Нет никаких проблем в 32bit режиме (я имею 
+  TNT2 Ultra, и я проверил это).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Я должен признаться, что это былf длинная 
+  задача написать этот урок. Это дает Вам точную оценку той работы, которую выполняет 
+  Джеф! Я надеюсь, что Вам понравился это урок, и Вы благодарите Banu, 
+  который написал первоначальный код! ЕСЛИ  что-нибудь не понятно, то пишите письма 
+  - brettporter@yahoo.com.</p>
+
+<p class="textnoalign" align="right">
+<font color="#0000A0"><a href="mailto:brettporter@yahoo.com"><b> © Banu Cosmin (Choko) &amp; Brett Porter </b></a></b></font>
+</p>  
+
+</div>
+<div id="end">
+
+          <p><a href="http://pmg.org.ru/"
+			onmouseover=" return event_over(this,'Программирование магических игр')  "
+			onmouseout=" return event_out(this) "><font class="link"><b>PMG</b></font></a> 
+            <font class="comment">&nbsp;26 июля 2004&nbsp;(c)&nbsp;</font> 
+        <a href="mailto:anis@pmg.org.ru"
+	onmouseover=" return event_over(this,'Почта переводчику')  " 
+	onmouseout=" return event_out(this) "> <font class="link"><b>Сергей Анисимов</b></font></a> 
+          </p>
+</div>
+</center>
+
+<script language="JavaScript">
+<!--
+form_print();
+//-->
+</script>
+
+</body>
+</html>

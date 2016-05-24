@@ -1,0 +1,1084 @@
+<!doctype html public "-//w3c//dtd html 3.2 final//ru">
+<html>
+
+<head>
+<meta http-equiv="Content-Type"
+content="text/html; charset=windows-1251">
+<meta name="description"
+content="Переводы по OpenGL, трехмерная графика, игры, мультимедия
+Translations Russian OpenGL
+">
+<meta name="keyword"
+content="Программирование,игры,3D,трехмерная графика,OpenGL,NeHe">
+<meta name="keyword"
+content="programming,C,C++,game,graphics">
+<title>Урок 25. Морфинг и загрузка объектов из файла.</title>
+<link rel="stylesheet" href="pmg.css" type="text/css">
+</head>
+
+<body bgcolor="#b2d3e1" link="#800080" vlink="#800080">
+<script src='nehe.js' language="javascript">
+<!--
+//-->
+</script>
+
+<center>
+<div id="top">
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+        <td width="20%" align="center" valign="center">
+        <img src="nehelogo.jpg" align="left" hspace="0" width="125" height="50" alt="NeHe Tutorials">
+        </td>
+        <td width="60%" align="center">
+	<a href="index.html"
+	onmouseover=" return event_over(this,'NeHe Ru.')  "
+        onmouseout=" return event_out(this) ">
+        <font class="linksbig">
+        Народный учебник по OpenGL</font></a><br>
+        </td>
+        <td width="20%" align="center" valign="center">
+        <img src="nehe25.jpg" align="right" hspace="0" width="80" height="60" alt="Урок 25. OpenGL">
+        </td>
+    </tr>
+</table>
+</div>
+
+<div id="head">
+<p class="head1">
+Урок 25. Морфинг и загрузка объектов из файла.</p>
+</div>
+<div id="main" bgcolor="#ADADFF">
+<p class="textnoalign" align="left">
+
+<a href="http://nehe.gamedev.net/data/lessons/lesson.asp?lesson=25" target="_blank"
+onmouseover=" return event_over(this,this)  "
+onmouseout=" return event_out(this) ">
+<font class="link"><b>Morphing & Loading Objects From A File</b></font></a>
+<br>
+</p>
+
+<p class=textword>&nbsp;</p>
+<p class=textword>Добро пожаловать в еще один потрясающий урок! На этот раз мы 
+  сосредоточимся не на графике, а на эффекте, хотя результат все равно будет выглядеть 
+  очень круто. В этом уроке Вы научитесь осуществлять морфинг – плавное &quot;превращение&quot; 
+  одного объекта в другой. Подобный эффект я использую в демонстрации dolphin. 
+  Надо сделать несколько замечаний. Прежде всего, стоит отметить, что каждый объект 
+  должен состоять из одинакового количества точек. Очень редко удается получить 
+  три объекта, содержащих точно одно и тоже количество вершин, но, к счастью, 
+  в этом уроке у нас имеются три объекта с одинаковым количеством точек :). Не 
+  поймите меня неправильно, – Вы можете использовать объекты с разным количеством 
+  вершин, но тогда переход одного объекта в другой не будет выглядеть так четко 
+  и плавно.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Также Вы научитесь считывать объект из файла. Формат файла подобен 
+  формату, используемому в уроке 10, хотя код легко можно изменить для чтения 
+  .ASC файлов или других текстовых файлов. В общем, это 
+  действительно крутой эффект и действительно крутой урок. Итак, 
+  приступим!</p>
+<p class=textword>    </p>
+<p class=textword>Начинаем как обычно. Подключаем заголовочные файлы, в том числе 
+  необходимые для работы с математическими функциями и стандартной библиотекой 
+  ввода/вывода. Заметьте, что мы не подключаем библиотеку GLAUX. В этом уроке мы будем рисовать точки, а не текстуры. 
+  После того, как Вы поймете урок, Вы сможете поиграть с полигонами, линиями и 
+  текстурами!</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>#include &lt;windows.h&gt;       // Заголовочный файл для 
+  Windows</p>
+<p class=textpreword>#include &lt;math.h&gt;          // Заголовочный файл для математической библиотеки</p>
+<p class=textpreword>#include &lt;stdio.h&gt;         // Заголовочный файл для стандартного ввода/вывода</p>
+<p class=textpreword>#include &lt;gl\gl.h&gt;         // Заголовочный файл 
+  для библиотеки OpenGL32</p>
+<p class=textpreword>#include &lt;gl\glu.h&gt;        // Заголовочный файл 
+  для библиотеки GLu32 </p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>HDC       hDC=NULL;        
+  // Контекст устройства</p>
+<p class=textpreword>HGLRC     hRC=NULL;        
+  // Контекст рендеринга</p>
+<p class=textpreword>HWND      hWnd=NULL;       
+  // Дескриптор окна</p>
+<p class=textpreword>HINSTANCE hInstance;       // Экземпляр приложения</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>bool      keys[256];       // Массив 
+  для работы с клавиатурой</p>
+<p class=textpreword>bool      active=TRUE;     
+  // Флаг активности приложения</p>
+<p class=textpreword>bool      fullscreen=TRUE; 
+  // Флаг полноэкранного режима</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>После установки всех стандартных переменных, мы добавим несколько 
+  новых. Переменные xrot, yrot 
+  и zrot будут хранить текущие значения углов вращения экранного 
+  объекта по осям x, y и z. 
+  Переменные xspeed, yspeed и zspeed будут контролировать 
+  скорость вращения объекта по соответствующим осям. Переменные cx, 
+  cy и cz определяют позицию рисования 
+  объекта на экране (cx – слева направо, cy 
+  – снизу вверх и cz – в экран и от него).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Переменную key я включил для того, чтобы 
+  убедиться в том, что пользователь не будет пытаться сделать морфинг первой формы 
+  на  себя. Это было бы красивой бессмысленностью и вызвало бы задержку, за счет 
+  морфинга точек в позицию, в которой они уже находятся.             </p>
+<p class=textword>&nbsp; </p>
+<p class=textword>step – это переменная-счетчик, которая 
+  постепенно увеличивается до значения steps. Если Вы увеличите значение переменной steps, 
+  то морфинг объекта займет больше времени, зато морфинг будет осуществлен более 
+  плавно. Как только переменная step станет равной steps, 
+  мы поймем, что морфинг завершился.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Последняя переменная morph дает знать 
+  нашей программе, нужно ли осуществить морфинг точек или же не трогать их. Если 
+  она установлена в TRUE, то объект находится в процессе 
+  морфинга из одной фигуры в другую.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>Lfloat xrot, yrot, 
+  zrot,       // углы вращения по X, 
+  Y и Z</p>
+<p class=textpreword>       xspeed, yspeed, zspeed, 
+  // скорость вращения по X, Y и Z</p>
+<p class=textpreword>       cx, cy, cz=-15;         
+  // положение на X, Y и Z</p>
+<p class=textpreword>int    key=1;                  // Используется для проверки морфинга</p>
+<p class=textpreword>int    step=0, 
+  steps=200;      // Счетчик шага и максимальное число 
+  шагов</p>
+<p class=textpreword>bool   morph=FALSE;            
+  // По умолчанию morph равен False 
+  (морфинг выключен)</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Здесь мы создаем структуру для хранения вершин. В ней будут 
+  храниться координаты x, y и 
+  z любой точки на экране. Переменные x, 
+  y и z – вещественные, поэтому мы можем позиционировать 
+  точку в любом месте экрана с большой точностью.          </p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>typedef struct                 // Структура 
+  для вершины</p>
+<p class=textpreword>{</p>
+<p class=textpreword>        float x, y, z;         
+  // X, Y и Z координаты</p>
+<p class=textpreword>} VERTEX;                      // Назовем ее 
+  VERTEX</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Итак, у нас есть структура для хранения вершин. Нам известно, 
+  что объект состоит из множества вершин, тогда давайте создадим структуру OBJECT. Первая переменная verts является целым числом, определяющим количество вершин 
+  необходимое для создания объекта. Таким образом, если наш объект состоит из 
+  5 вершин, то verts  будет равно 5. Мы установим значение 
+  позже в коде. Все что Вам нужно знать сейчас – это то, что verts следит за тем, сколько точек будет использовано для создания 
+  объекта.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Переменная points будет указывать на 
+  переменную типа VERTEX(значения x, 
+  y и z). Это даст нам возможность 
+  захватывать значения x, y и z координат любой точки, используя 
+  выражение points[{точка, к которой нужно осуществить 
+  доступ}].{x, y или z}.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Имя этой структуры… Вы угадали… OBJECT! 
+</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>typedef struct         // Структура для объекта</p>
+<p class=textpreword>{</p>
+<p class=textpreword>   int     verts;      // Количество вершин 
+  в объекте</p>
+<p class=textpreword>   VERTEX* points;     // Одна вершина  </p>
+<p class=textpreword>} OBJECT;              // Назовем ее OBJECT</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Теперь, когда мы создали структуру VERTEX 
+  и структуру OBJECT, мы можем определить некоторые объекты.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Переменная maxver будет хранить самое 
+  большое количество вершин, из всех используемых в объектах. Если один объект 
+  содержит всего 5 точек, другой – 20, а последний объект – 15, то значение maxver 
+  будет равно самому большему из них. Таким образом, значение maxver 
+  будет равно 20.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>После того, как мы определили переменную maxver, 
+  мы можем определить объекты. morph1, morph2, morph3, 
+  morph4 и helper – все определены 
+  как переменные типа OBJECT. *sour и *dest – определены как переменные 
+  типа OBJECT* (указатели на объект). Объект состоит из вершин (VERTEX). 
+  Первые четыре переменных morph{номер} будут хранить 
+  объекты, которые мы и будем подвергать морфингу. helper 
+  будет использоваться для отслеживания изменений морфинга объекта. *sour 
+  будет указывать на объект-источник, а *dest будет указывать 
+  на объект, в который мы хотим осуществить морфинг (объект-назначение).</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>int    maxver;                      
+  // Хранит максимум числа вершин объектов</p>
+<p class=textpreword>OBJECT morph1,morph2,morph3,morph4, 
+  // Наши объекты для морфинга (morph1, 2, 3 и 4)</p>
+<p class=textpreword>       helper,*sour,*dest;          
+  // Вспомогательный объект, Источник и Назначение</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Так же, как всегда, объявляем WndProc().</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>LRESULTCALLBACK WndProc(HWND, UINT, WPARAM, 
+  LPARAM);  // Объявление WndProc</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>В коде ниже происходит выделение памяти для каждого объекта, 
+  основанное на числе вершин которое мы передаем параметром n. 
+  *k указывает на объект, для которого мы хотим выделить 
+  память.    </p>
+<p class=textword>&nbsp; </p>
+<p class=textword>В строке кода расположенной между скобками выделяется память 
+  для переменной points объекта k. 
+  Размер выделенной памяти будет равен размеру структуры VERTEX 
+  (3 переменных типа float) умноженному на количество вершин (n). 
+  Так, если бы было 10 вершин (n=10), то мы выделили бы 
+  место для 30 вещественных значений (3 переменных типа float * 10 вершин).            </p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>void objallocate(OBJECT *k, int 
+  n) // Выделение памяти для каждого объекта</p>
+<p class=textpreword>{                                  // И определение точек</p>
+<p class=textpreword>     k-&gt;points=(VERTEX*)malloc(sizeof(VERTEX)*n); 
+  // points = размер(VERTEX)* число вершин</p>
+<p class=textpreword>}                                  // (3 точки для каждой 
+  вершины)</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Следующий код удаляет объект и освобождает память, используемую 
+  объектом. Объект задается параметром k. Функция free() 
+  говорит нашей программе освободить память, занимаемую вершинами, которые были 
+  использованы для создания нашего объекта (k).  </p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>void objfree(OBJECT *k)                   // Удаление 
+  объекта (Освобождение памяти)</p>
+<p class=textpreword>{</p>
+<p class=textpreword>     free(k-&gt;points);                     
+  // Освобождаем память, занимаемую points</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Код ниже считывает строку из текстового файла. Указатель на 
+  нашу файловую структуру задается параметром *f. Считанная 
+  строка будет помещена в переменную string.</p>
+<p class=textword> </p>
+<p class=textword>Начинаем с создания do-while  
+  цикла. Функция fgets()  прочитает 255 символов из нашего 
+  файла f и сохранит их в переменной *string. Если считанная строка пуста (перевод строки \n), 
+  то цикл будет продолжать искать строку с текстом. Оператор while() 
+  проверяет наличие пустых строк, и, в случае успеха, начинает цикл заново.          
+</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>После того, как строка будет прочитана, функция возвратит управление.  
+</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>void readstr(FILE *f, char *string)  // Считывает строку 
+  из файла (f)</p>
+<p class=textpreword>{</p>
+<p class=textpreword>     do                              // Повторять</p>
+<p class=textpreword>     {</p>
+<p class=textpreword>          fgets(string, 255, f);     
+  // Считывание 255 символов из файла f в переменную string 
+</p>
+<p class=textpreword>     } while ((string[0] == '/') || (string[0] 
+  == '\n')); // Пока строка пуста</p>
+<p class=textpreword>     return;                         // Возврат</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Здесь мы загружаем объект из файла. *name 
+  указывает на имя файла. *k указывает на объект, в который мы хотим загрузить данные.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Мы начинаем с переменной целого типа ver. 
+  В ver будет храниться количество вершин, используемое 
+  для построения объекта.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>В переменных rx, ry 
+  и rz будут храниться значения x, y и z каждой 
+  вершины.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Переменная filein является указателем 
+  на нашу файловую структуру, массив oneline[] будет использоваться 
+  для хранения 255 текстовых символов.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Мы открываем файл на чтение как текстовый (значение символа 
+  CTRL-Z означает конец строки). Затем 
+  мы считываем строку, используя readstr(filein, oneline). Строка текста будет 
+  сохранена в массиве oneline.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>После того, как строка считана, мы сканируем ее (oneline) пока не найдем фразу &quot;Vertices: 
+  {какое-то число}{\n}&quot;. Если фраза найдена, то число 
+  сохраняется в переменной ver. Это число является количеством 
+  вершин, используемых для построения объекта. Если Вы посмотрите в текстовые 
+  файлы описания объектов, то Вы увидите, что первой строкой является: Vertices: {какое-то число}.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Теперь, когда нам известно количество используемых вершин, мы 
+  сохраняем его в переменных verts объектов. Объекты могут 
+  иметь различное количество вершин, поэтому их значения verts могут отличаться.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Последнее, что мы делаем в этой секции кода – это выделение 
+  памяти для объекта. Это делается вызовом objallocate({имя 
+  объекта}, {количество вершин}).</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>void objload(char *name, OBJECT *k)  // Загружает объект 
+  из файла (name)</p>
+<p class=textpreword>{</p>
+<p class=textpreword>     int       ver;                  // Будет 
+  хранить количество вершин</p>
+<p class=textpreword>     float    rx, ry, 
+  rz;            // Будут хранить x, y 
+  и z координаты вершины</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>     FILE  *filein;                  // Файл 
+  для работы</p>
+<p class=textpreword>     char    oneline[255];           // Хранит 
+  одну строку текста (до 255 символов)</p>
+<p class=textpreword>     </p>
+<p class=textpreword>     filein = fopen(name, 
+  &quot;rt&quot;);     // Открываем файл на чтение (CTRL-Z означает конец файла)</p>
+<p class=textpreword>     </p>
+<p class=textpreword>     readstr(filein, oneline);       
+  // Считываем одну строку текста из файла</p>
+<p class=textpreword>                                     // Сканируем текст на 
+  &quot;Vertices: &quot;.</p>
+<p class=textpreword>                                     // Число вершин сохраняем 
+  в ver</p>
+<p class=textpreword>     sscanf(oneline, &quot;Vertices: %d\n&quot;, &amp;ver);</p>
+<p class=textpreword>     k-&gt;verts=ver;                   
+  // Устанавливаем переменные verts объектов</p>
+<p class=textpreword>                                     // равными значению 
+  ver</p>
+<p class=textpreword>     objallocate(k, ver); 
+             // Выделяем память для хранения объектов</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Мы знаем, из скольких вершин состоит объект. Память выделена. 
+  Все, что нам осталось сделать – это считать вершины. Мы создаем цикл по всем 
+  вершинам, используя переменную i.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Далее, мы считываем строку текста. Это будет первая строка корректного 
+  текста, следующая за строкой &quot;Vertices: {какое-то 
+  число}&quot;. В конечном итоге мы считываем строку с вещественными значениями 
+  координат x, y и z.      
+</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Строка анализируется функцией sscanf() 
+  и три вещественных значения извлекаются и сохраняются в переменных rx, 
+  ry и rz.      </p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>for (int i=0; i&lt;ver; i++)        // Цикл по всем вершинам</p>
+<p class=textpreword>{</p>
+<p class=textpreword>     readstr(filein, oneline);   
+  // Считывание следующей строки</p>
+<p class=textpreword>                                 // Поиск 3 вещественных 
+  чисел и сохранение их в rx, ry и rz</p>
+<p class=textpreword>     sscanf(oneline, &quot;%f 
+  %f %f&quot;, &amp;rx, 
+  &amp;ry, &amp;rz);</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Следующие три строки кода сложно объяснить, если Вы не понимаете 
+  что такое структуры, и т.п., но я попытаюсь :)</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Строку k-&gt;points[i].x=rx 
+  можно разобрать следующим образом:  </p>
+<p class=textword>&nbsp; </p>
+<p class=textword>rx – это значение координаты x 
+  одной из вершин.</p>
+<p class=textword>points[i].x – это координата x 
+  вершины points[i].  </p>
+<p class=textword>Если i = 0, то мы устанавливаем значение 
+  координаты x вершины 1, если i 
+  = 1, то мы устанавливаем значение координаты x вершины 
+  2, и т. д.    </p>
+<p class=textword>points[i] является частью нашего объекта (представленного как k).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Таким образом, если i = 0, то мы говорим: 
+  координата x вершины 1 (points[0].x) 
+  нашего объекта (k) равняется значению координаты x, считанному нами из файла (rx).  </p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Оставшиеся две строки устанавливают значения координат y и z каждой вершины нашего объекта. 
+</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Цикл проходит по всем вершинам. Во избежание ошибки, в случае 
+  если вершин будет не достаточно, убедитесь в том, что текст в начале файла “Vertices: {какое-то число}” соответствует действительному числу 
+  вершин в файле. То есть, если верхняя строка файла говорит “Vertices: 
+  10”, то за ней должно следовать описание 10 вершин (значения x, 
+  y и z).         </p>
+<p class=textword>&nbsp; </p>
+<p class=textword>После считывания всех вершин, мы закрываем файл и проверяем 
+  больше ли переменная ver, чем переменная maxver. 
+  Если ver больше maxver, то мы делаем maxver равной ver. Таким образом, если мы считали первый объект, состоящий 
+  из 20 вершин, то maxver станет равной 20. Далее, если 
+  мы считали следующий объект, состоящий из 40 вершин, то maxver 
+  станет равной 40. Таким образом, мы узнаем, сколько вершин содержит наш самый 
+  большой объект.      </p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>          k-&gt;points[i].x 
+  = rx;   // Устанавливаем значение points.x 
+  объекта (k) равным rx</p>
+<p class=textpreword>          k-&gt;points[i].y 
+  = ry;   // Устанавливаем значение points.y 
+  объекта (k) равным ry</p>
+<p class=textpreword>          k-&gt;points[i].z = rz;   
+  // Устанавливаем значение points.z объекта (k) равным rz</p>
+<p class=textpreword>     }</p>
+<p class=textpreword>     fclose(filein);             // Закрываем 
+  файл</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>     if(ver &gt; maxver) 
+  maxver=ver;// Если ver 
+  больше чем maxver, устанавливаем maxver 
+  равным ver</p>
+<p class=textpreword>}                                // Следим за максимальным 
+  числом используемых вершин</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Следующий кусок кода может показаться немного пугающим… это 
+  не так :).  Я объясню его настолько подробно, что Вы будете смеяться, когда 
+  в следующий раз посмотрите на это.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Код ниже всего лишь вычисляет новую позицию для каждой точки, 
+  когда включен морфинг. Номер вычисляемой вершины храниться в i. 
+  Возвращаемый результат вычислений будет иметь тип VERTEX.       
+</p>
+<p class=textword> </p>
+<p class=textword>Мы создаем переменную <b>a</b> типа 
+  <b>VERTEX</b>, что позволяет нам работать с <b>a</b> 
+  как с совокупностью значений <b>x</b>, <b>y</b> 
+  и <b>z</b>.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Давайте посмотрим на первую строку. Значению x вершины a присваивается разность значений 
+  x вершин sour-&gt;points[i].x 
+  объекта-ИСТОЧНИКА и dest-&gt;points[i].x объекта-НАЗНАЧЕНИЯ, деленная на 
+  steps.   </p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Давайте для примера возьмем какие-нибудь числа. Пусть значение 
+  x нашего объекта-источника равняется 20, а значение 
+  x объекта-назначения равняется 40. Мы знаем, что steps равно 200! Тогда a.x=(40-20)/200=(20)/200=0.1  </p>
+<p class=textword> </p>
+<p class=textword>Это значит, что для перемещения из точки 40 в точку 20 за 200 
+  шагов, мы должны перемещаться на 0.1 единиц за один раз. Для доказательства 
+  этого умножьте 0.1 на 200, и Вы получите 20. 40-20=20 :) </p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>То же самое мы делаем для вычисления количества единиц, на которые 
+  нужно перемещаться  по осям y и z, для каждой точки. Если Вы увеличите 
+  значение steps, то превращение будет выглядеть более 
+  красиво (плавно), но морфинг из одной позиции в другую займет больше времени.    
+</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>VERTEX calculate(int i)    // Вычисление перемещения точек в процессе морфинга </p>
+<p class=textpreword>{</p>
+<p class=textpreword>     VERTEX a;             // Временная вершина a</p>
+<p class=textpreword>                           // a.x равно x Источника - x 
+  Назначения делить на Steps</p>
+<p class=textpreword>     a.x=(sour-&gt;points[i].x-dest-&gt;points[i].x)/steps;</p>
+<p class=textpreword>                           // a.y равно y Источника - y 
+  Назначения делить на Steps</p>
+<p class=textpreword>     a.y=(sour-&gt;points[i].y-dest-&gt;points[i].y)/steps;</p>
+<p class=textpreword>                           // a.z равно z Источника - z 
+  Назначения делить на Steps</p>
+<p class=textpreword>     a.z=(sour-&gt;points[i].z-dest-&gt;points[i].z)/steps;</p>
+<p class=textpreword>     return a;             // Возвращаем результат</p>
+<p class=textpreword>}                          // Возвращаем вычисленные точки</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Код функции ReSizeGLScene() не изменился, 
+  поэтому мы пропускаем его.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>GLvoid ReSizeGLScene(GLsizei width, GLsizei height) // Изменение размеров и инициализация GL 
+  окна</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>В коде ниже мы устанавливаем смешивание для эффекта прозрачности. 
+  Это позволит нам создать красиво смотрящиеся следы от перемещающихся точек.   
+</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>int InitGL(GLvoid)                         // Здесь задаются все установки 
+  для OpenGL</p>
+<p class=textpreword>{</p>
+<p class=textpreword>     glBlendFunc(GL_SRC_ALPHA, 
+  GL_ONE);    // Устанавливаем 
+  функцию смешивания</p>
+<p class=textpreword>     glClearColor(0.0f, 0.0f, 0.0f, 
+  0.0f); // Очищаем фон в черный цвет</p>
+<p class=textpreword>     glClearDepth(1.0);                    // Очищаем буфер глубины</p>
+<p class=textpreword>     glDepthFunc(GL_LESS);                 
+  // Устанавливаем тип теста глубины</p>
+<p class=textpreword>     glEnable(GL_DEPTH_TEST);              
+  // Разрешаем тест глубины</p>
+<p class=textpreword>     glShadeModel(GL_SMOOTH);              // Разрешаем 
+  плавное цветовое сглаживание</p>
+<p class=textpreword>     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST); 
+  // Улучшенные вычисления перспективы</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Для начала мы устанавливаем переменную maxver 
+  в 0. Мы не считывали объекты, поэтому нам неизвестно какое будет максимальное 
+  количество вершин.      </p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Затем мы загружаем три объекта. Первый объект – сфера. Данные 
+  для сферы находятся в файле sphere.txt. Данные будут загружены в объект, который называется morph1. 
+  Также мы загружаем тор и трубку в объекты morph2 и morph3.  
+</p>
+<p class=textword> </p>
+<p class=textpreword>     maxver=0;                            // Устанавливаем максимум 
+  вершин в 0 по умолчанию</p>
+<p class=textpreword>     objload(&quot;data/sphere.txt&quot;, 
+  &amp;morph1); // Загружаем первый объект в morph1 из файла sphere.txt</p>
+<p class=textpreword>     objload(&quot;data/torus.txt&quot;, 
+  &amp;morph2);  // Загружаем второй объект в morph2 из файла torus.txt</p>
+<p class=textpreword>     objload(&quot;data/tube.txt&quot;, 
+  &amp;morph3);   // Загружаем третий объект в morph3 из файла tube.txt</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Четвертый объект не считывается из файла. Это множество точек, 
+  произвольно разбросанных по экрану. Поскольку данные не считываются из файла, 
+  постольку мы должны вручную выделить память, используя вызов objallocate(&amp;morph4, 486). Цифра 486 означает то, что мы хотим выделить достаточное 
+  количество памяти для хранения 486 вершин (то же количество вершин, из которого 
+  состоят остальные три объекта).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>После выделения памяти мы создаем цикл, который назначает случайные 
+  значения x, y и z каждой вершине. Случайное значение 
+  является вещественным числом из интервала от -7 до 7. (14000/1000=14... минус 
+  7 даст нам максимальное значение +7... если случайным числом будет 0, то мы 
+  получим минимум 0-7 или -7).</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>objallocate(&amp;morph4, 486);     // Резервируем память для 486 вершин четвертого 
+  объекта (morph4)</p>
+<p class=textpreword>for(int i=0; i&lt;486; i++)       
+  // Цикл по всем 486 вершинам</p>
+<p class=textpreword>{</p>
+<p class=textpreword>     // Точка x объекта morph4 принимает случайное 
+  значение от -7 до 7</p>
+<p class=textpreword>     morph4.points[i].x=((float)(rand()%14000)/1000)-7;</p>
+<p class=textpreword>     // Точка y объекта morph4 принимает случайное 
+  значение от -7 до 7</p>
+<p class=textpreword>     morph4.points[i].y=((float)(rand()%14000)/1000)-7;</p>
+<p class=textpreword>     // Точка z объекта morph4 принимает случайное 
+  значение от -7 до 7</p>
+<p class=textpreword>     morph4.points[i].z=((float)(rand()%14000)/1000)-7;</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Затем мы загружаем sphere.txt 
+  во вспомогательный объект helper. Мы никогда не будем 
+  модифицировать объектные данные в morph{1/2/3/4} непосредственно. 
+  Мы будем модифицировать данные, хранящиеся в helper, 
+  для превращения его в одну из 4 фигур. Мы начинаем с отображения morph1 
+  (сфера), поэтому во вспомогательный объект helper мы 
+  также поместили сферу.   </p>
+<p class=textword>&nbsp; </p>
+<p class=textword>После того, как все объекты загружены, мы устанавливаем объекты 
+  источник и назначение (sour и dest) 
+  равными объекту morph1, который является сферой. Таким 
+  образом, все будет начинаться со сферы.   </p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>     // Загружаем sphere.txt в helper 
+  (используется как отправная точка)</p>
+<p class=textpreword>     objload(&quot;data/sphere.txt&quot;,&amp;helper);</p>
+<p class=textpreword>     sour=dest=&amp;morph1;  
+  // Источник и Направление приравниваются к первому объекту (morph1)</p>
+<p class=textpreword>     </p>
+<p class=textpreword>     return TRUE;        // Инициализация прошла успешно</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>А теперь позабавимся! Фактический код рисования :)</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Начинаем как обычно. Очищаем экран и буфер глубины, сбрасываем 
+  матрицу просмотра модели. Затем мы позиционируем объект на экране, используя 
+  значения, хранящиеся в переменных cx, cy 
+  и cz.</p>
+<p class=textword> </p>
+<p class=textword>Осуществляем вращение, используя переменные xrot, 
+  yrot и zrot.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Углы вращения увеличиваются за счет xpseed, 
+  yspeed и zspeed.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Наконец, создаем три временные переменные tx, 
+  ty и tz вместе с новой вершиной 
+  q.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>void DrawGLScene(GLvoid)          // Здесь происходит все рисование</p>
+<p class=textpreword>{</p>
+<p class=textpreword>     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Очищаем экран и буфер глубины</p>
+<p class=textpreword>     glLoadIdentity();            // Сбрасываем просмотр</p>
+<p class=textpreword>     glTranslatef(cx, cy, cz);    
+  // Сдвигаем текущую позицию рисования</p>
+<p class=textpreword>     glRotatef(xrot, 1, 0, 0);    // Вращаем 
+  по оси X на xrot</p>
+<p class=textpreword>     glRotatef(yrot, 0, 1, 0);    // Вращаем 
+  по оси Y на yrot</p>
+<p class=textpreword>     glRotatef(zrot, 0, 0, 1);    // Вращаем 
+  по оси Z на zrot</p>
+<p class=textpreword>     </p>
+<p class=textpreword>     // Увеличиваем xrot, yrot 
+  и zrot на xspeed, yspeed 
+  и zspeed</p>
+<p class=textpreword>     xrot+=xspeed; yrot+=yspeed; zrot+=zspeed;</p>
+<p class=textpreword>     </p>
+<p class=textpreword>     GLfloat tx, ty, tz;          
+  // Временные переменные X, Y и Z</p>
+<p class=textpreword>     VERTEX q;                    // Хранит вычисленные значения для одной 
+  вершины</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Здесь мы рисуем точки и, если морфинг включен, производим наши 
+  вычисления. Команда glBegin(GL_POINTS) говорит OpenGL, 
+  что каждая вершина, которую мы определили, будет нарисована на экране как точка. 
+</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Мы создаем цикл для прохода по всем вершинам. Вы можете использовать 
+  переменную maxver, но, поскольку все объекты состоят 
+  из одинакового количества вершин, мы будем использовать morph1.verts.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>В цикле мы проверяем, равняется ли значение morph 
+  TRUE. Если да, то мы вычисляем перемещение для текущей точки 
+  (i). Результат будет помещен в q.x, 
+  q.y и q.z. 
+  Если нет, то q.x, q.y и q.z будут сброшены в 0 (предотвращение перемещения).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Точки объекта helper перемещаются на 
+  основе результатов, полученных из calculate(i) 
+  (вспомните, как выше мы вычислили, что точка должна перемещаться по 0.1 единиц, 
+  для того, чтобы переместиться из 40 в 20 за 200 шагов).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Мы корректируем значения каждой точки по осям x, y и z, вычитая 
+  количество единиц перемещения из объекта helper.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Новая точка объекта helper сохраняется 
+  в tx, ty и tz (t{x/y/z}=helper.points[i].{x/y/z}).</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>     glBegin(GL_POINTS);  
+  // Начало рисования точек</p>
+<p class=textpreword>          // Цикл по всем вершинам объекта morph1 
+  (все объекты состоят из</p>
+<p class=textpreword>          for(int i=0; i&lt;morph1.verts; 
+  i++)</p>
+<p class=textpreword>          {    // одинакового количества вершин, также можно 
+  использовать maxver)</p>
+<p class=textpreword>               // Если morph равно 
+  True, вычисляем перемещение, иначе перемещение = 0</p>
+<p class=textpreword>               if(morph) q=calculate(i); else q.x=q.y=q.z=0; </p>
+<p class=textpreword>               // Вычитание q.x единиц из helper.points[i].x 
+  (перемещение по оси X)</p>
+<p class=textpreword>               helper.points[i].x-=q.x;</p>
+<p class=textpreword>               // Вычитание q.y единиц из helper.points[i].y 
+  (перемещение по оси Y)</p>
+<p class=textpreword>               helper.points[i].y-=q.y;</p>
+<p class=textpreword>               // Вычитание q.z единиц из helper.points[i].z 
+  (перемещение по оси Z)</p>
+<p class=textpreword>               helper.points[i].z-=q.z;</p>
+<p class=textpreword>               // Делаем временную переменную X 
+  равной вспомогательной X</p>
+<p class=textpreword>               tx=helper.points[i].x;</p>
+<p class=textpreword>               // Делаем временную переменную Y 
+  равной вспомогательной Y</p>
+<p class=textpreword>               ty=helper.points[i].y;</p>
+<p class=textpreword>               // Делаем временную переменную Z 
+  равной вспомогательной Z</p>
+<p class=textpreword>               tz=helper.points[i].z;</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Теперь, когда вычислена новая позиция, пришло время нарисовать 
+  наши точки. Устанавливаем ярко-голубой цвет и рисуем первую точку с помощью 
+  glVertex3f(tx, ty, tz). 
+  Эта команда нарисует точку на новой вычисленной позиции.</p>
+<p class=textword> </p>
+<p class=textword>Затем мы делаем цвет более темным и перемещаемся на 2 единицы 
+  в вычисленном направлении, вместо одной. Это перемещает точку на новую вычисленную 
+  позицию, а затем перемещает ее опять в том же направлении. Таким образом, если 
+  она путешествовала влево на 0.1 единиц, то следующая точка окажется на 0.2 единиц. 
+  После вычисления 2 позиций вперед, мы рисуем вторую точку. </p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Наконец, мы устанавливаем темно-синий цвет и вычисляем будущее 
+  перемещение. На этот раз, используя наш пример, мы переместимся на 0.4 единиц 
+  влево вместо 0.1 или 0.2. Конечным результатом является небольшой хвост, движущийся 
+  за перемещающимися точками. С включенным смешиванием это дает очень крутой эффект!</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>glEnd() говорит OpenGL 
+  о том, что мы закончили рисовать точки. </p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>               glColor3f(0, 1, 1);                // 
+  Установить цвет в ярко голубой</p>
+<p class=textpreword>               glVertex3f(tx, 
+  ty, tz);            // Нарисовать точку</p>
+<p class=textpreword>               glColor3f(0, 0.5f, 
+  1);             // Темный цвет</p>
+<p class=textpreword>               tx-=2*q.x; ty-=2*q.y; ty-=2*q.y;   // Вычислить на две позиции вперед</p>
+<p class=textpreword>               glVertex3f(tx, 
+  ty, tz);            // Нарисовать вторую точку</p>
+<p class=textpreword>               glColor3f(0, 0, 1);                // 
+  Очень темный цвет</p>
+<p class=textpreword>               tx-=2*q.x; ty-=2*q.y; ty-=2*q.y;   // Вычислить еще на две позиции вперед</p>
+<p class=textpreword>               glVertex3f(tx, 
+  ty, tz);            // Нарисовать третью точку</p>
+<p class=textpreword>          }                              // Это создает призрачный 
+  хвост, когда точки двигаются</p>
+<p class=textpreword>glEnd();                                          
+  // Закончим рисовать точки</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Напоследок, мы проверяем, равняется ли morph 
+  значению TRUE и меньше ли step 
+  значения переменной steps (200). Если step меньше 200, то мы увеличиваем step 
+  на 1. </p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Если morph равно FALSE 
+  или step больше или равно steps (200), то morph устанавливается в FALSE, объект sour (источник) устанавливается равным объекту dest 
+  (назначение), и step сбрасывается в 0. Это говорит программе 
+  о том, что, либо морфинг не происходит, либо он уже завершился.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>     // Если делаем морфинг и не прошли все 200 шагов, то 
+  увеличим счетчик</p>
+<p class=textpreword>     // Иначе сделаем морфинг ложью, присвоим источник назначению 
+  и счетчик обратно в ноль</p>
+<p class=textpreword>     if(morph &amp;&amp; step&lt;=steps) step++; else { morph=FALSE; sour=dest; 
+  step=0; }</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Код функции KillGLWindow() не сильно 
+  изменился. Единственное существенное отличие заключается в том, что мы освобождаем 
+  все объекты из памяти, перед тем как убить окно. Это предотвращает утечку памяти, 
+  да и просто является хорошим стилем программирования ;)</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>Lvoid KillGLWindow(GLvoid) // Правильное завершение работы окна</p>
+<p class=textpreword>{</p>
+<p class=textpreword>     objfree(&amp;morph1);     // Освободим память </p>
+<p class=textpreword>     objfree(&amp;morph2);</p>
+<p class=textpreword>     objfree(&amp;morph3);</p>
+<p class=textpreword>     objfree(&amp;morph4);</p>
+<p class=textpreword>     objfree(&amp;helper); </p>
+<p class=textpreword>     if (fullscreen)       // Полноэкранный 
+  режим?</p>
+<p class=textpreword>     {</p>
+<p class=textpreword>          ChangeDisplaySettings(NULL, 0);  // Перейти обратно в режим рабочего стола</p>
+<p class=textpreword>          ShowCursor(TRUE);                
+  // Показать указатель мыши</p>
+<p class=textpreword>     }</p>
+<p class=textpreword>     if (hRC)                              
+  // Есть контекст визуализации?</p>
+<p class=textpreword>     {</p>
+<p class=textpreword>          if (!wglMakeCurrent(NULL, 
+  NULL)) // Можем освободим контексты DC 
+  и RC?</p>
+<p class=textpreword>          {</p>
+<p class=textpreword>               MessageBox(NULL, &quot;Release 
+  Of DC And RC Failed.&quot;, &quot;SHUTDOWN ERROR&quot;, MB_OK |                  
+</p>
+<p class=textpreword>                                     MB_ICONINFORMATION);</p>
+<p class=textpreword>          }</p>
+<p class=textpreword>          if (!wglDeleteContext(hRC))</p>
+<p class=textpreword>          {</p>
+<p class=textpreword>               MessageBox(NULL, &quot;Release 
+  Rendering Context Failed.&quot;, &quot;SHUTDOWN ERROR&quot;, MB_OK |             
+</p>
+<p class=textpreword>                                     MB_ICONINFORMATION);</p>
+<p class=textpreword>          }</p>
+<p class=textpreword>          hRC=NULL;                        // 
+  Установить RC в NULL</p>
+<p class=textpreword>     }</p>
+<p class=textpreword>     if (hDC &amp;&amp; !ReleaseDC(hWnd, hDC))</p>
+<p class=textpreword>     {</p>
+<p class=textpreword>          MessageBox(NULL, &quot;Release Device 
+  Context Failed.&quot;, &quot;SHUTDOWN ERROR&quot;, MB_OK | </p>
+<p class=textpreword>                                MB_ICONINFORMATION);</p>
+<p class=textpreword>          hDC=NULL;</p>
+<p class=textpreword>     }</p>
+<p class=textpreword>     if (hWnd &amp;&amp; !DestroyWindow(hWnd))     
+  // Можем удалить окно?</p>
+<p class=textpreword>     {</p>
+<p class=textpreword>          MessageBox(NULL, &quot;Could Not Release 
+  hWnd.&quot;, &quot;SHUTDOWN ERROR&quot;, MB_OK | </p>
+<p class=textpreword>                                MB_ICONINFORMATION);</p>
+<p class=textpreword>          hWnd=NULL;                       // 
+  Установить hWnd в NULL</p>
+<p class=textpreword>     }</p>
+<p class=textpreword>     if (!UnregisterClass(&quot;OpenGL&quot;, 
+  hInstance))</p>
+<p class=textpreword>     {</p>
+<p class=textpreword>          MessageBox(NULL, &quot;Could Not Unregister 
+  Class.&quot;, &quot;SHUTDOWN ERROR&quot;, MB_OK |                  </p>
+<p class=textpreword>                                MB_ICONINFORMATION);</p>
+<p class=textpreword>          hInstance=NULL;</p>
+<p class=textpreword>     }</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Код функций CreateGLWindow() and WndProc() не изменился. 
+  Пропустим его.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>BOOL CreateGLWindow()                      // Создает 
+  GL окно </p>
+<p class=textpreword>LRESULT CALLBACK WndProc()                 // Дескриптор 
+  этого окна</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Некоторые изменения произошли в функции WinMain(). 
+  Во-первых, изменилась надпись в заголовке окна. </p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>int WINAPI WinMain( HINSTANCE  hInstance,     // Экземпляр</p>
+<p class=textpreword>                    HINSTANCE  hPrevInstance, 
+  // Предыдущий экземпляр</p>
+<p class=textpreword>                    LPSTR      lpCmdLine,     
+  // Параметры командной строки</p>
+<p class=textpreword>                    int        nCmdShow)      
+  // Состояние отображения окна</p>
+<p class=textpreword>{</p>
+<p class=textpreword>     MSG   msg;                               
+  // Структура сообщений Windows</p>
+<p class=textpreword>     BOOL done=FALSE;                         
+  // Переменная для выхода из цикла</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>     // Спросить пользователя какой он предпочитает режим</p>
+<p class=textpreword>     if (MessageBox(NULL,&quot;Would You Like To Run In Fullscreen 
+  Mode?&quot;, &quot;Start   </p>
+<p class=textpreword>     FullScreen?&quot;,MB_YESNO|MB_ICONQUESTION)==IDNO)</p>
+<p class=textpreword>     {</p>
+<p class=textpreword>          fullscreen=FALSE;                   
+  // Оконный режим</p>
+<p class=textpreword>     }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>     // Create Our OpenGL Window</p>
+<p class=textpreword>     if (!CreateGLWindow(</p>
+<p class=textpreword>          &quot;Piotr Cieslak &amp; NeHe's Morphing 
+  Points tutorial&quot;,640,480,16,fullscreen))</p>
+<p class=textpreword>     {</p>
+<p class=textpreword>          return 0;                           // Выходим если окно не 
+  было создано</p>
+<p class=textpreword>     }</p>
+<p class=textpreword>     while(!done)                             // 
+  Цикл, который продолжается пока done=FALSE</p>
+<p class=textpreword>     {</p>
+<p class=textpreword>          if (PeekMessage(&amp;msg,NULL,0,0,PM_REMOVE)) // Есть ожидаемое сообщение?</p>
+<p class=textpreword>          {</p>
+<p class=textpreword>               if (msg.message==WM_QUIT)      // Мы получили сообщение о выходе?</p>
+<p class=textpreword>               {</p>
+<p class=textpreword>                    done=TRUE;                
+  // Если так done=TRUE</p>
+<p class=textpreword>               }</p>
+<p class=textpreword>               else                           // Если нет, продолжаем работать 
+  с сообщениями окна</p>
+<p class=textpreword>               {</p>
+<p class=textpreword>                    TranslateMessage(&amp;msg);   // Переводим сообщение</p>
+<p class=textpreword>                    DispatchMessage(&amp;msg);    // Отсылаем сообщение</p>
+<p class=textpreword>               }</p>
+<p class=textpreword>          }</p>
+<p class=textpreword>          else                                // Если сообщений нет</p>
+<p class=textpreword>          {</p>
+<p class=textpreword>              // Рисуем сцену. 
+  Ожидаем нажатия кнопки ESC</p>
+<p class=textpreword>              // Активно?  Было получено сообщение 
+  о выходе?</p>
+<p class=textpreword>               if (active &amp;&amp; keys[VK_ESCAPE])</p>
+<p class=textpreword>               {</p>
+<p class=textpreword>                    done=TRUE;                
+  // ESC просигналил 
+  &quot;выход&quot;</p>
+<p class=textpreword>               }</p>
+<p class=textpreword>               else                           // Не время выходить, обновляем 
+  экран</p>
+<p class=textpreword>               {</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>                    // Нарисовать сцену (Не рисовать, когда 
+  неактивно 1% использования CPU)</p>
+<p class=textpreword>                    DrawGLScene();</p>
+<p class=textpreword>                    SwapBuffers(hDC);         // Переключаем буферы (Двойная буферизация)</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Код ниже отслеживает нажатия клавиш. Оставшийся код довольно 
+  легок для понимания. Если нажата клавиша Page 
+  Up, то мы увеличиваем значение zspeed. 
+  Это приводит к тому, что объект начинает вращаться быстрее по оси Z 
+  в положительном направлении.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Если нажата клавиша Page 
+  Down, то мы уменьшаем значение zspeed. 
+  Это приводит к повышению скорости вращения объекта по оси Z 
+  в отрицательном направлении.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Если нажата клавиша Стрелка Вниз, то мы увеличиваем значение 
+  xspeed. Это приводит к повышению скорости вращения объекта по 
+  оси X в положительном направлении.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Если нажата клавиша Стрелка Вверх, то мы уменьшаем значение 
+  xspeed. Это приводит к повышению скорости вращения объекта по 
+  оси X в отрицательном направлении.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Если нажата клавиша Стрелка Вправо, то мы увеличиваем значение 
+  yspeed. Это приводит к повышению скорости вращения объекта 
+  по оси Y в положительном направлении.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Если нажата клавиша Стрелка Влево, то мы уменьшаем значение 
+  yspeed. Это приводит к повышению скорости вращения объекта по 
+  оси Y в отрицательном направлении.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>       if (keys[VK_PRIOR]) // Page Up нажата?</p>
+<p class=textpreword>       zspeed+=0.01f;      
+  // Увеличиваем zspeed</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>       if (keys[VK_NEXT])  // Page Down нажата?</p>
+<p class=textpreword>       zspeed-=0.01f;      // Уменьшаем 
+  zspeed</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>       if (keys[VK_DOWN])  // Стрелка Вниз нажата?</p>
+<p class=textpreword>       xspeed+=0.01f;      // Увеличиваем xspeed</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>       if (keys[VK_UP])    
+  // Стрелка Вверх нажата?</p>
+<p class=textpreword>       xspeed-=0.01f;      // Уменьшаем xspeed</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>       if (keys[VK_RIGHT]) 
+  // Стрелка Вправо нажата?</p>
+<p class=textpreword>       yspeed+=0.01f ;     // Увеличиваем yspeed</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>       if (keys[VK_LEFT])  
+  // Стрелка Влево нажата?</p>
+<p class=textpreword>       yspeed-=0.01f;      // Уменьшаем yspeed</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Следующие клавиши физически перемещают объект. 'Q' перемещает его внутрь экрана, 'Z' 
+  перемещает его к зрителю, 'W' перемещает объект вверх, 
+  'S' перемещает объект вниз, 'D' 
+  перемещает его вправо, и, наконец, 'A' перемещает его 
+  влево.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>       if (keys['Q'])      
+  // Клавиша Q нажата и удерживается?</p>
+<p class=textpreword>       cz-=0.01f;          // Перемещение объекта 
+  прочь от зрителя</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>       if (keys['Z'])      
+  // Клавиша Z нажата и удерживается?</p>
+<p class=textpreword>       cz+=0.01f;          // Перемещение объекта 
+  к зрителю</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>       if (keys['W'])      
+  // Клавиша W нажата и удерживается?</p>
+<p class=textpreword>       cy+=0.01f;          // Перемещение объекта 
+  вверх</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>       if (keys['S'])      
+  // Клавиша S нажата и удерживается?</p>
+<p class=textpreword>       cy-=0.01f;          // Перемещение объекта 
+  вниз</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>       if (keys['D'])      
+  // Клавиша D нажата и удерживается?</p>
+<p class=textpreword>       cx+=0.01f;          // Перемещение объекта 
+  вправо</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>       if (keys['A'])      
+  // Клавиша A нажата и удерживается?</p>
+<p class=textpreword>       cx-=0.01f;          // Перемещение объекта 
+  влево</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Здесь мы отслеживаем нажатие клавиш с 1 по 4. Если нажата клавиша 
+  1, и переменная key не равна 1 (не является текущим 
+  объектом), и значение morph равно FALSE 
+  (в текущий момент не происходит морфинг), то мы устанавливаем key 
+  в 1, тем самым, сообщая нашей программе, что мы  только что выбрали объект 1. 
+  Затем мы устанавливаем morph в TRUE, позволяя нашей программе 
+  начать морфинг, и, наконец, мы делаем объект-назначение (dest) 
+  равным объекту 1 (morph1).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Обработка нажатия клавиш 2, 3 и 4 аналогична. Если нажата клавиша 
+  2, то мы делаем dest равной morph2 
+  и устанавливаем  key равной 2. Нажатие 3 устанавливает 
+  dest в morph3 и key 
+  в 3.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Устанавливая значение переменной key 
+  в значение только что нажатой нами клавиши, мы предотвращаем попытку пользователя 
+  сделать морфинг из сферы в сферу или из тора в тор!</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>       if (keys['1'] &amp;&amp; (key!=1) 
+  &amp;&amp; !morph) // Если нажата 1, key не равно 1 и morph равен False</p>
+<p class=textpreword>       {</p>
+<p class=textpreword>              key=1; // Устанавливаем key в 1 (для предотвращения нажатия 1 два раза подряд)</p>
+<p class=textpreword>              morph=TRUE; // Устанавливаем morph 
+  в True (Начинаем процесс морфинга)</p>
+<p class=textpreword>              dest=&amp;morph1; // Устанавливаем объект-назначение 
+  в morph1</p>
+<p class=textpreword>       }</p>
+<p class=textpreword>       if (keys['2'] &amp;&amp; (key!=2) 
+  &amp;&amp; !morph) // Если нажата 2, key не равно 2 и morph равен False</p>
+<p class=textpreword>       {</p>
+<p class=textpreword>              key=2; // Устанавливаем key в 2 (для предотвращения нажатия 2 два раза подряд)</p>
+<p class=textpreword>              morph=TRUE; // Устанавливаем morph 
+  в True (Начинаем процесс морфинга)</p>
+<p class=textpreword>              dest=&amp;morph2; // Устанавливаем объект-назначение 
+  в morph2</p>
+<p class=textpreword>       }</p>
+<p class=textpreword>       if (keys['3'] &amp;&amp; (key!=3) 
+  &amp;&amp; !morph) // Если нажата 3, key не равно 3 и morph равен False </p>
+<p class=textpreword>       {</p>
+<p class=textpreword>              key=3; // Устанавливаем key в 3 (для предотвращения нажатия 3 два раза подряд)</p>
+<p class=textpreword>              morph=TRUE; // Устанавливаем morph 
+  в True (Начинаем процесс морфинга)</p>
+<p class=textpreword>              dest=&amp;morph3; // Устанавливаем объект-назначение 
+  в morph3</p>
+<p class=textpreword>       }</p>
+<p class=textpreword>       if (keys['4'] &amp;&amp; (key!=4) 
+  &amp;&amp; !morph) // Если нажата 4, key не равно 4 и morph равен False</p>
+<p class=textpreword>       {</p>
+<p class=textpreword>              key=4; // Устанавливаем key в 4 (для предотвращения нажатия 4 два раза подряд)</p>
+<p class=textpreword>              morph=TRUE; // Устанавливаем morph 
+  в True (Начинаем процесс морфинга)</p>
+<p class=textpreword>              dest=&amp;morph4; // Устанавливаем объект-назначение 
+  в morph4</p>
+<p class=textpreword>       }</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Наконец, если нажата клавиша F1, то 
+  мы переключаемся из полноэкранного режима в оконный режим или наоборот!</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>            if (keys[VK_F1])       
+  // Нажата клавиша F1?</p>
+<p class=textpreword>            {</p>
+<p class=textpreword>               keys[VK_F1]=FALSE;  
+  // Если да, то устанавливаем ее в FALSE</p>
+<p class=textpreword>               KillGLWindow();     // Убиваем наше текущее окно</p>
+<p class=textpreword>               fullscreen=!fullscreen; // Переключаемся 
+  в Полноэкранный/Оконный режим</p>
+<p class=textpreword>               // Регенерируем наше OpenGL 
+  окно</p>
+<p class=textpreword>               if (!CreateGLWindow(&quot;Piotr Cieslak &amp; NeHe's Morphing Points 
+  Tutorial&quot;,</p>
+<p class=textpreword>                    640, 480, 16, fullscreen))</p>
+<p class=textpreword>               {</p>
+<p class=textpreword>                  return 0;        // Выход если окно не было создано</p>
+<p class=textpreword>               }</p>
+<p class=textpreword>            }</p>
+<p class=textpreword>         }</p>
+<p class=textpreword>      }</p>
+<p class=textpreword>   }</p>
+<p class=textpreword>   // Завершение</p>
+<p class=textpreword>   KillGLWindow();                 // Убиваем окно</p>
+<p class=textpreword>   return (msg.wParam);            
+  // Выходим из программы</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Я надеюсь, что Вам понравился этот урок. Это не сложный урок, 
+  но Вы можете извлечь из кода много полезного! Анимация в моей демонстрации dolphin осуществляется по правилам, аналогичным изложенным в 
+  этом уроке. Играя с этим кодом, Вы можете добиться реально крутых результатов! 
+  Превращение точек в слова. Анимация и др. Возможно, что Вы захотите использовать 
+  многоугольники или линии вместо точек. Эффект может получиться очень впечатляющим!</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Piotr обновил код. Я надеюсь, что после 
+  прочтения этого урока Вы стали больше понимать о сохранении и загрузке объектов 
+  из файла, о манипулировании данными для достижения крутых GL 
+  эффектов в Ваших собственных программах! Написание файла .html 
+  этого урока заняло 3 дня. Если Вы обнаружили какие-либо ошибки, пожалуйста, 
+  дайте мне знать. Большая часть этого урока создана глубокой ночью, поэтому возможны 
+  некоторые  ошибки. Я хочу улучшить свои уроки настолько, насколько это возможно. 
+  Обратная связь очень важна!</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>RabidHaMsTeR создал демо &quot;Morph&quot; 
+  до того как написал этот урок, в котором лучше показана более усовершенствованная 
+  версия этого эффекта. Вы можете проверить это сами на http://homepage.ntlworld.com/fj.williams/PgSoftware.html.</p>
+
+<p class="textnoalign" align="right">
+<font color="#0000A0"><b> © Piotr Cieslak</a></b></font>
+<br>
+<font color="#0000A0"><b> © Jeff Molofee (NeHe)</a></b></font>
+</p>  
+
+</div>
+<div id="end">
+
+          <p><a href="http://pmg.org.ru/"
+			onmouseover=" return event_over(this,'Программирование магических игр')  "
+			onmouseout=" return event_out(this) "><font class="link"><b>PMG</b></font></a> 
+            <font class="comment">&nbsp;5 августа 2003&nbsp;(c)&nbsp;</font> 
+      <a href="mailto:den_popov@xaker.ru"
+      onMouseOver=" return event_over(this,'Почта переводчику')  "
+      onMouseOut=" return event_out(this) "><font class="link"><b>Popov Denis</b></font></a>
+          </p>
+</div>
+</center>
+
+<script language="JavaScript">
+<!--
+form_print();
+//-->
+</script>
+
+</body>
+</html>

@@ -1,0 +1,667 @@
+<!doctype html public "-//w3c//dtd html 3.2 final//ru">
+<html>
+
+<head>
+<meta http-equiv="Content-Type"
+content="text/html; charset=windows-1251">
+<meta name="description"
+content="Переводы по OpenGL, трехмерная графика, игры, мультимедия
+Translations Russian OpenGL
+">
+<meta name="keyword"
+content="Программирование,игры,3D,трехмерная графика,OpenGL,NeHe">
+<meta name="keyword"
+content="programming,C,C++,game,graphics">
+<title>Урок 37. Мультипликационное закрашивание.</title>
+<link rel="stylesheet" href="pmg.css" type="text/css">
+</head>
+
+<body bgcolor="#b2d3e1" link="#800080" vlink="#800080">
+<script src='nehe.js' language="javascript">
+<!--
+//-->
+</script>
+
+<center>
+<div id="top">
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+        <td width="20%" align="center" valign="center">
+        <img src="nehelogo.jpg" align="left" hspace="0" width="125" height="50" alt="NeHe Tutorials">
+        </td>
+        <td width="60%" align="center">
+	<a href="index.html"
+	onmouseover=" return event_over(this,'NeHe Ru.')  "
+        onmouseout=" return event_out(this) ">
+        <font class="linksbig">
+        Народный учебник по OpenGL</font></a><br>
+        </td>
+        <td width="20%" align="center" valign="center">
+        <img src="nehe37.jpg" align="right" hspace="0" width="80" height="60" alt="Урок 37. OpenGL">
+        </td>
+    </tr>
+</table>
+</div>
+
+<div id="head">
+<p class="head1">
+Урок 37. Мультипликационное закрашивание.</p>
+</div>
+<div id="main" bgcolor="#ADADFF">
+<p class="textnoalign" align="left">
+
+<a href="http://nehe.gamedev.net/data/lessons/lesson.asp?lesson=37" target="_blank"
+onmouseover=" return event_over(this,this)  "
+onmouseout=" return event_out(this) ">
+<font class="link"><b>Cel-Shading</b></font></a>
+<br>
+</p>
+
+<p class=textword>Наблюдая, как люди всё ещё пишут мне, спрашивая об исходном 
+  коде для статьи, которую я недавно написал на GameDev.net 
+  и, понимая, что второй вариант этой статьи (с исходными кодами для каждого API) 
+  далёк от того, чтобы быть законченным даже наполовину, я сварганил этот урок 
+  для NeHe (который фактически должен бы был лечь в основу 
+  статьи), что бы вы все, гуру OpenGL, могли поэкспериментировать с ним. Извините за выбор 
+  модели, но недавно я много играл в Quake II…</p>
+<p class=textword> &nbsp; </p>
+<p class=textword><i>Примечание:</i>  оригинал статьи для этого кода можно найти 
+  на:</p>
+<p class=textword>http://www.gamedev.net/reference/programming/features/celshading </p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>В этом уроке на самом деле нет объяснения теории, только код. 
+  Ответ на вопрос, ПОЧЕМУ это работает, можно найти по ссылке, указанной выше. 
+  Теперь, чёрт возьми, ПРЕКРАТИТЕ ПИСАТЬ И ПРОСИТЬ ИСХОДНЫЙ КОД!!!!</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Наслаждайтесь!</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Прежде всего, нам необходимо подключить несколько дополнительных 
+  заголовочных файлов. Первый из них (math.h) 
+  для использования функции <b>sqrtf </b>(квадратный корень), а второй 
+  (stdio.h) для обеспечения доступа к файлам.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>#include &lt;math.h&gt;      
+  // Заголовочный файл математической библиотеки</p>
+<p class=textpreword>#include &lt;stdio.h&gt;     // Заголовочный 
+  файл для стандартной библиотеки ввода\вывода</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Теперь мы собираемся определить несколько структур для хранения 
+  данных (для сохранения сотен массивов вещественных чисел). Первая – структура 
+  tagMATRIX. Если вы внимательно посмотрите, то обнаружите, 
+  что мы сохраняем матрицу как одномерный массив из 16 вещественных чисел, а не 
+  двумерный размерностью 4x4. Это соответствует тому, как в OpenGL 
+  хранятся матрицы. Если бы мы использовали массив 4x4, 
+  то значения располагались бы в неправильном порядке.</p>
+<p class=textword> &nbsp; </p>
+<p class=textpreword>typedef struct tagMATRIX    // Структура для хранения матрицы 
+  в формате OpenGL</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  float Data[16];           
+  // Мы используем размерность 16 из-за формата матрицы OpenGL</p>
+<p class=textpreword>} MATRIX;</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Вторая структура – векторный класс. Она просто хранит значения 
+  для X, Y и Z.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>typedef struct tagVECTOR    // Структура для хранения 
+  вектора</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  float X, Y, Z;            
+  // Компоненты вектора</p>
+<p class=textpreword>} VECTOR;</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Третья – структура вершины. Для каждой вершины необходима только 
+  её нормаль и позиция (без координат текстуры). Они ДОЛЖНЫ храниться только в 
+  этом порядке, иначе процесс загрузки данных из файла пройдет не корректно (я 
+  затратил много сил, чтобы понять это, возможно, этот опыт научит меня разбивать 
+  код на части).</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textpreword>typedef struct tagVERTEX    // Структура для хранения 
+  одной вершины</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  VECTOR Nor;        // Нормаль вершины</p>
+<p class=textpreword>  VECTOR Pos;        // Позиция вершины</p>
+<p class=textpreword>} VERTEX;</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Наконец, структура многоугольника. Я знаю, что так глупо хранить 
+  вершины, но это просто и работает. Вообще, я использовал бы массив вершин, массив 
+  многоугольников и помещал бы номера индексов трех вершин в структуру многоугольника, 
+  но так проще показать вам, что происходит.</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textpreword>typedef struct tagPOLYGON    // Структура для хранения 
+  многоугольника</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  VERTEX Verts[3];           // Массив из 3-х структур VERTEX</p>
+<p class=textpreword>} POLYGON;</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textword>Далее тоже довольно простой материал. Смотрите комментарии, 
+  объясняющие назначение каждой переменной.</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textpreword>bool   outlineDraw  = true;        // Флаг рисования контура</p>
+<p class=textpreword>bool   outlineSmooth = false;      
+  // Флаг сглаживания линий</p>
+<p class=textpreword>float  outlineColor[3] 
+  = { 0.0f, 0.0f, 0.0f }; // Цвет линий</p>
+<p class=textpreword>float  outlineWidth 
+  = 3.0f;       // Ширина линий</p>
+<p class=textpreword>VECTOR lightAngle;                // Направление света</p>
+<p class=textpreword>bool   lightRotate = false;       
+  // Флаг поворота источника света</p>
+<p class=textpreword>float  modelAngle  = 0.0f;        // Угол наклона модели по оси Y</p>
+<p class=textpreword>bool   modelRotate = false;       
+  // Флаг поворота модели</p>
+<p class=textpreword>POLYGON *polyData  = NULL;        
+  // Информация о многоугольнике</p>
+<p class=textpreword>int    polyNum     = 0;           // 
+  Количество многоугольников</p>
+<p class=textpreword>GLuint shaderTexture[1];          // Хранилище для одной текстуры</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textword>Далее идет функция чтения модели. Формат хранения модели крайне 
+  прост. В первых нескольких байтах хранится число многоугольников в сцене, а 
+  остальная часть файла – массив структур tagPOLYGON. 
+  Благодаря этому, при считывании данных нет необходимости сортировать их в какой-либо 
+  особой последовательности.</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textpreword>BOOL ReadMesh ()        // Чтение содержимого 
+  файла «model.txt»</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  FILE *In = fopen (&quot;Data\\model.txt&quot;, 
+  &quot;rb&quot;);  // Открытие файла</p>
+<p class=textpreword>  if (!In)</p>
+<p class=textpreword>    return FALSE;        // FALSE, если файл 
+  не открыт</p>
+<p class=textpreword>  fread (&amp;polyNum, 
+  sizeof (int), 1, In);  
+  // Считывание заголовка (т.е. кол-во многоугольников)</p>
+<p class=textpreword>  polyData = new 
+  POLYGON [polyNum];       // Резервирование 
+  памяти</p>
+<p class=textpreword>  fread (&amp;polyData[0], 
+  sizeof(POLYGON)*polyNum, 
+  1, In); // Чтение данных о всех многоугольниках</p>
+<p class=textpreword>  fclose (In);            
+  // Закрытие файла</p>
+<p class=textpreword>  return TRUE;            // Файл отработан</p>
+<p class=textpreword >}</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textword>Теперь несколько основных математических функций. Функция <b>DotProduct</b> 
+  рассчитывает угол между двумя векторами или плоскостями, функция <b>Magnitude</b> 
+  рассчитывает длину вектора, а функция <b>Normalize</b> 
+  уменьшает вектор до единичной длины.</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textpreword>inline float DotProduct (VECTOR 
+  &amp;V1, VECTOR &amp;V2)  
+  // Вычисление угла между двумя векторами</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  return V1.X * V2.X 
+  + V1.Y * V2.Y 
+  + V1.Z * V2.Z; 
+  // Возвращает угол</p>
+<p class=textpreword>}</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>inline float Magnitude (VECTOR 
+  &amp;V)      // Вычисление длины вектора</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  return sqrtf (V.X * 
+  V.X + V.Y * V.Y + V.Z * V.Z); // Возвращает длину вектора</p>
+<p class=textpreword>}</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>void Normalize (VECTOR 
+  &amp;V)        // Создаёт вектор единичной длины</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  float M = Magnitude (V);        
+  // Вычисление длины вектора </p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  if (M != 
+  0.0f)          // Удостовериться, что нет деления на 
+  0 </p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    V.X /= M;             
+  // Нормализация трёх составляющих</p>
+<p class=textpreword>    V.Y /= M;</p>
+<p class=textpreword>    V.Z /= M;</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>}</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textword>Эта функция производит вращение вектора, используя предоставляемую 
+  ей матрицу. Пожалуйста, обратите внимание, что она ТОЛЬКО вращает вектор – что 
+  не имеет никакого отношения к расположению вектора. Это используется при вращении 
+  нормалей, когда необходимо удостовериться, что они указывают в правом направлении 
+  при расчете освещения.</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textpreword>void RotateVector (MATRIX 
+  &amp;M, VECTOR &amp;V, 
+  VECTOR &amp;D) // Вращение вектора с использованием матрицы</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  D.X =(M.Data[0] * V.X) 
+  + (M.Data[4] * V.Y) 
+  + (M.Data[8]  * V.Z);  
+  // Поворот вокруг оси X</p>
+<p class=textpreword>  D.Y =(M.Data[1] * V.X) 
+  + (M.Data[5] * V.Y) 
+  + (M.Data[9]  * V.Z);  
+  // Поворот вокруг оси Y</p>
+<p class=textpreword>  D.Z =(M.Data[2] * V.X) 
+  + (M.Data[6] * V.Y) 
+  + (M.Data[10] * V.Z);  
+  // Поворот вокруг оси Z</p>
+<p class=textpreword >}</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textword>Первая главная функция движка… <b>Initialise</b>, 
+  выполняет то, что означает. Я вырезал несколько строк кода, т.к. объяснять их 
+  нет необходимости.</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textpreword>//Здесь располагается любой код инициализации графической 
+  библиотеки и пользователя</p>
+<p class=textpreword>BOOL Initialize (GL_Window* window, Keys* 
+  keys)</p>
+<p class=textpreword >{</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textword>Следующие три переменные используются при загрузки файла с данными 
+  о закрашивании (shader-файл). <b>Line</b> 
+  используется для чтения строки из текстового файла, в то время как <b>shaderData</b> 
+  хранит действительные параметры закрашивания. Вам может быть интересно, почему 
+  у нас 96 значений вместо 32. Ну, необходимо конвертировать значения шкалы оттенков 
+  серого цвета (greyscale) в RGB, чтобы OpenGL мог их использовать. 
+  Можно по-прежнему хранить значения как оттенки серого цвета, но дальше мы будем 
+  использовать значения для компонентов RGB при загрузке 
+  текстуры.</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textpreword>  char  Line[255];    
+  // Хранилище для 255 символов</p>
+<p class=textpreword>  float shaderData[32][3];  // Хранилище для 96 значений тени</p>
+<p class=textpreword >  FILE 
+  *In = NULL;    // Указатель на файл</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textword>При прорисовке линий, мы хотим удостовериться, что они точные 
+  и гладкие. Первоначально этот режим отключён, но, нажимая клавишу «2», можно 
+  переключаться между режимами вкл\выкл.</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textpreword>  glShadeModel (GL_SMOOTH);   
+  // Включение плавного цветового закрашивания</p>
+<p class=textpreword>  glDisable (GL_LINE_SMOOTH); 
+  // Первоначальное отключение сглаживания линий</p>
+<p class=textpreword>  glEnable (GL_CULL_FACE);    
+  // Разрешить удаление задних граней</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Мы отключаем освещение OpenGL, потому 
+  что мы делаем все вычисления освещения самостоятельно.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>  glDisable (GL_LIGHTING);  // Отключение освещения 
+  OpenGL</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textword>Здесь мы загружаем файл закрашивания. Это просто 32 числа с 
+  плавающей запятой, сохранённые в кодировке ASCII (для 
+  простой модификации), каждое на отдельной строке.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>  In = fopen 
+  (&quot;Data\\shader.txt&quot;, &quot;r&quot;);  
+  // Открытие файла закрашивания</p>
+<p class=textpreword>  if (In) 
+  // Проверка на открытие файла</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    for (i = 0; i 
+  &lt; 32; i++) // Цикл по 32 значениям шкалы оттенков 
+  серого цвета</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      if (feof (In))         
+  // Проверка на конец файла</p>
+<p class=textpreword>        break;</p>
+<p class=textpreword>      fgets (Line, 255, In); // Текущая строка</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textword>Здесь мы конвертируем значения серого цвета в RGB, как описано выше.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword style='text-indent:35.4pt'>// Копирование 
+  значений</p>
+<p class=textpreword>      shaderData[i][0] = shaderData[i][1] = 
+  shaderData[i][2] = atof (Line);</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>    fclose (In);        // Закрытие файла</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>  else</p>
+<p class=textpreword>    return FALSE;       // Ужасно-ужасно неверно </p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Теперь мы загружаем текстуру. Как ясно указывается, не используйте 
+  никакой фильтрации на текстуре, иначе она будет выглядеть, мягко говоря, странно. 
+  Используется <b>GL_</b><b>TEXTURE_1</b><b>D</b>, 
+  потому что это одномерный массив значений.</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textpreword>  glGenTextures (1, &amp;shaderTexture[0]); 
+  // Получение свободного ID текстуры</p>
+<p class=textpreword>  // Связывание с текстурой. В дальнейшем это будет ID 
+  текстуры.</p>
+<p class=textpreword>  glBindTexture (GL_TEXTURE_1D, shaderTexture[0]);</p>
+<p class=textpreword>  // Чёрт возьми, не позволяйте OpenGL использовать двух\трёхлинейную фильтрацию!</p>
+<p class=textpreword>  glTexParameteri (GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, 
+  GL_NEAREST);</p>
+<p class=textpreword>  glTexParameteri (GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, 
+  GL_NEAREST);</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>  // Подгрузка</p>
+<p class=textpreword >  glTexImage1D (GL_TEXTURE_1D, 
+  0, GL_RGB, 32, 0, GL_RGB , GL_FLOAT, shaderData);</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textword>Теперь установите направление освещения. Я установил его вдоль 
+  оси Z, что значит – свет будет падать на лицевую сторону 
+  модели.</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textpreword>  lightAngle.X 
+  = 0.0f;    // Направление вдоль оси X</p>
+<p class=textpreword>  lightAngle.Y 
+  = 0.0f;    // Направление вдоль оси Y</p>
+<p class=textpreword>  lightAngle.Z 
+  = 1.0f;    // Направление вдоль оси Z</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword >  Normalize 
+  (lightAngle); // Нормализация направления света</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textword>Загрузите набор граней из файла (описано выше).</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textpreword>  return ReadMesh (); // Возвращает значение функции ReadMesh()</p>
+<p class=textpreword >}</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textword>Функция, обратная описанной выше… <b>Deinitialize</b>, 
+  удаляет текстуру и данные многоугольника, созданные функциями <b>Initalize</b> и <b>ReadMesh</b>.</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textpreword>void Deinitialize (void)  
+  // Здесь может располагаться любой код деинициализации пользователя</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  glDeleteTextures (1, &amp;shaderTexture[0]); 
+  // Удаление текстуры</p>
+<p class=textpreword>  delete [] polyData;     
+  // Удаление данных многоугольника</p>
+<p class=textpreword >}</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textword>Главный демонстрационный цикл. Все что он делает – это обрабатывает 
+  ввод и модифицирует угол. Средство управления следующие:</p>
+<p class=textword>&lt;SPACE&gt; = Переключатель вращения</p>
+<p class=textword>1            = Переключатель прорисовки контура</p>
+<p class=textword>2            = Переключатель сглаживания контура</p>
+<p class=textword>&lt;UP&gt;       = Увеличение ширины линии</p>
+<p class=textword>&lt;DOWN&gt;  = Уменьшение ширины линии</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textpreword>void Update (DWORD 
+  milliseconds)     // Здесь производится модернизация 
+  движения </p>
+<p class=textpreword>{</p>
+<p class=textpreword>  if (g_keys-&gt;keyDown [' '] == TRUE) // Нажата 
+  клавиша &lt;SPACE&gt;?</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    modelRotate = !modelRotate;      // Переключение вращения модели вкл\выкл</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>    g_keys-&gt;keyDown [' '] = FALSE;</p>
+<p class=textpreword>  }</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>  if (g_keys-&gt;keyDown ['1'] == TRUE) // Нажата 
+  клавиша «1»?</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    outlineDraw = !outlineDraw;      // Переключение прорисовки контура вкл\выкл</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>    g_keys-&gt;keyDown ['1'] = FALSE;</p>
+<p class=textpreword>  }</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>  if (g_keys-&gt;keyDown ['2'] == TRUE) // Нажата 
+  клавиша «2»?</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    outlineSmooth = !outlineSmooth;  // Переключение 
+  сглаживания контура вкл\выкл</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>    g_keys-&gt;keyDown ['2'] = FALSE;</p>
+<p class=textpreword>  }</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>  if (g_keys-&gt;keyDown [VK_UP] == TRUE) // 
+  Нажата стрелка «Вверх»?</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    outlineWidth++;                    // Увеличение ширины линии</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>    g_keys-&gt;keyDown [VK_UP] = FALSE;</p>
+<p class=textpreword>  }</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>  if (g_keys-&gt;keyDown [VK_DOWN] == TRUE) 
+  // Нажата стрелка «Вниз»?</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    outlineWidth--;                    // Уменьшение ширины линии</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>    g_keys-&gt;keyDown [VK_DOWN] = FALSE;</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  if (modelRotate)                     
+  // Проверка включен или нет режим вращения</p>
+<p class=textpreword>    modelAngle += (float) (milliseconds) / 10.0f; 
+  // Модификация угла основанного на таймере</p>
+<p class=textpreword >}</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textword>Функция, которую вы все ждали. Функция <b>Draw</b> 
+  делает всё – вычисляет значения закрашивания, отображает набор граней, отображает 
+  контуры - и это действительно так.</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textpreword>void Draw (void)</p>
+<p class=textpreword >{</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textword><b>TmpShade</b> используется для хранения 
+  значений закрашивания для текущей вершины. Вся информация о вершине рассчитывается 
+  в одно и то же время, в том смысле, что мы многократно используем одну и ту 
+  же переменную.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Структуры <b>TmpMatrix</b>, <b>TmpVector</b> и <b>TmpNormal</b> так же используются для расчета информации о вершине. 
+  Значение <b>TmpMatrix</b> устанавливается однократно 
+  при запуске функции и не меняется до следующего вызова функции <b>Draw</b>. 
+  С другой стороны, <b>TmpVector</b> и <b>TmpNormal</b> изменяются при расчете каждой последующей вершины.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>    float TmpShade;    // Временное значение закрашивания</p>
+<p class=textpreword>    MATRIX TmpMatrix;  // Временная структура MATRIX</p>
+<p class=textpreword>    VECTOR TmpVector, TmpNormal; // Временная структура 
+  VECTOR</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Давайте очистим буферы и матричные данные.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>    glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Очистка 
+  буферов</p>
+<p class=textpreword>    glLoadIdentity (); // Перезагрузка матрицы</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Первая проверка – хотим ли мы иметь гладкий контур. Если так, 
+  то включаем сглаживание. Если нет – отключаем. Просто!</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>    if (outlineSmooth)          // Проверка 
+  – хотим ли гладкий контур</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      glHint (GL_LINE_SMOOTH_HINT, 
+  GL_NICEST); //Использовать качественные 
+  вычисления</p>
+<p class=textpreword>      glEnable (GL_LINE_SMOOTH); 
+  // Включить сглаживание</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>    else // Мы не хотим гладкий контур</p>
+<p class=textpreword>    glDisable (GL_LINE_SMOOTH); 
+  // Отключить сглаживание</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Затем мы устанавливаем область просмотра. Отодвигаем камеру 
+  на две единицы назад, а затем поворачиваем модель заданный угол. Обратите внимание: 
+  модель будет вращаться на месте, т.к. мы в начале переместили камеру. Если бы 
+  мы делали наоборот, модель вращалась бы вокруг камеры.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Затем мы берём вновь созданную матрицу у OpenGL 
+  и сохраняем её в <b>TmpMatrix</b>.</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textpreword>    glTranslatef (0.0f, 0.0f, -2.0f);         
+  // Отодвигаемся на две единицы от экрана</p>
+<p class=textpreword>    glRotatef (modelAngle, 0.0f, 
+  1.0f, 0.0f); // Вращаем модель 
+  вдоль оси Y</p>
+<p class=textpreword>    glGetFloatv (GL_MODELVIEW_MATRIX, 
+  TmpMatrix.Data); // Берём сгенерированную 
+  матрицу</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Начинаются чудеса. Вначале включаем одномерное текстурирование, 
+  а затем разрешаем использование текстуры с оттенками серого цвета для закрашивания. 
+  OpenGL пользуется ей в качестве таблицей соответствия. 
+  Затем мы устанавливаем цвет модели (белый). Я выбрал белый, т.к. он даёт возможность 
+  отображать подсветки и затенения намного лучше, чем другие цвета. Предлагаю 
+  вам не использовать чёрный…</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textpreword>    // Код эффекта мультипликационного закрашивания</p>
+<p class=textpreword>    glEnable (GL_TEXTURE_1D); 
+  // Включить одномерное текстурирование</p>
+<p class=textpreword>    glBindTexture (GL_TEXTURE_1D, shaderTexture[0]); // «Захват» 
+  нашей текстуры</p>
+<p class=textpreword >    glColor3f 
+  (1.0f, 1.0f, 1.0f); // Установка цвета модели</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textword>Теперь начинаем прорисовку треугольников. Мы просматриваем каждый 
+  многоугольник в массиве, а затем по очереди все его вершины. На первом шаге 
+  информация о нормали копируется во временную структуру. Таким образом, мы можем 
+  вращать нормали, но сохранить их первоначальные значения (без снижения точности).</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textpreword>    glBegin (GL_TRIANGLES); 
+  // «Сказать» OpenGL, что мы рисуем треугольники</p>
+<p class=textpreword>    for (i = 0; i 
+  &lt; polyNum; i++)    // Цикл 
+  по каждому многоугольнику</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      for (j = 0; j 
+  &lt; 3; j++)        // Цикл по каждой вершине</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        TmpNormal.X = polyData[i].Verts[j].Nor.X;  
+  // Заполнение структуры TmpNormal</p>
+<p class=textpreword>        TmpNormal.Y = polyData[i].Verts[j].Nor.Y;  
+  // значениями нормали текущей вершины</p>
+<p class=textpreword>        TmpNormal.Z = polyData[i].Verts[j].Nor.Z;</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textword>Во-вторых, мы вращаем нормаль в соответствии с матрицей ранее 
+  взятой у OpenGL. Затем мы нормализуем её, что бы она 
+  ни вела себя странно.</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textpreword>        // Вращение в соответствии с матрицей</p>
+<p class=textpreword>        RotateVector (TmpMatrix, TmpNormal, TmpVector);</p>
+<p class=textpreword >        Normalize 
+  (TmpVector); // Нормализация новой нормали</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textword>В-третьих, мы получаем скалярное произведение векторов вращаемой 
+  нормали и направления света <b>lightAngel</b>. Затем мы урезаем значение до диапазона 0-1 (с 
+  диапазона от -1 до +1).</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textpreword>        // Вычисление значения закрашивания</p>
+<p class=textpreword>        TmpShade = DotProduct (TmpVector, 
+  lightAngle);</p>
+<p class=textpreword>        if (TmpShade &lt; 0.0f)</p>
+<p class=textpreword >          TmpShade 
+  = 0.0f;  // Установка значения в 0, если TmpShade отрицательно</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textword>В-четвёртых, мы передаём это значение OpenGL 
+  как координаты текстуры. Текстура закрашивания ведёт себя как таблица соответствия 
+  (значение закрашивания – это индекс), которая (как я думаю) и является главной 
+  причиной того, почему была инвертирована одномерная текстура. Затем мы передаём 
+  позицию вершины OpenGL, и повторяем цикл. Повторяем. Повторяем. Думаю, вы ухватили 
+  идею.</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textpreword>         glTexCoord1f (TmpShade);    
+  // Установка координат текстуры значением закрашивания</p>
+<p class=textpreword>        // Отправка вершин</p>
+<p class=textpreword>        glVertex3fv (&amp;polyData[i].Verts[j].Pos.X);</p>
+<p class=textpreword>        }</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  glEnd (); // Завершение рисования</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  glDisable (GL_TEXTURE_1D); 
+  // Отключение одномерных текстур</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textword>Теперь переходим к контурам. Контур может быть определён как 
+  «край соприкосновения двух многоугольников, один из которых обращён к наблюдателю, 
+  а другой наоборот». В OpenGL это соответствует тому, 
+  когда тест глубины установлен в значение меньшее или равное текущему значению 
+  (GL_LEQUAL). Мы также смешиваем 
+  линии для лучшего отображения.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Теперь разрешаем смешивание и устанавливаем режим. Говорим OpenGL, отобразить задние многоугольники как линии, и устанавливаем 
+  ширину этих линий. Запрещаем прорисовку передних многоугольников и устанавливаем 
+  тест глубины меньшим или равным текущему значению Z. 
+  После того, как установлен цвет линий, перебираем в цикле все многоугольники, 
+  отображая их вершины. Необходимо передавать только позицию вершины, а не нормаль 
+  или значение закрашивания, т.к. всё, что нам нужно - это контур.</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textpreword>  // Код прорисовки контура</p>
+<p class=textpreword>  if (outlineDraw)        
+  // Проверка на необходимость прорисовки контура</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    glEnable (GL_BLEND);  
+  // Разрешить смешивание</p>
+<p class=textpreword>    // Установить режим смешивания</p>
+<p class=textpreword>    glBlendFunc (GL_SRC_ALPHA 
+  ,GL_ONE_MINUS_SRC_ALPHA);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>    glPolygonMode (GL_BACK, GL_LINE); 
+  // Прорисовка задних многоугольников в виде линий</p>
+<p class=textpreword>    glLineWidth (outlineWidth);       // Установка ширины линии</p>
+<p class=textpreword>    glCullFace (GL_FRONT);           
+   // Запрет на прорисовку видимых многоугольников</p>
+<p class=textpreword>    glDepthFunc (GL_LEQUAL);          // Изменение режима 
+  глубины</p>
+<p class=textpreword>    glColor3fv (&amp;outlineColor[0]);    
+  // Установка цвета контура</p>
+<p class=textpreword>    glBegin (GL_TRIANGLES);           
+  // Сообщение того, что хотим нарисовать</p>
+<p class=textpreword>      for (i = 0; i 
+  &lt; polyNum; i++)   // Цикл 
+  по каждому многоугольнику</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        for (j = 0; j 
+  &lt; 3; j++)       // Цикл по каждой вершине</p>
+<p class=textpreword>        {</p>
+<p class=textpreword>          // Передача положения вершины</p>
+<p class=textpreword>          glVertex3fv (&amp;polyData[i].Verts[j].Pos.X);</p>
+<p class=textpreword>        }</p>
+<p class=textpreword>      }</p>
+<p class=textpreword >    glEnd 
+  (); // Сообщение о завершении прорисовки</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textword>После этого, возвращаем все назад, как было до этого, и выходим.</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textpreword>    glDepthFunc (GL_LESS);      // Возврат в исходное 
+  положение режима теста глубины</p>
+<p class=textpreword>    glCullFace (GL_BACK);       
+  // Возвращение режима прорисовка граней</p>
+<p class=textpreword>    glPolygonMode (GL_BACK, GL_FILL); 
+  // Возвращение режима прорисовки задних граней</p>
+<p class=textpreword>    glDisable (GL_BLEND); 
+  // Отключение смешивания</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>}</p>
+<p class=textpreword > &nbsp; </p>
+<p class=textword>Теперь вы видите, что мультипликационное закрашивание - это 
+  не так трудно, как кажется. Безусловно, методику можно сильно улучшить. Хороший 
+  пример – игра XIII (http://www.nvidia.com/object/game_xiii.html), которая заставляет вас думать, что вы в мультяшном мире. 
+  Если вы хотите глубже понять технику отображения мультипликационных объектов, 
+  то можете посмотреть главу &quot;Non-Photorealistic Rendering&quot; в книге «Real-time Rendering» (Muller, Hains). 
+  Если вам нравится читать статьи в сети, обширный список ссылок можно найти здесь: 
+  http://www.red3d.com/cwr/npr/ .</p>
+
+<p class="textnoalign" align="right">
+<font color="#0000A0"><b> © Sami Hamlaoui (MENTAL)</b></font>
+<br>
+<font color="#0000A0"><b> © Jeff Molofee (NeHe)</b></font>
+</p>  
+
+</div>
+<div id="end">
+
+          <p><a href="http://pmg.org.ru/"
+			onmouseover=" return event_over(this,'Программирование магических игр')  "
+			onmouseout=" return event_out(this) "><font class="link"><b>PMG</b></font></a> 
+            <font class="comment">&nbsp;19 декабря 2003&nbsp;(c)&nbsp;</font> 
+<a href="mailto:Verisokin_V@kfin.kursknet.ru"
+onmouseover=" return event_over(this,'Почта переводчику')  "
+onmouseout=" return event_out(this) ">
+<font class="link"><b>Верисокин Владимир</b></font></a>
+          </p>
+</div>
+</center>
+
+<script language="JavaScript">
+<!--
+form_print();
+//-->
+</script>
+
+</body>
+</html>

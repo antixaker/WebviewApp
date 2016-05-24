@@ -1,0 +1,805 @@
+<!doctype html public "-//w3c//dtd html 3.2 final//ru">
+<html>
+
+<head>
+<meta http-equiv="Content-Type"
+content="text/html; charset=windows-1251">
+<meta name="description"
+content="Переводы по OpenGL, трехмерная графика, игры, мультимедия
+Translations Russian OpenGL
+">
+<meta name="keyword"
+content="Программирование,игры,3D,трехмерная графика,OpenGL,NeHe">
+<meta name="keyword"
+content="programming,C,C++,game,graphics">
+<title>Урок X2. Отсечение по пирамиде видимости в OpenGL.</title>
+<link rel="stylesheet" href="pmg.css" type="text/css">
+</head>
+
+<body bgcolor="#b2d3e1" link="#800080" vlink="#800080">
+<script src='nehe.js' language="javascript">
+<!--
+//-->
+</script>
+
+<center>
+<div id="top">
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+        <td width="20%" align="center" valign="center">
+        <img src="nehelogo.jpg" align="left" hspace="0" width="125" height="50" alt="NeHe Tutorials">
+        </td>
+        <td width="60%" align="center">
+	<a href="index.html"
+	onmouseover=" return event_over(this,'NeHe Ru.')  "
+        onmouseout=" return event_out(this) ">
+        <font class="linksbig">
+        Народный учебник по OpenGL</font></a><br>
+        </td>
+        <td width="20%" align="center" valign="center">
+        <img src="nehex2.jpg" align="right" hspace="0" width="80" height="60" alt="Урок X2. OpenGL">
+        </td>
+    </tr>
+</table>
+</div>
+
+<div id="head">
+<p class="head1">
+Урок X2. Отсечение по пирамиде видимости в OpenGL.</p>
+</div>
+<div id="main" bgcolor="#ADADFF">
+<p class="textnoalign" align="left">
+
+<p class=head3word>Введение:</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Представьте, что вы пишете программу, в которой можно бродить 
+  по виртуальному миру, который битком набит деревьями, зданиями, машинами, людьми 
+  и т.д. Интересно, как бы выглядела ваша функция рисования этого мира?</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Проще всего – это в цикле прорисовывать каждый из этих объектов. 
+  В конце концов, OpenGL отсекает все сам, поэтому вам 
+  не придется заботиться об объектах за кадром. Когда все будет завершено, выглядеть 
+  это будет просто замечательно.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Конечно, если у вас немного объектов, этот метод годится. Но 
+  как только ваш мир немного разрастется, вы заметите, что скорость прорисовки 
+  будет стремительно падать.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Обычно в каждый момент только малая доля объектов в вашем мире 
+  видна. Если бы мы могли определить, виден тот или иной объект до его прорисовки, 
+  мы бы могли его просто пропустить и не посылать лишних данных процессору.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Один из способов это сделать называется отсечением по пирамиде 
+  видимости (frustum сulling).</p>
+<p class=textword>&nbsp; </p>
+<p class=head3word>Определения:</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Прежде, чем пойдем дальше, давайте ответим на несколько простых 
+  вопросов:</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Что такое view frustum?</p>
+<p class=textwordni1 style='margin-left:35.4pt'>View 
+  frustum (пирамида видимости) – это часть пространства, 
+  в которой находятся все объекты, видимые из данной точки в данный момент. Она 
+  определяется шестью гранями усеченной пирамиды (т.е. пирамиды со срезанной вершиной). 
+  Если какая-то точка находится внутри пирамиды видимости, ее видно. Если вне 
+  пирамиды, значит, эту точку не видно.</p>
+<p class=textwordni1 style='margin-left:35.4pt'> [Обратите внимание – я говорю, что точка <i>видима</i>, 
+  хотя это не совсем так. Ее может закрывать другой объект, но она по крайней 
+  мере в поле зрения.]</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Что такое - плоскость?</p>
+<p class=textword>(прим. перев. – интересно было бы посмотреть на программиста, 
+  который не знает, что такое плоскость J)</p>
+<p class=textwordni1 style='margin-left:35.4pt'>Плоскость можно представить как бесконечно 
+  широкий и длинный лист бумаги. Любая точка пространства либо принадлежит плоскости, 
+  либо «спереди» от плоскости, либо «за» плоскостью.</p>
+<p class=textwordni1 style='margin-left:35.4pt'>Плоскость определяется четырьмя числами: 
+  A,B,C и D, где 
+  {A,B,C} – вектор нормали к этой плоскости, 
+  а D – расстояние до начала координат. Если вы вообще ничего из 
+  этого не понимаете, не падайте духом – на самом деле чтоб это использовать, 
+  понимать этого не надо.</p>
+<p class=textword>&nbsp; </p>
+<p class=head3word>Профминимум</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Итак, прежде всего, нам надо знать: какие числа определяют текущую 
+  пирамиду видимости.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Вычислять это вручную может быть достаточно сложно. К счастью, 
+  приложив минимум усилий, мы можем заставить OpenGL сделать 
+  это за нас. Все, что нам надо - это извлечь текущие матрицы PROJECTION 
+  и MODELVIEW, скомбинировать их и узнать нужные значения.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Прежде всего, договоримся, что мы будем хранить значения задающее 
+  усеченную пирамиду видимости в глобальной переменной:</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>float frustum[6][4];</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Это - двумерный массив 6*4 (шесть плоскостей, для каждой четыре 
+  числа: A, B, C, и D).</p>
+<p class=textword> </p>
+<p class=textword>Теперь функция, которая извлекает числа и заполняет массив. 
+  Вам придется вызывать эту функцию для каждого кадра, строго перед рисованием.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>ExtractFrustum()</p>
+<p class=textpreword>{</p>
+<p class=textpreword>   float   proj[16];</p>
+<p class=textpreword>   float   modl[16];</p>
+<p class=textpreword>   float   clip[16];</p>
+<p class=textpreword>   float   t;</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>   /* Узнаем текущую матрицу PROJECTION 
+  */</p>
+<p class=textpreword>   glGetFloatv( GL_PROJECTION_MATRIX, proj );</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>   /* Узнаем текущую матрицу MODELVIEW */</p>
+<p class=textpreword>   glGetFloatv( GL_MODELVIEW_MATRIX, modl );</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>   /* Комбинируем матрицы(перемножаем) 
+  */</p>
+<p class=textpreword>   clip[ 0] = modl[ 0] * proj[ 0] + modl[ 1] * proj[ 4] + modl[ 2] * proj[ 
+  8] + modl[ 3] * proj[12];</p>
+<p class=textpreword>   clip[ 1] = modl[ 0] * proj[ 1] + modl[ 
+  1] * proj[ 5] + modl[ 2] * proj[ 9] + modl[ 3] * proj[13];</p>
+<p class=textpreword>   clip[ 2] = modl[ 0] * proj[ 2] + modl[ 
+  1] * proj[ 6] + modl[ 2] * proj[10] + modl[ 3] * proj[14];</p>
+<p class=textpreword>   clip[ 3] = modl[ 0] * proj[ 3] + modl[ 
+  1] * proj[ 7] + modl[ 2] * proj[11] + modl[ 3] * proj[15];</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>   clip[ 4] = modl[ 4] * proj[ 0] + modl[ 
+  5] * proj[ 4] + modl[ 6] * proj[ 8] + modl[ 7] * proj[12];</p>
+<p class=textpreword>   clip[ 5] = modl[ 4] * proj[ 1] + modl[ 
+  5] * proj[ 5] + modl[ 6] * proj[ 9] + modl[ 7] * proj[13];</p>
+<p class=textpreword>   clip[ 6] = modl[ 4] * proj[ 2] + modl[ 
+  5] * proj[ 6] + modl[ 6] * proj[10] + modl[ 7] * proj[14];</p>
+<p class=textpreword>   clip[ 7] = modl[ 4] * proj[ 3] + modl[ 
+  5] * proj[ 7] + modl[ 6] * proj[11] + modl[ 7] * proj[15];</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>   clip[ 8] = modl[ 8] * proj[ 0] + modl[ 
+  9] * proj[ 4] + modl[10] * proj[ 8] + modl[11] * proj[12];</p>
+<p class=textpreword>   clip[ 9] = modl[ 8] * proj[ 1] + modl[ 
+  9] * proj[ 5] + modl[10] * proj[ 9] + modl[11] * proj[13];</p>
+<p class=textpreword>   clip[10] = modl[ 8] * proj[ 2] + modl[ 
+  9] * proj[ 6] + modl[10] * proj[10] + modl[11] * proj[14];</p>
+<p class=textpreword>   clip[11] = modl[ 8] * proj[ 3] + modl[ 
+  9] * proj[ 7] + modl[10] * proj[11] + modl[11] * proj[15];</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>   clip[12] = modl[12] * proj[ 0] + modl[13] 
+  * proj[ 4] + modl[14] * proj[ 8] + modl[15] * proj[12];</p>
+<p class=textpreword>   clip[13] = modl[12] * proj[ 1] + modl[13] 
+  * proj[ 5] + modl[14] * proj[ 9] + modl[15] * proj[13];</p>
+<p class=textpreword>   clip[14] = modl[12] * proj[ 2] + modl[13] 
+  * proj[ 6] + modl[14] * proj[10] + modl[15] * proj[14];</p>
+<p class=textpreword>   clip[15] = modl[12] * proj[ 3] + modl[13] 
+  * proj[ 7] + modl[14] * proj[11] + modl[15] * proj[15];</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>   /* Находим A, 
+  B, C, D для ПРАВОЙ плоскости */</p>
+<p class=textpreword>   frustum[0][0] = clip[ 3] - clip[ 0];</p>
+<p class=textpreword>   frustum[0][1] = clip[ 7] - clip[ 4];</p>
+<p class=textpreword>   frustum[0][2] = clip[11] - clip[ 8];</p>
+<p class=textpreword>   frustum[0][3] = clip[15] - clip[12];</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>   /* Приводим уравнение плоскости 
+  к нормальному виду */</p>
+<p class=textpreword>   t = sqrt( frustum[0][0] * frustum[0][0] + frustum[0][1] * frustum[0][1] 
+  + frustum[0][2] * frustum[0][2] );</p>
+<p class=textpreword>   frustum[0][0] /= t;</p>
+<p class=textpreword>   frustum[0][1] /= t;</p>
+<p class=textpreword>   frustum[0][2] /= t;</p>
+<p class=textpreword>   frustum[0][3] /= t;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>   /* Находим A, 
+  B, C, D для ЛЕВОЙ плоскости */</p>
+<p class=textpreword>   frustum[1][0] = clip[ 3] + clip[ 0];</p>
+<p class=textpreword>   frustum[1][1] = clip[ 7] + clip[ 4];</p>
+<p class=textpreword>   frustum[1][2] = clip[11] + clip[ 8];</p>
+<p class=textpreword>   frustum[1][3] = clip[15] + clip[12];</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>   /* Приводим уравнение плоскости 
+  к нормальному виду */</p>
+<p class=textpreword>   t = sqrt( frustum[1][0] * frustum[1][0] + frustum[1][1] * frustum[1][1] 
+  + frustum[1][2] * frustum[1][2] );</p>
+<p class=textpreword>   frustum[1][0] /= t;</p>
+<p class=textpreword>   frustum[1][1] /= t;</p>
+<p class=textpreword>   frustum[1][2] /= t;</p>
+<p class=textpreword>   frustum[1][3] /= t;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>   /* Находим A, 
+  B, C, D для НИЖНЕЙ плоскости */</p>
+<p class=textpreword>   frustum[2][0] = clip[ 3] + clip[ 1];</p>
+<p class=textpreword>   frustum[2][1] = clip[ 7] + clip[ 5];</p>
+<p class=textpreword>   frustum[2][2] = clip[11] + clip[ 9];</p>
+<p class=textpreword>   frustum[2][3] = clip[15] + clip[13];</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>   /* Приводим уравнение плоскости 
+  к нормальному */</p>
+<p class=textpreword>   t = sqrt( frustum[2][0] * frustum[2][0] + frustum[2][1] * frustum[2][1] 
+  + frustum[2][2] * frustum[2][2] );</p>
+<p class=textpreword>   frustum[2][0] /= t;</p>
+<p class=textpreword>   frustum[2][1] /= t;</p>
+<p class=textpreword>   frustum[2][2] /= t;</p>
+<p class=textpreword>   frustum[2][3] /= t;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>   /* ВЕРХНЯЯ плоскость 
+  */</p>
+<p class=textpreword>   frustum[3][0] = clip[ 3] - clip[ 1];</p>
+<p class=textpreword>   frustum[3][1] = clip[ 7] - clip[ 5];</p>
+<p class=textpreword>   frustum[3][2] = clip[11] - clip[ 9];</p>
+<p class=textpreword>   frustum[3][3] = clip[15] - clip[13];</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>   /* Нормальный вид 
+  */</p>
+<p class=textpreword>   t = sqrt( frustum[3][0] * frustum[3][0] 
+  + frustum[3][1] * frustum[3][1] + frustum[3][2] * frustum[3][2] );</p>
+<p class=textpreword>   frustum[3][0] /= t;</p>
+<p class=textpreword>   frustum[3][1] /= t;</p>
+<p class=textpreword>   frustum[3][2] /= t;</p>
+<p class=textpreword>   frustum[3][3] /= t;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>   /* ЗАДНЯЯ плоскость 
+  */</p>
+<p class=textpreword>   frustum[4][0] = clip[ 3] - clip[ 2];</p>
+<p class=textpreword>   frustum[4][1] = clip[ 7] - clip[ 6];</p>
+<p class=textpreword>   frustum[4][2] = clip[11] - clip[10];</p>
+<p class=textpreword>   frustum[4][3] = clip[15] - clip[14];</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>   /* Нормальный вид 
+  */</p>
+<p class=textpreword>   t = sqrt( frustum[4][0] * frustum[4][0] 
+  + frustum[4][1] * frustum[4][1] + frustum[4][2] * frustum[4][2] );</p>
+<p class=textpreword>   frustum[4][0] /= t;</p>
+<p class=textpreword>   frustum[4][1] /= t;</p>
+<p class=textpreword>   frustum[4][2] /= t;</p>
+<p class=textpreword>   frustum[4][3] /= t;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>   /* ПЕРЕДНЯЯ плоскость 
+  */</p>
+<p class=textpreword>   frustum[5][0] = clip[ 3] + clip[ 2];</p>
+<p class=textpreword>   frustum[5][1] = clip[ 7] + clip[ 6];</p>
+<p class=textpreword>   frustum[5][2] = clip[11] + clip[10];</p>
+<p class=textpreword>   frustum[5][3] = clip[15] + clip[14];</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>   /* Нормальный вид 
+  */</p>
+<p class=textpreword>   t = sqrt( frustum[5][0] * frustum[5][0] 
+  + frustum[5][1] * frustum[5][1] + frustum[5][2] * frustum[5][2] );</p>
+<p class=textpreword>   frustum[5][0] /= t;</p>
+<p class=textpreword>   frustum[5][1] /= t;</p>
+<p class=textpreword>   frustum[5][2] /= t;</p>
+<p class=textpreword>   frustum[5][3] /= t;</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Ууууф. Многовато. Как-то не очень похоже, что из-за этого программа 
+  будет работать быстрее, да? Будет, поверьте. Нам придется вызывать эту функцию 
+  только один раз для кадра, так что не волнуйтесь из-за этих громоздких функций 
+  типа sqrt() и вообще математики.</p>
+<p class=textword>&nbsp; </p>
+<p class=head3word>Точка лежит в пирамиде?</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Хорошо, мы наконец-то получили уравнения плоскостей, как же 
+  мы будем проверять, видим объект или нет? Давайте начнем с одной точки.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Учитывая то, что мы теперь знаем о плоскостях и точках, мы можем 
+  делать следующий вывод: </p>
+<p class=textword>&nbsp; </p>
+<p class=textword><i>Точка в пирамиде, если она находится перед всеми плоскостями 
+  одновременно.</i></p>
+<p class=textword>&nbsp; </p>
+<p class=textword> [ Это так, потому что наши 6 векторов нормалей 
+  вида {A,B,C} лежат в пирамиде (т.е. все плоскости 
+  как бы смотрят внутрь пирамиды). Если бы было наоборот, то точка бы лежала ЗА 
+  всеми плоскостями.]</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Уже неплохо! Это и есть основа всех последующих вычислений. 
+  Следующий шаг – понять, находится ли точка перед плоскостью или нет. Для этого 
+  нам надо посчитать расстояние от точки плоскости. Если расстояние положительно, 
+  значит, точка лежит перед плоскостью, отрицательна – значит за плоскостью. </p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Вот - формула для вычисления расстояния точки до плоскости:</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>distance = A * X + B * Y + C * Z + D</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Где A, B, C, 
+  и D - четыре числа, которые определяют плоскость и X, Y, и Z - 
+  координаты точки. </p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Теперь мы можем написать функцию для проверки  - видима точка 
+  или нет.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>bool PointInFrustum( float x, float y, float 
+  z )</p>
+<p class=textpreword>{</p>
+<p class=textpreword>   int p;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>   for( p = 0; p &lt; 6; p++ )</p>
+<p class=textpreword>      if( frustum[p][0] * x + frustum[p][1] 
+  * y + frustum[p][2] * z + frustum[p][3] &lt;= 0 )</p>
+<p class=textpreword>         return false;</p>
+<p class=textpreword>   return true;</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Функция просто пробегает в цикле по всем плоскостям, каждый 
+  раз считая расстояние от точки до каждой из плоскостей. Если точка не удовлетворяет 
+  условию хоть для одной плоскости, мы можем смело выходить и возвращать FALSE, так что в среднем тело цикла будет выполняться три раза.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Просто, не так ли?</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Кстати, эта функция выкидывает все точки, находящиеся НА плоскостях 
+  – мне так больше нравится. Если вы не хотите их выкидывать, измените оператор 
+  &quot;&lt;=&quot; на &quot;&lt;&quot;.</p>
+<p class=textword>&nbsp; </p>
+<p class=head3word>Ограничивающие тела</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Перед тем, как мы перейдем к более сложным проверкам, давайте 
+  поговорим об ограничивающих телах.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Например, пусть у вас есть объект, состоящий из множества полигонов 
+  (т.е. многоугольников). В принципе, мы можем вызывать функцию PointInFrustum() для каждой вершины в модели, но сама эта проверка 
+  будет занимать больше времени, чем простая прорисовка всех объектов.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>[Вообще-то, этот метод и не всегда бы правильно работал – если 
+  бы объект включает себя целиком пирамиду, то все точки объекта были бы вне пирамиды, 
+  но объект пришлось бы рисовать все равно.]</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Что же мы делаем? Представьте сферу, которая включает в себя 
+  целиком объект. Теперь, вместо того, чтобы проверять на видимость сам объект, 
+  давайте лучше проверим эту сферу. Если хоть какая-то часть сферы видна, мы рисуем 
+  весь объект (саму сферу мы, конечно, не рисуем).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Поэтому мы можем решать: проверять каждую вершину из объекта 
+  или проверять одну, описанную вокруг объекта. Конечно, сфера может находиться 
+  в пирамиде, когда сам объект невидим, но пусть уж с этим OpenGL 
+  разбирается.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Такая сфера называется ограничивающей сферой. Это один из примеров 
+  ограничивающих тел. Другое распространенное ограничивающее тел – это параллелепипед. 
+  Вы можете использовать тела любых других форм, но сферы и параллелепипеды обычно 
+  самые удобные.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Идея состоит в том, чтобы вычислить ограничивающую сферу для 
+  каждого объекта, как только мы его загружаем в память. Чтобы хранить в памяти 
+  сферу, нужно хранить точку и ее радиус, всего четыре числа. Для куба – то же 
+  самое, для параллелепипеда нужно 8 точек, но это все равно проще, чем проверять 
+  сложный объект.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Так что же лучше, куб или сфера? Когда как. Мы вернемся к этому 
+  вопросу позже.</p>
+<p class=textword>&nbsp; </p>
+<p class=head3word>Эта сфера в пирамиде?</p>
+<p class=textword><b> &nbsp; </b></p>
+<p class=textword>Теперь мы знаем – надо проверять сферу, но как? Да почти так 
+  же, как точку:</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Here you go:</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>bool SphereInFrustum( float x, float y, 
+  float z, float radius )</p>
+<p class=textpreword>{</p>
+<p class=textpreword>   int p;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>   for( p = 0; p &lt; 6; p++ )</p>
+<p class=textpreword>      if( frustum[p][0] * x + frustum[p][1] 
+  * y + frustum[p][2] * z + frustum[p][3] &lt;= -radius )</p>
+<p class=textpreword>         return false;</p>
+<p class=textpreword>   return true;</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>В качестве параметров мы передаем X, 
+  Y и Z центра сферы и ее радиус. 
+  Единственное отличие в самой проверке от проверки точки – то, что мы сравниваем 
+  расстояние с радиусом, а не с нулем.</p>
+<p class=textword>&nbsp; </p>
+<p class=head3word>Забавный вариант</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Посмотрите на этот вариант функции SphereInFrustum():</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>float SphereInFrustum( float x, float y, 
+  float z, float radius )</p>
+<p class=textpreword>{</p>
+<p class=textpreword>   int p;</p>
+<p class=textpreword>   float d;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>   for( p = 0; p &lt; 6; p++ )</p>
+<p class=textpreword>   {</p>
+<p class=textpreword>      d = frustum[p][0] * x + frustum[p][1] 
+  * y + frustum[p][2] * z + frustum[p][3];</p>
+<p class=textpreword>      if( d &lt;= -radius )</p>
+<p class=textpreword>         return 0;</p>
+<p class=textpreword>   }</p>
+<p class=textpreword>   return d + radius;</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Это почти то же самое, только мы возвращаем 0, если сфера вне 
+  пирамиды, иначе мы возвращаем радиус плюс расстояние до последней проверенной 
+  плоскости.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Зачем нам это нужно? Последняя плоскость пирамиды – это <i>ближняя</i> 
+  грань пирамиды, поэтому мы сразу получаем расстояние от камеры до объекта.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Это здорово, потому что мы можем использовать это, чтобы изменять 
+  уровень детализации. Если объект очень близко, нам нужно будет рисовать очень 
+  много полигонов, а если он далеко, то бы обойдемся и менее детальным изображением. 
+  И это все не будет тратить дополнительного времени – все равно мы это вычисляем!</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword> [Заметьте, 
+  что просто использовать расстояние до объекта, чтобы регулировать детализацию 
+  - это не всегда правильно. Может, вам захочется учитывать и радиус сферы тоже. 
+  Например, очень большой объект, даже если он находится далеко, придется рисовать 
+  тщательно.]</p>
+<p class=textword>&nbsp; </p>
+<p class=head3word>Этот параллелепипед в пирамиде?</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Точка не может превосходить по размеру пирамиду, да и тест со 
+  сферой работает правильно, даже если эта сфера включает в себя целиком пирамиду. 
+  Но с параллелепипедом будет немного сложнее.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Мы, конечно, можем проверить все 8 вершин параллелепипеда, но 
+  если он включает в себя целиком пирамиду, то все точки будут вне пирамиды, но 
+  объект будет виден.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>В данном примере мы возьмем частный случай параллелепипеда – 
+  куб. </p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Вот это - (и это работает, даже если пирамида целиком внутри 
+  куба):</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>bool CubeInFrustum( float x, float y, float 
+  z, float size )</p>
+<p class=textpreword>{</p>
+<p class=textpreword>   int p;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>   for( p = 0; p &lt; 6; p++ )</p>
+<p class=textpreword>   {</p>
+<p class=textpreword>      if( frustum[p][0] * (x - size) + frustum[p][1] 
+  * (y - size) + frustum[p][2] * (z - size) + frustum[p][3] &gt; 0 )</p>
+<p class=textpreword>         continue;</p>
+<p class=textpreword>      if( frustum[p][0] * (x + size) + frustum[p][1] 
+  * (y - size) + frustum[p][2] * (z - size) + frustum[p][3] &gt; 0 )</p>
+<p class=textpreword>         continue;</p>
+<p class=textpreword>      if( frustum[p][0] * (x - size) + frustum[p][1] 
+  * (y + size) + frustum[p][2] * (z - size) + frustum[p][3] &gt; 0 )</p>
+<p class=textpreword>         continue;</p>
+<p class=textpreword>      if( frustum[p][0] * (x + size) + frustum[p][1] 
+  * (y + size) + frustum[p][2] * (z - size) + frustum[p][3] &gt; 0 )</p>
+<p class=textpreword>         continue;</p>
+<p class=textpreword>      if( frustum[p][0] * (x - size) + frustum[p][1] 
+  * (y - size) + frustum[p][2] * (z + size) + frustum[p][3] &gt; 0 )</p>
+<p class=textpreword>         continue;</p>
+<p class=textpreword>      if( frustum[p][0] * (x + size) + frustum[p][1] 
+  * (y - size) + frustum[p][2] * (z + size) + frustum[p][3] &gt; 0 )</p>
+<p class=textpreword>         continue;</p>
+<p class=textpreword>      if( frustum[p][0] * (x - size) + frustum[p][1] 
+  * (y + size) + frustum[p][2] * (z + size) + frustum[p][3] &gt; 0 )</p>
+<p class=textpreword>         continue;</p>
+<p class=textpreword>      if( frustum[p][0] * (x + size) + frustum[p][1] 
+  * (y + size) + frustum[p][2] * (z + size) + frustum[p][3] &gt; 0 )</p>
+<p class=textpreword>         continue;</p>
+<p class=textpreword>      return false;</p>
+<p class=textpreword>   }</p>
+<p class=textpreword>   return true;</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>В качестве аргументов мы передаем функции координаты центра 
+  куба и расстояние, которое равно половине ребра куба (по аналогии со сферой). 
+  Затем мы проверяем каждую вершину куба с каждой плоскостью пирамиды. Как только 
+  мы находим вершину, находящуюся спереди какой-то из плоскостей, мы сразу переходим 
+  к следующей плоскости, экономя время. Если мы проверили, все восемь вершин и 
+  оказалось, что они находятся за плоскостью, мы сразу можем выходить, потому 
+  что куб явно невидим. Если оказалось, что перед каждой плоскостью пирамиды находится 
+  хотя бы по одной вершине куба, значит, он видим.<i></i></p>
+<p class=textword><i> &nbsp; </i></p>
+<p class=textword><i>ПРИМЕЧАНИЕ: Функция, приведенная выше, будет иногда выдавать 
+  ошибочные результаты: </i><i>TRUE вместо </i><i>FALSE, 
+  т.е. объект будет виден, хотя он вне пирамиды. Это происходит, когда все вершины 
+  куба находятся не за плоскостями пирамиды, но они все равно вне пирамиды. Поэтому 
+  иногда вам придется прорисовывать ненужные объекты. Но обычно такое расположение 
+  встречается достаточно редко, и, соответственно, не сильно сказывается на общей 
+  скорости.</i></p>
+<p class=textword><i> &nbsp; </i></p>
+<p class=textword><i>Чтобы проверка была абсолютно правильной, нужно также проверять 
+  расположение 8 вершин пирамиды относительно шести граней ограничивающего параллелепипеда. 
+  Если плоскости параллелепипеда располагаются параллельно осям, то можно обойтись 
+  простыми проверками больше-меньше  вместо проверок плоскостей параллелепипеда. 
+  В любом случае, это будет упражнением для менее ленивых, чем я ;-)</i></p>
+<p class=textword><i> &nbsp; </i></p>
+<p class=textword> <img width=258 height=258 src="nehex2-1.gif"> </p>
+<p class=textword><i> &nbsp; </i></p>
+<p class=head3word>Смешанные тесты</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Функции, приведенные выше, проверяли, находится ли хоть какая-нибудь 
+  часть ограничивающего тела в пирамиде или нет. Эти функции подходят для большинства 
+  случаев, но иногда нужно знать: находится ли ограничивающее тело целиком в пирамиде 
+  или только частично.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Зачем это нужно? Например, пусть у вас есть ограничивающее тело, 
+  включающее в себя много других ограничивающих тел, они в свою очередь тоже включают 
+  себя ограничивающие тела, и так далее. Если вы проверите какое-то большое ограничивающее 
+  тело, и оно окажется вне пирамиды, значит, все внутренние тела тоже не видны, 
+  значит, их проверять не надо. Если тело полностью внутри пирамиды, то и все 
+  внутренние тела тоже внутри, и опять их проверять не требуется. То есть, мы 
+  будем рекурсивно проверять внутренние объекты только в случае, если тело находится 
+  частично в пирамиде.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Вот версия функции SphereInFrusum(), 
+  которая возвращает 0, если сфера полностью вне пирамиды, 1 если частично и 2 
+  или полностью внутри.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>int SphereInFrustum( float x, float y, float 
+  z, float radius )</p>
+<p class=textpreword>{</p>
+<p class=textpreword>   int p;</p>
+<p class=textpreword>   int c = 0;</p>
+<p class=textpreword>   float d;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>   for( p = 0; p &lt; 6; p++ )</p>
+<p class=textpreword>   {</p>
+<p class=textpreword>      d = frustum[p][0] * x + frustum[p][1] 
+  * y + frustum[p][2] * z + frustum[p][3];</p>
+<p class=textpreword>      if( d &lt;= -radius )</p>
+<p class=textpreword>         return 0;</p>
+<p class=textpreword>      if( d &gt; radius )</p>
+<p class=textpreword>         c++;</p>
+<p class=textpreword>   }</p>
+<p class=textpreword>   return (c == 6) ? 2 : 1;</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Как и в предыдущих функциях, мы выходим, если сфера находится 
+  полностью за какой-либо из плоскостей, но теперь мы еще проверяем, пересекает 
+  ли она эту плоскость. Если нет, то мы просто прибавляем единицу к счетчику. 
+  Тогда в конце мы можем просто проверить – если сфера не пересекает ни одну из 
+  плоскостей, т.е. счетчик равен шести, то сфера полностью внутри пирамиды. </p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Вот версия CubeInFrustum(), делающая 
+  то же самое.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>int CubeInFrustum( float x, float y, float 
+  z, float size )</p>
+<p class=textpreword>{</p>
+<p class=textpreword>   int p;</p>
+<p class=textpreword>   int c;</p>
+<p class=textpreword>   int c2 = 0;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>   for( p = 0; p &lt; 6; p++ )</p>
+<p class=textpreword>   {</p>
+<p class=textpreword>      c = 0;</p>
+<p class=textpreword>      if( frustum[p][0] * (x - size) + frustum[p][1] 
+  * (y - size) + frustum[p][2] * (z - size) + frustum[p][3] &gt; 0 )</p>
+<p class=textpreword>         c++;</p>
+<p class=textpreword>      if( frustum[p][0] * (x + size) + frustum[p][1] 
+  * (y - size) + frustum[p][2] * (z - size) + frustum[p][3] &gt; 0 )</p>
+<p class=textpreword>         c++;</p>
+<p class=textpreword>      if( frustum[p][0] * (x - size) + frustum[p][1] 
+  * (y + size) + frustum[p][2] * (z - size) + frustum[p][3] &gt; 0 )</p>
+<p class=textpreword>         c++;</p>
+<p class=textpreword>      if( frustum[p][0] * (x + size) + frustum[p][1] 
+  * (y + size) + frustum[p][2] * (z - size) + frustum[p][3] &gt; 0 )</p>
+<p class=textpreword>         c++;</p>
+<p class=textpreword>      if( frustum[p][0] * (x - size) + frustum[p][1] 
+  * (y - size) + frustum[p][2] * (z + size) + frustum[p][3] &gt; 0 )</p>
+<p class=textpreword>         c++;</p>
+<p class=textpreword>      if( frustum[p][0] * (x + size) + frustum[p][1] 
+  * (y - size) + frustum[p][2] * (z + size) + frustum[p][3] &gt; 0 )</p>
+<p class=textpreword>         c++;</p>
+<p class=textpreword>      if( frustum[p][0] * (x - size) + frustum[p][1] 
+  * (y + size) + frustum[p][2] * (z + size) + frustum[p][3] &gt; 0 )</p>
+<p class=textpreword>         c++;</p>
+<p class=textpreword>      if( frustum[p][0] * (x + size) + frustum[p][1] 
+  * (y + size) + frustum[p][2] * (z + size) + frustum[p][3] &gt; 0 )</p>
+<p class=textpreword>         c++;</p>
+<p class=textpreword>      if( c == 0 )</p>
+<p class=textpreword>         return 0;</p>
+<p class=textpreword>      if( c == 8 )</p>
+<p class=textpreword>         c2++;</p>
+<p class=textpreword>   }</p>
+<p class=textpreword>   return (c2 == 6) ? 2 : 1;</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Эта функция проверяет восемь вершин относительно каждой из граней, 
+  считая, сколько из вершин находятся перед гранью. Если нет таких вершин, то 
+  мы можем сразу выходить, т.к. куб находится полностью вне пирамиды. Если все 
+  вершины находятся перед плоскостью, мы увеличиваем счетчик и в конце его сравниваем 
+  с 6. </p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Можно также возвращать байт – каждый бит отвечает за какую-то 
+  плоскость пирамиды. Устанавливаем бит в единицу, если тело полностью находится 
+  перед соответствующей плоскостью, и оставить бит равным нулю в противном случае. 
+  Если в конце этот байт равен нулю, значит, тело вне пирамиды. Если он равен 
+  255, значит,  , считая, сколько из вершин находятся 
+  перед гранью. ьюроверяем,тело полностью внутри пирамиды. Иначе – только 
+  частично внутри.</p>
+<p class=textword>&nbsp; </p>
+<p class=head3word>Сферы ПРОТИВ параллелепипедов</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Голосов за использование ограничивающих сфер примерно столько 
+  же, сколько за параллелепипеды. Но мне кажется, что лучше использовать сферы, 
+  когда это возможно. Вот почему:</p>
+<p class=textword>&nbsp;  </p>
+<p class=textwordni style='margin-left:36.0pt;tab-stops:list 36.0pt'> 
+  - 
+   Проверка сферы на видимость более правильная, чем у параллелепипеда 
+  – они никогда не возвращает неправильного значения.</p>
+<p class=textwordni style='margin-left:36.0pt;tab-stops:list 36.0pt'> 
+  - 
+   Проверка сферы проходит быстрее всего: примерно 3 операции сравнения, 
+  тогда как в случае с кубом это как минимум 6 сравнений, а как максимум – все 
+  48!</p>
+<p class=textwordni style='margin-left:36.0pt;tab-stops:list 36.0pt'> 
+  - 
+   Если объект вращается вокруг центра ограничивающей сферы, сферу 
+  пересчитывать не надо. А вот если мы ограничиваем объект кубом, то некоторые 
+  части объекта могут «вылезти» за пределы куба.</p>
+<p class=textwordni style='margin-left:36.0pt;tab-stops:list 36.0pt'> 
+  - 
+   Сфера занимает меньше памяти. Конечно, если вы используете куб, 
+  то вы тоже можете обойтись четырьмя числами, но вот в случае с параллелепипедом 
+  вам нужно будет уже 8 чисел.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Правда, у сфер тоже есть один недостаток. Представьте, что объект 
+  длинный и тонкий, как кусок провода. Ограничивающую сферу придется строить очень 
+  большую, будет много пустого места в сфере. Если у вас будет много таких объектов, 
+  то вам придется прорисовывать много ненужного.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Обойти это можно несколькими способами. Один из них – это использовать 
+  длинный тонкий ограничивающий параллелепипед вместо сферы. Пустого места в ограничивающем 
+  теле будет мало, правда, и проверка займет больше времени.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Другой способ – это разбить объект на множество маленьких кусочков, 
+  и для каждого из них создать собственную ограничивающую сферу. И вообще, вы 
+  можете применять этот способ, если у вас есть просто большой или сложный объект.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Есть еще один способ – не разбивать объект на части, а определить 
+  несколько ограничивающих сфер для него. Если хоть одна будет видна, рисуем весь 
+  объект. Так как сферы в этом случае могут перекрываться, ускорит эта проверка 
+  весь процесс или нет, зависит от объекта.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>В общем, решение за вами. Может, вам захочется использовать 
+  некую комбинацию методов.</p>
+<p class=textword>&nbsp; </p>
+<p class=head3word>Испытание Треугольников и Других Многоугольников</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Меня часто спрашивают, как проверить принадлежность многоугольника 
+  пирамиде. Действительно, это то же самое, что и CubeInFrustum () , но для произвольного числа точек. Действуем 
+  точно так же: если все точки находятся за какой-нибудь плоскостью пирамиды, 
+  значит, многоугольник невидим (конечно, мы предполагаем, что многоугольники 
+  выпуклые).</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword> [Примечание: Иногда такая функция возращает TRUE вместо FALSE – я объяснял это в CubeInFrustum()]</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Вот функция:</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>bool PolygonInFrustum( int numpoints, POINT* 
+  pointlist )</p>
+<p class=textpreword>{</p>
+<p class=textpreword>   int f, p;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>   for( f = 0; f &lt; 6; f++ )</p>
+<p class=textpreword>   {</p>
+<p class=textpreword>      for( p = 0; p &lt; numpoints; p++ 
+  )</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>         if( frustum[f][0] * pointlist[p].x 
+  + frustum[f][1] * pointlist[p].y + frustum[f][2] * pointlist[p].z + frustum[f][3] 
+  &gt; 0 )</p>
+<p class=textpreword>            break;</p>
+<p class=textpreword>      }</p>
+<p class=textpreword>      if( p == numpoints )</p>
+<p class=textpreword>         return false;</p>
+<p class=textpreword>   }</p>
+<p class=textpreword>   return true;</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>В качестве аргумента мы передаем функции количество проверяемых 
+  точек и указатель на сам массив точек (структура POINT 
+  в данном случае должна содержать координаты X, Y и Z, тогда как существующая структура 
+  содержит только две координаты). Мы проверяем расположение точек относительно 
+  каждой из граней пирамиды и обрываем проверку плоскости, если какая-то из точек 
+  находится перед текущей плоскостью. Если все точки находятся за какой-либо из 
+  граней, мы сразу же возвращаем FALSE. Если в конце оказывается, 
+  что перед каждой из плоскостей находится хотя бы по точке, то многоугольник 
+  потенциально видим.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword> [Конечно, у этой функции есть свои применения, 
+  но в играх глупо проверять каждый многоугольник на видимость, легче предоставить 
+  это OpenGL. Лучше браковать целые группы многоугольников 
+  одним тестом. ]</p>
+<p class=textword>&nbsp; </p>
+<p class=head3word>Оптимизация</p>
+<p class=textword><b> &nbsp; </b></p>
+<p class=textword>Вы можете проделать следующие оптимизации, правда, неясно, будет 
+  ли заметна разница:</p>
+<p class=textwordni style='margin-left:36.0pt;tab-stops:list 36.0pt'> 
+  - 
+   Вы можете убрать приведение уравнений плоскостей к нормальному 
+  виду в ExtractFrustum(). Тогда полученные расстояния 
+  от точек до плоскостей будут отличаться от настоящих ровно в несколько раз. 
+  Тесты точки и параллелепипеда будут работать правильно, а тест сферы – нет. 
+  Если вы не используете ограничивающие сферы, вы можете таким образом избежать 
+  выполнения лишних команд, правда, это будет в большинстве случаев незаметно.</p>
+<p class=textwordni style='margin-left:36.0pt;tab-stops:list 36.0pt'> 
+  - 
+   На самом деле функцию ExtractFrustum() 
+  необходимо вызывать, только если положение камеры изменилось. Если от кадра 
+  к кадру ваши матрицы PROJECTION и MODELVIEW не меняются, лучше не пересчитывать уравнения плоскостей.</p>
+<p class=textwordni style='margin-left:36.0pt;tab-stops:list 36.0pt'> 
+  - 
+   Попробуйте развернуть циклы в функциях проверки.</p>
+<p class=textword>&nbsp; </p>
+<p class=head3word>Пример</p>
+<p class=textword>
+<a href="nehex2.zip"
+onmouseover=" return event_over(this,this)  "
+onmouseout=" return event_out(this) ">
+<font class="link"><b>nehex2.zip</b></font></a>
+<font class="info">(48 Kb)</font>
+</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Клавиши управления в примере:</p>
+<p class=textword><b> &nbsp; </b></p>
+<p class=textword><b>Esc </b>- Выход </p>
+<p class=textword><b>Up </b>– Переместить камеру вперед</p>
+<p class=textword><b>Стрелка</b> <b>вниз</b> – Переместить камеру назад</p>
+<p class=textword><b>Стрелка влево</b> - Повернуть камеру налево</p>
+<p class=textword><b>Стрелка </b>в<b>право</b> - Повернуть камеру направо</p>
+<p class=textword><b>U</b> - Наклонить камеру вверх </p>
+<p class=textword><b>D</b> - Наклонить камеру вниз </p>
+<p class=textword><b>Keypad +</b> - Добавить объект (максимум 1000)</p>
+<p class=textword><b>Keypad -</b> - Убрать объект (минимум один) </p>
+<p class=textword><b>W -</b> Увеличить угол просмотра (FOV)</p>
+<p class=textword><b>T –</b> Уменьшить угол просмотра 
+  (FOV)</p>
+<p class=textword><b>G -</b> Включить/выключить сетку</p>
+<p class=textword><b>M -</b> Изменить режим (объекты могут 
+  быть точками, сферами и кубами)</p>
+<p class=textword><b>C -</b> Включить/выключить отсечение 
+  по пирамиде видимости</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Примечания к примеру: </p>
+<p class=textwordni style='margin-left:36.0pt;tab-stops:list 36.0pt'>
+  -
+  Этот исходный текст основан на NeHe 
+  Production’s OpenGL tutorial (nehe.gamedev.net), 
+  и я старался сделать свой исходный код похожим на код NeHe.</p>
+<p class=textwordni style='margin-left:36.0pt;tab-stops:list 36.0pt'> 
+  - 
+   Вы, вероятно, заметили, что в режиме кубов программа работает 
+  быстрее. Это не из-за проверки пирамиды, это потому, что кубы легче рисовать.</p>
+<p class=textwordni style='margin-left:36.0pt;tab-stops:list 36.0pt'> 
+  - 
+   Включите отсечение и попробуйте разные значения FOV (т.е. угла обзора), и чем больше ваша пирамида, тем больше 
+  объектов надо прорисовывать. </p>
+<p class=textwordni style='margin-left:36.0pt;tab-stops:list 36.0pt'> 
+  - Главный цикл просто прокручивает все объекты. Было бы лучше хранить 
+  объекты в octree (восьмеричное дерево) или использовать 
+  какой-нибудь другой метод организации памяти, но все это вы сделаете сами.</p>
+<p class=textword>&nbsp; </p>
+
+<p class="textnoalign" align="right">
+<font color="#0000A0"><b> © Mark Morley </b></b></font>
+</p>  
+
+</p>
+
+</div>
+<div id="end">
+
+          <p><a href="http://pmg.org.ru/"
+			onmouseover=" return event_over(this,'Программирование магических игр')  "
+			onmouseout=" return event_out(this) "><font class="link"><b>PMG</b></font></a> 
+            <font class="comment">&nbsp;18 августа 2004&nbsp;(c)&nbsp;</font> 
+        <a href="mailto:bessmelt@academ.org"
+	onmouseover=" return event_over(this,'Почта переводчику')  " 
+	onmouseout=" return event_out(this) "> <font class="link"><b>Bessmeltsev Mikhail</b></font></a> 
+          </p>
+</div>
+</center>
+
+<script language="JavaScript">
+<!--
+form_print();
+//-->
+</script>
+
+</body>
+</html>
