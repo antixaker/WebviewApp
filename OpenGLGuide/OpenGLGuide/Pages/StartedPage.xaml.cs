@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-using Xamarin.Forms;
+﻿using Xamarin.Forms;
 using OpenGLGuide.ViewModels;
 
 namespace OpenGLGuide.Pages
@@ -14,7 +11,7 @@ namespace OpenGLGuide.Pages
             _mainMenuView.ItemSelected += OnMainMenuViewItemSelected;
         }
 
-        void OnMainMenuViewItemSelected(object sender, SelectedItemChangedEventArgs e)
+        private void OnMainMenuViewItemSelected(object sender, SelectedItemChangedEventArgs e)
         {
             if (e.SelectedItem != null)
             {
@@ -23,7 +20,7 @@ namespace OpenGLGuide.Pages
             }
         }
 
-        void RedirectFromMenuItem(object item)
+        private void RedirectFromMenuItem(object item)
         {
             var vm = BindingContext as StartedViewModel;
             if (vm != null)

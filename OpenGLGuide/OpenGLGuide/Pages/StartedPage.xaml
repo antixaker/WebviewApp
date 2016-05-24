@@ -7,7 +7,7 @@
                     <ViewCell>
                         <StackLayout Orientation="Horizontal" VerticalOptions="Center" Padding="16,0,21,0" Spacing="9" HeightRequest="62">
                             <Image Source="{Binding ImageSource}" HeightRequest="18" WidthRequest="18" HorizontalOptions="Start" VerticalOptions="Center" />
-                            <Label Text="{Binding ItemText}" HorizontalOptions="Start" />
+                            <Label Text="{Binding ItemText}" HorizontalOptions="Start" VerticalOptions="Center" VerticalTextAlignment="Center" />
                             <!--                            <Label HorizontalOptions="EndAndExpand" VerticalTextAlignment="Center" Text="{Binding IsAccordionOpened,Converter={StaticResource BoolToArrowTypeConverter}}" TextColor="White" FontFamily="fontawesome" />-->
                         </StackLayout>
                     </ViewCell>
