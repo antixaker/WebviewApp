@@ -1,0 +1,845 @@
+<!doctype html public "-//w3c//dtd html 3.2 final//ru">
+<html>
+
+<head>
+<meta http-equiv="Content-Type"
+content="text/html; charset=windows-1251">
+<meta name="description"
+content="Переводы по OpenGL, трехмерная графика, игры, мультимедия
+Translations Russian OpenGL
+">
+<meta name="keyword"
+content="Программирование,игры,3D,трехмерная графика,OpenGL,NeHe">
+<meta name="keyword"
+content="programming,C,C++,game,graphics">
+<title>Урок 43. FreeType шрифты в OpenGL.</title>
+<link rel="stylesheet" href="pmg.css" type="text/css">
+</head>
+
+<body bgcolor="#b2d3e1" link="#800080" vlink="#800080">
+<script src='nehe.js' language="javascript">
+<!--
+//-->
+</script>
+
+<center>
+<div id="top">
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+        <td width="20%" align="center" valign="center">
+        <img src="nehelogo.jpg" align="left" hspace="0" width="125" height="50" alt="NeHe Tutorials">
+        </td>
+        <td width="60%" align="center">
+	<a href="index.html"
+	onmouseover=" return event_over(this,'NeHe Ru.')  "
+        onmouseout=" return event_out(this) ">
+        <font class="linksbig">
+        Народный учебник по OpenGL</font></a><br>
+        </td>
+        <td width="20%" align="center" valign="center">
+        <img src="nehe43.jpg" align="right" hspace="0" width="80" height="60" alt="Урок 43. OpenGL">
+        </td>
+    </tr>
+</table>
+</div>
+
+<div id="head">
+<p class="head1">
+Урок 43. FreeType шрифты в OpenGL.</p>
+</div>
+<div id="main" bgcolor="#ADADFF">
+<p class="textnoalign" align="left">
+
+<a href="http://nehe.gamedev.net/data/lessons/lesson.asp?lesson=43" target="_blank"
+onmouseover=" return event_over(this,this)  "
+onmouseout=" return event_out(this) ">
+<font class="link"><b>FreeType Fonts in OpenGL</b></font></a>
+<br>
+</p><p class=textword>&nbsp;  </p>
+<p class=textword>
+  Итак, этот небольшой урок покажет вам, как использовать с OpenGL библиотеку 
+  шрифтов FreeType. Используя библиотеку FreeType мы можем создавать текст со 
+  сглаживанием краев, который выглядит намного лучше, чем текст сделанный с использованием 
+  растровых шрифтов - также нам будет легче поворачивать его и работать с функциями 
+  выбора объектов.
+</p>
+<p class=textword>&nbsp;  </p>
+<p class=head3word>Мотивация</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Сегодня мы будем печатать текст, используя одновременно и растровые 
+  шрифты WGL и шрифты сделанные с помощью FreeType (оба 
+  Arial Black Italic).</p>
+<p class=textword><img src="foo_foo.gif"></p>
+<p class=textword>&nbsp;</p>
+<p class=textword>Основная проблема состоит в том, что используемые растровые 
+  шрифты в OpenGL по определению бинарные изображения. Смысл этого в том, что 
+  растровые изображения в OpenGL имеют только один бит на один пиксель. Если вы 
+  будете увеличивать текст, используя WGL, результат будет похож на этот:</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword><img width=185 height=84 src="wgl.gif"></p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Поскольку растры бинарные, в них нет оттенков серого цвета, 
+  они показывают только текст.</p>
+<p class=textword>&nbsp;</p>
+<p class=textword>К счастью очень легко сделать прилично смотрящиеся шрифты, используя 
+  GNU FreeType library. Кстати FreeType использовали в Blizzard для вывода шрифтов 
+  в их играх, так что вы знаете всю прелесть этой библиотеки.</p>
+<p class=textword>&nbsp;</p>
+<p class=textword>Вот текст, который я создал при помощи FreeType Library.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword><img width=196 height=85 src="free.gif"></p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Вы можете видеть, что здесь есть оттенки серого цвета на углах 
+  текста; это типичный признак шрифта со сглаживанием, оттенки серого цвета делают 
+  текст гладким в независимости от расстояния.</p>
+<p class=textword>&nbsp;  </p>
+<p class=head3word>Создание программы.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Первый шаг, который мы должны сделать, это получить копию GNUFreeType 
+  library. Идите по адресу  http://gnuwin32.sourceforge.net/packages/freetype.htm 
+  и загрузите бинарные и файлы для разработчиков. Когда вы установите ее, прочитайте 
+  лицензионное соглашение, где написано, что если вы используете FreeType в вашей 
+  программе, вы должны отметить разработчиков, где-нибудь в вашей документации.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Сейчас нам нужен MSVC, чтобы использовать FreeType. Итак, создайте 
+  новый проект как показано в первом уроке, но когда нажмете Project-&gt;Setting-&gt;Link 
+  будьте, уверены, что вы добавили libfreetype.lib в Object Modules /libraries 
+  вместе c opengl32.lib, glu32.lib и glaux.lib (если нужно).</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Следующее что нам нужно это добавить директорию FreeType library в Tools-&gt;Options-&gt;Directories. Под &quot;Show Directories 
+  For&quot; выберите &quot;Include Files&quot;, затем два раза кликните на пустой 
+  линии вверху листа каталогов, после вашего щелчка по кнопке &quot;...&quot; 
+  появится окно, в котором вы можете выбрать директорию. В этом случае добавьте C:\PROGRAM FILES\GNUWIN32\INCLUDE\FREETYPE2 и 
+  C:\PROGRAM FILES\GNUWIN32\INCLUDE. В список используемых директорий. 
+  Теперь под &quot;Show Directories For&quot; выберите &quot;Library Files&quot;, и добавьте C:\PROGRAM 
+  FILES\GNUWIN32\LIB.</p>
+<p class=textword>&nbsp;  </p>    
+<p class=textword>В этой точке мы должны быть готовы к компиляции программ используя 
+  FreeType, но они не захотят запускать пока не получат доступа к freetype-6.dll. 
+  Эта библиотека лежим в каталоге GNUWIN32\BIN, и если вы запихнете ее, куда-нибудь 
+  где все ваши программы смогут видеть её (Program Files\Microsoft Visual Studio\VC98\Bin 
+  хороший вариант), вы сможете запускать программы использующие FreeType.  Но 
+  помните то, что если вы будете распространять программу, которая использует 
+  FreeType, вы должны будете также распространять копии этой DLL с ней.</p>
+<p class=textword>&nbsp;  </p>    
+<p class=textword>
+  Наконец то, теперь мы можем начать писать код. Я решил работать с уроком 13, 
+  поэтому скачайте пример к этому уроку, если у вас нет его. Скопируйте lesson13.cpp 
+  в директорию вашего проекта и добавьте файл в проект.
+</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Сейчас добавьте и создайте два новых файла:&quot;freetype.cpp&quot; 
+  и &quot;freetype.h&quot;. Мы поместим все наши функции, которые специфичны для 
+  FreeType в эти файлы, и тогда немного изменим lesson13.cpp , чтобы показать 
+  написанные функции. Когда мы закончим, у нас будет созданное очень простое приложение 
+  OpenGL FreeType library, которое теоретически может быть использовано в любом 
+  OpenGL проекте.
+</p>
+<p class=textword>&nbsp;  </p>  
+<p class=textword>Начнём с freetype.h.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Обычно сначала мы подключаем заголовочные файлы FreeType и OpenGL. 
+  Также мы подключим некоторые части Standart Template Library, включая STLовские 
+  классы обработчики прерываний, которые сделают отладку приложения проще.</p>
+<p class=textword>&nbsp;</p>
+<p class=textpreword>#ifndef FREE_NEHE_H</p>
+<p class=textpreword>#define FREE_NEHE_H</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>// FreeType заголовочные файлы</p>
+<p class=textpreword>#include &lt;ft2build.h&gt;</p>
+<p class=textpreword>#include &lt;freetype/freetype.h&gt;</p>
+<p class=textpreword>#include &lt;freetype/ftglyph.h&gt;</p>
+<p class=textpreword>#include &lt;freetype/ftoutln.h&gt;</p>
+<p class=textpreword>#include &lt;freetype/fttrigon.h&gt;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>// OpenGL заголовочные файлы</p>
+<p class=textpreword>#include &lt;windows.h&gt;                    
+  // (GL'у это нужно)</p>
+<p class=textpreword>#include &lt;GL/gl.h&gt;</p>
+<p class=textpreword>#include &lt;GL/glu.h&gt;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>// Некоторые заголовки STL</p>
+<p class=textpreword>#include &lt;vector&gt;</p>
+<p class=textpreword>#include &lt;string&gt;</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>// Использование STL библиотеки исключений увеличивает шансы</p>
+<p class=textpreword>// на то, что другой человек будет корректно отлавливать 
+  посылаемые нами исключения.</p>
+<p class=textpreword>#include &lt;stdexcept&gt;</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>// MSVC будет выплевывать все сорта бесполезных предупреждений, 
+  если</p>
+<p class=textpreword>// вы создаете векторы строк, эта pragma отключает их</p>
+<p class=textpreword>#pragma warning(disable: 4786)</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Мы поместим информацию нужную каждому шрифту в структуру (это 
+  облегчит управление несколькими шрифтами). Как мы видели в уроке 13, при создании 
+  шрифта с WGL генерировался набор последовательных списков отображения. Это изящно, 
+  потому что мы можем вызывать glCallLists чтобы напечать текст, при помощи лишь 
+  одной команды. Когда мы создаем шрифт, мы делаем аналогично, что обозначает 
+  то, что list_base поле будет хранить первые 128 списков отображения. Поскольку 
+  нам надо использовать текстуры для прорисовки текста, нам также нужно хранилище 
+  для 128 связанных текстур. Последний кусок информации это высота в пикселях 
+  шрифта, который будет создан (это сделает возможным обработку символов перевода 
+  строк в нашей функции печати).</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>//Помещая все в пространство имен, мы можем, не беспокоится 
+  о конфликте с чужим</p>
+<p class=textpreword>// кодом такой распространенной функцией как print</p>
+<p class=textpreword>namespace freetype {</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>// В этом пространстве, даем себе возможность написать только 
+  &quot;vector&quot; вместо &quot;std::vector&quot;</p>
+<p class=textpreword>using std::vector;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>// тоже самое для строки.</p>
+<p class=textpreword>using std::string;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>// Здесь мы храним всю информацию о FreeType шрифте, который 
+  мы хотим создать</p>
+<p class=textpreword>struct font_data {</p>
+<p class=textpreword>  float h;                    // Высота</p>
+<p class=textpreword>  GLuint * textures;          // Идентификатор</p>
+<p class=textpreword>  GLuint list_base;           // 
+  Содержит указатель на список отображения</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // Функция инициализации создаст шрифт с</p>
+<p class=textpreword>  // высотой h из файла fname</p>
+<p class=textpreword>  void init(const char * fname, unsigned 
+  int h);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Освобождаем ресурсы связанные 
+  со шрифтом</p>
+<p class=textpreword>  void clean();</p>
+<p class=textpreword>};</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Последнее что нам нужно это прототип функции печати
+</p>
+<p class=textword>&nbsp;  </p>  
+<p class=textpreword>// Главная функция библиотеки -  она будет печатать</p>
+<p class=textpreword>// текст в окне по координатам X,Y используя Font ft_font.</p>
+<p class=textpreword>// Текущая матрица вида модели также будет применена к тексту</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>void print(const font_data &amp;ft_font, 
+  float x, float y, const char *fmt, ...);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>}                        // Закрываем пространство имен</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>#endif</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>А вот и конец заголовочного файла! Время редактировать freetype.cpp.
+</p>
+<p class=textword>&nbsp;  </p>  
+<p class=textpreword>// Включаем заголовочные файлы</p>
+<p class=textpreword>#include &quot;freetype.h&quot;</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>namespace freetype {</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Мы используем текстуры, чтобы отобразить каждый символ в нашем 
+  шрифте. OpenGL текстуры должны иметь размеры, которые являются степенью двойки, 
+  так что мы должны преобразовать наши растры шрифтов сделанные FreeType в размер 
+  такого типа. Для этого нам нужна следующая функция:
+</p>
+<p class=textword>&nbsp;  </p>  
+<p class=textpreword>// Эта функция возвращает число в степени два, большее, чем 
+  число a</p>
+<p class=textpreword>inline int next_p2 (int a )</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  int rval=1;</p>
+<p class=textpreword>  // rval&lt;&lt;=1 это лучше чем rval*=2; </p>
+<p class=textpreword>  while(rval&lt;a) rval&lt;&lt;=1;</p>
+<p class=textpreword>  return rval;</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Следующее что нам нужно сделать это функцию make_dlist, это 
+  действительно самая главная функция. Она использует FT_Face, который является 
+  объектом, используемым FreeType для сохранения информации о шрифте, и создания 
+  списка отображения, который отвечает за каждый символ.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>// Создает список отображения на базе данного символа</p>
+<p class=textpreword>void make_dlist ( FT_Face face, char ch, 
+  GLuint list_base, GLuint * tex_base ) {</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Первая вещь, которую нам надо 
+  сделать, это вывести наш символ</p>
+<p class=textpreword>  // в растр. Это делается набором команд FreeType</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // Загрузить глифы для каждого символа.</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  if(FT_Load_Glyph( face, FT_Get_Char_Index( 
+  face, ch ), FT_LOAD_DEFAULT ))</p>
+<p class=textpreword>    throw std::runtime_error(&quot;FT_Load_Glyph 
+  failed&quot;);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Поместить глиф в объект.</p>
+<p class=textpreword>  FT_Glyph glyph;</p>
+<p class=textpreword>  if(FT_Get_Glyph( face-&gt;glyph, &amp;glyph 
+  ))</p>
+<p class=textpreword>    throw std::runtime_error(&quot;FT_Get_Glyph 
+  failed&quot;);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Конвертировать глиф в растр.</p>
+<p class=textpreword>  FT_Glyph_To_Bitmap( &amp;glyph, ft_render_mode_normal, 
+  0, 1 );</p>
+<p class=textpreword>  FT_BitmapGlyph bitmap_glyph = (FT_BitmapGlyph)glyph;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // С помощью этой ссылки, получаем 
+  легкий доступ до растра.</p>
+<p class=textpreword>  FT_Bitmap&amp; bitmap=bitmap_glyph-&gt;bitmap;</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword><b>Примечание:</b></p>
+<p class=textword>&quot;Символы - объекты, назначенные по стандарту Unicode, которые 
+  представляют самые маленькие семантические модули языка. Глифы - определенные 
+  формы, которыми символы могут быть представлены. Один символ может прописываться 
+  как несколько глифов: нижний регистр &quot;a&quot;, капительная буква &quot;a&quot; 
+  и специальный символ &quot;a&quot; - это три отдельных глифа. Один глиф может 
+  также представлять многие символы, как в случае &quot;ffi&quot; связи, который 
+  соответствует последовательности трех символов: f, f и i. Для любого символа 
+  имеется заданный по умолчанию глиф и позиционированные данные.&quot;</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Теперь, когда у нас есть растр созданный с помощью FreeType,&nbsp;нам 
+  нужно его наложить на текстуру OpenGL. Важно помнить, что пока OpenGL 
+  использует термин &quot;растр&quot; это подразумевает двоичные рисунки, в FreeType растры сохраняют 8 битов информации на пиксель, так 
+  что FreeType'ские растры смогу сохранять оттенки серого, 
+  которые нам нужны для сглаживания.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>  // Используем нашу вспомогательную функцию для вычисления 
+  ширины и высоты</p>
+<p class=textpreword>  // текстуры для нашего растра.</p>
+<p class=textpreword>  int width = next_p2( bitmap.width );</p>
+<p class=textpreword>  int height = next_p2( bitmap.rows );</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Выделим память для данных текстуры.</p>
+<p class=textpreword>  GLubyte* expanded_data = new GLubyte[ 
+  2 * width * height];</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Поместим данные в расширенный 
+  растр.</p>
+<p class=textpreword>  // Отмечу, что использован двухканальный растр (Один для</p>
+<p class=textpreword>  // канала яркости и один для альфа), но мы будем назначать</p>
+<p class=textpreword>  // обоим каналам одно и тоже значение, которое мы</p>
+<p class=textpreword>  // получим из растра FreeType. </p>
+<p class=textpreword>  // Мы используем оператор ?: для того чтобы поместить 0 
+  в зону вне растра FreeType.</p>
+<p class=textpreword>  for(int j=0; j &lt;height;j++) {</p>
+<p class=textpreword>    for(int i=0; i &lt; width; i++){</p>
+<p class=textpreword>      expanded_data[2*(i+j*width)]= expanded_data[2*(i+j*width)+1] 
+  = </p>
+<p class=textpreword>        (i&gt;=bitmap.width || j&gt;=bitmap.rows) 
+  ?</p>
+<p class=textpreword>        0 : bitmap.buffer[i + bitmap.width*j];</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>  }</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Когда заполнение закончится, мы сможем создать текстуру OpenGL. 
+  Мы включим альфа канал, таким образом, черные куски растра будут прозрачными, 
+  а остальные слегка прозрачные (что должно сделать вывод шрифта правильным на 
+  любом фоне).
+</p>
+<p class=textword>&nbsp;  </p>  
+<p class=textpreword>  // Теперь мы только устанавливаем параметры</p>
+<p class=textpreword>  glBindTexture( GL_TEXTURE_2D, tex_base[ch]);</p>
+<p class=textpreword>  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);</p>
+<p class=textpreword>  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // 
+  Здесь мы создаем текстуру</p>
+<p class=textpreword>  // Помните, что используем 
+  GL_LUMINANCE_ALPHA, чтобы было два альфа канала данных</p>
+<p class=textpreword>&nbsp;</p>
+<p class=textpreword>  glTexImage2D( 
+  GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0,</p>
+<p class=textpreword>    GL_LUMINANCE_ALPHA, 
+  GL_UNSIGNED_BYTE, expanded_data );</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // 
+  После создания текстуры, мы больше не нуждаемся в промежуточных данных.</p>
+<p class=textpreword>  delete 
+  [] expanded_data;</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Мы используем наложение текстуры на четырехугольники для прорисовки 
+  текста. Это обозначает то, что будет легко поворачивать и увеличивать/приближать 
+  текст, и мы также создадим шрифты с текущим цветом OpenGL (ни один из которых 
+  не будет использоваться в растрах).</p>
+<p class=textword>&nbsp;</p>
+<p class=textpreword>  // Создать список отображения</p>
+<p class=textpreword>  glNewList(list_base+ch,GL_COMPILE);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  glBindTexture(GL_TEXTURE_2D,tex_base[ch]);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Вначале мы сдвинем символ вправо 
+  на расстояние между ним и символам до него.</p>
+<p class=textpreword>  glTranslatef(bitmap_glyph-&gt;left,0,0);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Сдвинем вниз в том случае, если 
+  растр уходит вниз строки.</p>
+<p class=textpreword>  // Это истинно только для символов, таких как 'g' или 'y'.</p>
+<p class=textpreword>  glPushMatrix();</p>
+<p class=textpreword>  glTranslatef(0,bitmap_glyph-&gt;top-bitmap.rows,0);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Вычислим какая часть нашей текстуры 
+  будет заполнена пустым пространством.</p>
+<p class=textpreword>  // Мы рисуем только ту часть текстуры, в которой находится 
+  символ, и сохраняем</p>
+<p class=textpreword>  // информацию в переменных x и y, затем, когда мы рисуем 
+  четырехугольник,</p>
+<p class=textpreword>  // мы будем только ссылаться на ту часть текстуры, в которой 
+  непосредственно</p>
+<p class=textpreword>  // содержится символ.</p>
+<p class=textpreword>  float   x=(float)bitmap.width / (float)width,</p>
+<p class=textpreword>  y=(float)bitmap.rows / (float)height;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Рисуем текстурированный четырехугольник.</p>
+<p class=textpreword>  glBegin(GL_QUADS);</p>
+<p class=textpreword>  glTexCoord2d(0,0); glVertex2f(0,bitmap.rows);</p>
+<p class=textpreword>  glTexCoord2d(0,y); glVertex2f(0,0);</p>
+<p class=textpreword>  glTexCoord2d(x,y); glVertex2f(bitmap.width,0);</p>
+<p class=textpreword>  glTexCoord2d(x,0); glVertex2f(bitmap.width,bitmap.rows);</p>
+<p class=textpreword>  glEnd();</p>
+<p class=textpreword>  glPopMatrix();</p>
+<p class=textpreword>  glTranslatef(face-&gt;glyph-&gt;advance.x 
+  &gt;&gt; 6 ,0,0);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Увеличиваем позицию растра, 
+  как если бы это был растровый шрифт.</p>
+<p class=textpreword>  // (Необходимо только, если вы хотите вычислить длину текста)</p>
+<p class=textpreword>  // glBitmap(0,0,0,0,face-&gt;glyph-&gt;advance.x 
+  &gt;&gt; 6,0,NULL);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Завершим создание списка отображения</p>
+<p class=textpreword>  glEndList();</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Следующая функция, которую мы создадим, будет использовать make_dlist, 
+  для создания наборов списков отображения, соответствующих данному файлу шрифта 
+  и высоте пикселя.
+</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>FreeType использует шрифты TrueType, так что неплохо бы найти 
+  какой файл шрифта TrueType. Шрифты TrueType очень распространены, так что вы можете 
+  найти множество сайтов, где вы можете загрузить себе разные шрифты TrueType. 
+  Windows 98 используется такой тип для почти всех шрифтов, так что если вы сможете 
+  найти старый компьютер, использующий эту ОС, вы можете получить все стандартные 
+  шрифты формата TrueType в каталоге windows/fonts.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>void font_data::init(const char * fname, 
+  unsigned int h) {</p>
+<p class=textpreword>  // Выделим память для идентификаторов 
+  текстуры.</p>
+<p class=textpreword>  textures = new GLuint[128];</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  this-&gt;h=h;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Инициализация библиотеки FreeType.</p>
+<p class=textpreword>  FT_Library library;</p>
+<p class=textpreword>  if (FT_Init_FreeType( &amp;library )) 
+  </p>
+<p class=textpreword>    throw std::runtime_error(&quot;FT_Init_FreeType 
+  failed&quot;);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Объект для хранения шрифта.</p>
+<p class=textpreword>  FT_Face face;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Загрузим шрифт из файла. Если 
+  файла шрифта не существует или шрифт битый,</p>
+<p class=textpreword>  // то программа может умереть.</p>
+<p class=textpreword>  if (FT_New_Face( library, fname, 0, &amp;face 
+  )) </p>
+<p class=textpreword>    throw std::runtime_error(&quot;FT_New_Face 
+  failed (there is probably a problem</p>
+<p class=textpreword>                              with your 
+  font file)&quot;);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // По некоторым причинам FreeType 
+  измеряет размер шрифта в терминах 1/64 пикселя.</p>
+<p class=textpreword>  // Таким образом, для того чтобы сделать шрифт выстой h 
+  пикселей, мы запрашиваем размер h*64.</p>
+<p class=textpreword>  // (h &lt;&lt; 6 тоже самое что и h*64)</p>
+<p class=textpreword>  FT_Set_Char_Size( face, h &lt;&lt; 6, 
+  h &lt;&lt; 6, 96, 96);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Здесь попросим OpenGL, чтобы 
+  он выделил память для</p>
+<p class=textpreword>  // всех текстур и списков отображения, которые 
+  нам нужны.  </p>
+<p class=textpreword>  list_base=glGenLists(128);</p>
+<p class=textpreword>  glGenTextures( 128, textures );</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // Создаем списки отображения шрифтов.</p>
+<p class=textpreword>  for(unsigned char i=0;i&lt;128;i++)</p>
+<p class=textpreword>    make_dlist(face,i,list_base,textures);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Уничтожим шрифт.</p>
+<p class=textpreword>  FT_Done_Face(face);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Не нужна и библиотека.</p>
+<p class=textpreword>  FT_Done_FreeType(library);</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Теперь нам нужна функция для удаления текстур и списков отображения 
+  связанных со шрифтом.</p>
+<p class=textword>&nbsp;</p>
+<p class=textpreword>void font_data::clean() {</p>
+<p class=textpreword>  glDeleteLists(list_base,128);</p>
+<p class=textpreword>  glDeleteTextures(128,textures);</p>
+<p class=textpreword>  delete [] textures;</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Ещё у нас осталось две функции, которые нам надо сделать, перед 
+  тем как мы сделаем функцию отображения текста.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>В OpenGL есть две очень удобных функции, glGet возвращает размеры 
+  окна, и glPush/PopAttrib используется для сохранения состояния режимов OpenGL. 
+  Если вы незнакомы с этими функциями, вам лучше посмотреть их описание.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>// Простая функция, в которой сохраняется матрица проекции,</p>
+<p class=textpreword>// затем делаем мировые координаты идентичными с координатами 
+  окна.</p>
+<p class=textpreword>inline void pushScreenCoordinateMatrix() 
+  {</p>
+<p class=textpreword>  glPushAttrib(GL_TRANSFORM_BIT);</p>
+<p class=textpreword>  GLint   viewport[4];</p>
+<p class=textpreword>  glGetIntegerv(GL_VIEWPORT, viewport);</p>
+<p class=textpreword>  glMatrixMode(GL_PROJECTION);</p>
+<p class=textpreword>  glPushMatrix();</p>
+<p class=textpreword>  glLoadIdentity();</p>
+<p class=textpreword>  gluOrtho2D(viewport[0],viewport[2],viewport[1],viewport[3]);</p>
+<p class=textpreword>  glPopAttrib();</p>
+<p class=textpreword>}</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>// Восстановить координаты матрицы проекции.</p>
+<p class=textpreword>inline void pop_projection_matrix() {</p>
+<p class=textpreword>  glPushAttrib(GL_TRANSFORM_BIT);</p>
+<p class=textpreword>  glMatrixMode(GL_PROJECTION);</p>
+<p class=textpreword>  glPopMatrix();</p>
+<p class=textpreword>  glPopAttrib();</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Наша функция печати очень похожа на такую же из Урока 13, но 
+  есть несколько важных различий. Мы разрешаем флаги, которые отражают тот факт, 
+  что, мы используем двухканальные текстуры, а не растр. Нам также нужно выполнить 
+  немного дополнительной работы для обработки символов перевода на новую строку. 
+  Поскольку мы такие добрые самаритяне, мы также заботимся о сохранении и восстановлении 
+  внутренних стеков OpenGL.</p>
+<p class=textword>&nbsp;  </p>  
+<p class=textpreword>
+  // Модифицируем функцию glPrint.</p>
+<p class=textpreword>void print(const 
+  font_data &amp;ft_font, float x, float y, const char *fmt, ...)  {</p>
+<p class=textpreword>        </p>
+<p class=textpreword>  // Мы хотим систему координат, 
+  в которой расстояние измеряется в пикселях.</p>
+<p class=textpreword>  pushScreenCoordinateMatrix();                
+                     </p>
+<p class=textpreword>        </p>
+<p class=textpreword>  GLuint font=ft_font.list_base;</p>
+<p class=textpreword>  // 
+  Сделаем высоту немного больше, что бы оставить место между линиями.</p>
+<p class=textpreword>  float 
+  h=ft_font.h/.63f;                                                 </p>
+<p class=textpreword>  char  
+  text[256];            // Сохраним нашу строку</p>
+<p class=textpreword>  va_list  ap;                
+  // Указатель на лист аргументов</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  if (fmt == NULL)            
+  // Если это не текст</p>
+<p class=textpreword>    *text=0;                  
+  // Тогда ничего не делать</p>
+<p class=textpreword>  else {</p>
+<p class=textpreword>    va_start(ap, fmt);        
+  // Разбор строки на переменные</p>
+<p class=textpreword>    vsprintf(text, fmt, ap);  
+  // И конвертировать символы в числа</p>
+<p class=textpreword>    va_end(ap);               
+  // Результат сохранить в текст</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Разделим текст на строки.</p>
+<p class=textpreword>  const 
+  char *start_line=text;</p>
+<p class=textpreword>  vector&lt;string&gt; 
+  lines;</p>
+<p class=textpreword>  for(const char 
+  *c=text;*c;c++) {</p>
+<p class=textpreword>    if(*c=='\n') 
+  {</p>
+<p class=textpreword>      string line;</p>
+<p class=textpreword>      for(const 
+  char *n=start_line;n&lt;c;n++) line.append(1,*n);</p>
+<p class=textpreword>      lines.push_back(line);</p>
+<p class=textpreword>      start_line=c+1;</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>  if(start_line) 
+  {</p>
+<p class=textpreword>    string line;</p>
+<p class=textpreword>    for(const 
+  char *n=start_line;n&lt;c;n++) line.append(1,*n);</p>
+<p class=textpreword>    lines.push_back(line);</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  glPushAttrib(GL_LIST_BIT 
+  | GL_CURRENT_BIT  | GL_ENABLE_BIT | GL_TRANSFORM_BIT); </p>
+<p class=textpreword>  glMatrixMode(GL_MODELVIEW);</p>
+<p class=textpreword>  glDisable(GL_LIGHTING);</p>
+<p class=textpreword>  glEnable(GL_TEXTURE_2D);</p>
+<p class=textpreword>  glDisable(GL_DEPTH_TEST);</p>
+<p class=textpreword>  glEnable(GL_BLEND);</p>
+<p class=textpreword>  glBlendFunc(GL_SRC_ALPHA, 
+  GL_ONE_MINUS_SRC_ALPHA);      </p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  glListBase(font);</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Поскольку мы используем текстурированные четырехугольники, любые 
+  преобразования, которые мы применяем к матрице вида модели до того как вызвать 
+  glCallLists будут влиять и на текст. Это значит, что есть возможность крутить 
+  или масштабировать наш текст (другое преимущество использования WGL растров). 
+  Самый хороший способ использовать это преимущество было бы оставить текущую 
+  матрицу вида в покое, что допускает любые преобразования, перед тем как функция 
+  print выведет текст. Но поскольку мы используем матрицу вида модели, чтобы установить 
+  позицию текста, это не сработает. Лучшим для нас было бы сохранить копию матрицу, 
+  и применить ее между glTranslate и glCallLists. Это просто сделать, но поскольку 
+  мы рисуем текст используя специальную матрицу проекции, то эффект от воздействия 
+  матрицы вида модели будет отличаться от того, что мы ожидаем увидеть в масштабе 
+  пикселей. Мы бы могли обойти эту проблему, не сбрасывая матрицу проекции в функции 
+  печати. Это вероятно хорошая идея в некоторых случаях, но если вы попробуете 
+  это, то удостоверьтесь, что вы масштабируете шрифты правильным размером (например, 
+  размер 32x32, соответствует размеру 0.01x0.01).</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>  float modelview_matrix[16];     </p>
+<p class=textpreword>  glGetFloatv(GL_MODELVIEW_MATRIX, modelview_matrix);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // На каждой строчке мы сбрасываем 
+  матрицу вида модели</p>
+<p class=textpreword>  // Поэтому строки будут начинаться с правильной позиции.</p>
+<p class=textpreword>  // Отмечу, что сброс надо делать до сдвига вниз на h, поскольку 
+  затем каждый</p>
+<p class=textpreword>  // символ рисуется и это модифицирует текущую матрицу, 
+  поэтому следующий</p>
+<p class=textpreword>  // символ будет нарисован прямо после него.</p>
+<p class=textpreword>  for(int i=0;i&lt;lines.size();i++) {</p>
+<p class=textpreword>    glPushMatrix();</p>
+<p class=textpreword>    glLoadIdentity();</p>
+<p class=textpreword>    glTranslatef(x,y-h*i,0);</p>
+<p class=textpreword>    glMultMatrixf(modelview_matrix);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>    // Уберите комментарии у следующего 
+  оператора и трех строк после вызова glCallLists,</p>
+<p class=textpreword>    // если хотите знать длину строки, но не забудьте убрать 
+  комментарий</p>
+<p class=textpreword>    // у glBitmap в функции make_dist.</p>
+<p class=textpreword>    // glRasterPos2f(0,0);</p>
+<p class=textpreword>    glCallLists(lines[i].length(), GL_UNSIGNED_BYTE, 
+  lines[i].c_str());</p>
+<p class=textpreword>    // float rpos[4];</p>
+<p class=textpreword>    // glGetFloatv(GL_CURRENT_RASTER_POSITION 
+  ,rpos);</p>
+<p class=textpreword>    // float len=x-rpos[0]; (Надеюсь, 
+  что нет вращения)</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>    glPopMatrix();</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  glPopAttrib();          </p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  pop_projection_matrix();</p>
+<p class=textpreword>}</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>}                        // Закроем пространство имени</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Библиотека закончена. Откройте lesson13.cpp и мы сделаем некоторые 
+  незначительные изменения, чтобы показать все функции, которые мы только что 
+  написали.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Добавьте FreeType.h за другими заголовочными файлами:</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>#include &quot;freetype.h&quot; // Заголовочный файл нашей 
+  маленькой библиотеки.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>И пока мы здесь, давайте создадим глобальную переменную font_data.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>// Сохраним всю информацию о нашем шрифте.</p>
+<p class=textpreword>freetype::font_data our_font;</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Сейчас нам нужно заняться созданием и удалением нашего шрифта. 
+  Так что добавьте следующее в конец InitGL.
+</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>our_font.init(&quot;Test.ttf&quot;, 16); 
+  // Создать шрифт FreeType</p>
+<p class=textword>&nbsp;  </p>  
+<p class=textword>
+  Добавьте это в начало KillGL Window, чтобы уничтожить шрифт, когда мы закончим.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>our_font.clean();</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Теперь мы должны изменить нашу функцию DrawGLScene так чтобы 
+  она вызывала функцию печати. По идее это также просто, как и добавить простую 
+  строку “hello world” в конце функции, но я хочу сделать чуточку побольше, поскольку 
+  я бы хотел показать масштабирование и вращение.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>int DrawGLScene(GLvoid)                    // Здесь мы рисуем</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // 
+  Очистка экрана и буфера глубины</p>
+<p class=textpreword>  glLoadIdentity();                  // Сброс матрицы вида 
+  модели</p>
+<p class=textpreword>  glTranslatef(0.0f,0.0f,-1.0f);     // Сдвиг на одну единицу 
+  в экран</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // Синий текст</p>
+<p class=textpreword>  glColor3ub(0,0,0xff);</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // Позиция текста WGL на экране</p>
+<p class=textpreword>  glRasterPos2f(-0.40f, 0.35f);</p>
+<p class=textpreword>  glPrint(&quot;Active WGL Bitmap Text With NeHe - %7.2f&quot;, 
+  cnt1);  // Вывод текста</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // Выводим тот же текст, но с вращением и масштабированием.</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // Красный текст</p>
+<p class=textpreword>  glColor3ub(0xff,0,0);</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  glPushMatrix();</p>
+<p class=textpreword>  glLoadIdentity();</p>
+<p class=textpreword>  glRotatef(cnt1,0,0,1);</p>
+<p class=textpreword>  glScalef(1,.8+.3*cos(cnt1/5),1);</p>
+<p class=textpreword>  glTranslatef(-180,0,0);</p>
+<p class=textpreword>  freetype::print(our_font, 320, 200, &quot;Active FreeType 
+  Text - %7.2f&quot;, cnt1);</p>
+<p class=textpreword>  glPopMatrix();</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // Уберите комментарий для вывода текста в несколько строк.</p>
+<p class=textpreword>  // freetype::print(our_font, 320, 200, &quot;Here\nthere\nbe\n\nnewlines\n.&quot;, 
+  cnt1);</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  cnt1+=0.051f;                   // Увеличим первый счетчик</p>
+<p class=textpreword>  cnt2+=0.005f;                   // Увеличим второй счетчик</p>
+<p class=textpreword>  return TRUE;                    // Все OK</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Последняя вещь, которую осталось сделать это добавить обработку 
+  исключений для надежности. Идите в WinMain и добавьте в начале ее try{..}.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>  MSG  msg;                    // Структура сообщения</p>
+<p class=textpreword>  BOOL  done=FALSE;            // Переменная цикла</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  try {                        // Использовать обработку 
+  сообщений</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Затем измените конец функции, чтобы иметь catch{}.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>  // Завершение</p>
+<p class=textpreword>  KillGLWindow();                    // убить окно</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // Захват исключений </p>
+<p class=textpreword>  } catch (std::exception &amp;e) {</p>
+<p class=textpreword>    MessageBox(NULL,e.what(),&quot;CAUGHT AN EXCEPTION&quot;,MB_OK 
+  | MB_ICONINFORMATION);</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  return (msg.wParam);                  // Выход из программы</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;</p>
+<p class=textword>Теперь, если когда-нибудь, что-то случается, появляется исключение, 
+  и мы получим небольшое сообщение гласящее, что собственно случилось. Заметьте, 
+  что обработка исключений может замедлить код, так что когда вы будете выпускать 
+  окончательную версию, желательно было бы выключить exception handling в Project-&gt;Settings-&gt;C/C++, 
+  в категории “C++ Language”.</p>
+<p class=textword>&nbsp;</p>
+<p class=textword>Вот и все! Скомпилируйте программу и вы должны видеть красивый 
+  FreeType сгенерированный текст, движущийся вокруг оригинального растрового текста 
+  из Урока 13.</p>
+<p class=textword>&nbsp;  </p>
+<p class=head3word>Общие замечания</p>
+<p class=textword>&nbsp;</p>
+<p class=textword>Есть ряд усовершенствований, который вы можете добавить в библиотеку. 
+  С одной стороны непосредственное использование данных шрифта выглядит неуклюже, 
+  так что вы можете захотеть создать стандартный кэш шрифтов, чтобы скрыть управление 
+  шрифтовыми ресурсами от пользователя. Вы также можете наподобие OpenGL и создать 
+  стек шрифтов, который позволил вам ссылаться на шрифт при вызове функции печати. 
+  (Эти вещи я всегда делаю в своем коде, но не привожу этого в уроке для простоты). 
+  Вы также можете захотеть сделать версию функции print, которая выравнивает текст 
+  по центру, тогда вам, вероятно, нужно использовать нижеследующие методы.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Сейчас у меня есть текст, вращающийся вокруг центра. Однако, 
+  чтобы получить такой эффект для любого текста, вам нужно точно знать длину текста 
+  – это довольно сложно. Один способ получения длины текста – это засунуть команды 
+  glBitmap в список отображения в порядке  изменения растровой позиции как в матрице 
+  вида модели (я оставил нужную линию в коде, но она закомментирована). Тогда 
+  мы должны установить позицию x,y перед использованием glCallLists, и использовать 
+  glGet чтобы найти её после отрисовки текста – разница даст вам длину текста 
+  в пикселях.
+</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Вы должны знать, что FreeType шрифты используют гораздо больше 
+  памяти, чем WGL's растровые шрифты (это одно из преимуществ бинарных изображений, 
+  они используют мало памяти). Если по каким-нибудь причинам вам нужно минимизировать 
+  использование памяти, наверное лучше придерживаться кода из урока 13.</p>
+<p class=textword>&nbsp;</p>
+<p class=textword>Другое интересное преимущество использования текстурированных 
+  четырехугольников то, что четырехугольники, по сравнению с растрами, работают 
+  лучше с функциями выбора ОpenGL (см Урок 32). Это делает жизнь гораздо проще, 
+  если вы хотите создать текст, который отвечает за наведение мыши или кликанье. 
+  (Использование WGL шрифтов здесь возможно, но опять же есть хитрый момент в 
+  использовании растровых координат, чтобы вычислить длину текста в пикселях).</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>И в завершении, я даю вам некоторые ссылки на библиотеки шрифтов 
+  к OpenGL. В зависимости от ваших целей и компилятора вы можете захотеть использовать 
+  одну из них вместо этой (на самом деле их очень много, я только включил то, 
+  с чем я немного поработал).
+</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>GLTT - эта старая библиотека которая вроде бы уже заброшена, 
+  но она получила позитивные отзывы. Основана на FreeType1. Я думаю, что вам надо 
+  найти копию старых исходников FreeType1 чтобы скомпилировать в MSVC6. Загрузка 
+  доступна отсюда  <a href="http://gltt.sourceforge.net/index.html" target="_blank"><b> 
+  http://gltt.sourceforge.net/index.html</b></a>.
+</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>OGLFT неплохая библиотека шрифтов, основанная на FreeType, потребуется 
+  немного усилий, чтобы скомпилировать ее под MSVC. Основная платформа там Linux...  
+  <a href="http://oglft.sourceforge.net/" target="_blank"><b>http://oglft.sourceforge.net</b></a>. 
+</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>FTGL ещё третья библиотека, основанная на FreeType, она была 
+  разработана под OS X. <a href="http://homepages.paradise.net.nz/henryj/code/" target="_blank"><b>http://homepages.paradise.net.nz/henryj/code/#FTGL</b></a>. 
+</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>FNT библиотека, основанная не на FreeType, являющаяся частью 
+  PLIB. Имеет неплохой интерфейс, использует собственный формат, отлично компилируется 
+  под MSVC6. <a href="http://plib.sourceforge.net/fnt" target="_blank">http://plib.sourceforge.net/fnt</a>.</p>
+<p class=textword>&nbsp;</p>
+
+<p class="textnoalign" align="right">
+<font color="#0000A0"><a href="mailto:sven@sccs.swarthmore.edu"><b> © Sven Olsen </b></a></b></font>
+</p>  
+
+</p>
+
+</div>
+<div id="end">
+
+          <p><a href="http://pmg.org.ru/"
+			onmouseover=" return event_over(this,'Программирование магических игр')  "
+			onmouseout=" return event_out(this) "><font class="link"><b>PMG</b></font></a> 
+            <font class="comment">&nbsp;27 июля 2004&nbsp;(c)&nbsp;</font> 
+        <a href="mailto:chipset3@mail.ru"
+	onmouseover=" return event_over(this,'Почта переводчику')  " 
+	onmouseout=" return event_out(this) "> <font class="link"><b>СhipSet</b></font></a> 
+          </p>
+</div>
+</center>
+
+<script language="JavaScript">
+<!--
+form_print();
+//-->
+</script>
+
+</body>
+</html>

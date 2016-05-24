@@ -24,7 +24,7 @@ namespace OpenGLGuide.ViewModels
                 {
                     var list = new List<MenuItemViewModel>();
                     for (int i = 1; i <= 42; i++)
-                        list.Add(new MenuItemViewModel(string.Format("Урок {0}", i), string.Format("NeheImages/nehe{0}.jpg", IntToStringConverter(i)), string.Format("nehe{0}.htm", IntToStringConverter(i))));
+                        list.Add(new MenuItemViewModel(string.Format("Урок {0}", i), string.Format("nehe{0}.jpg", IntToStringConverter(i)), string.Format("nehe{0}.htm", IntToStringConverter(i))));
 
                     return list;
                 }

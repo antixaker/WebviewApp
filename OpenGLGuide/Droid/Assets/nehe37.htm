@@ -1,0 +1,728 @@
+<!doctype html public "-//w3c//dtd html 3.2 final//ru">
+<html>
+
+<head>
+<meta http-equiv="Content-Type"
+content="text/html; charset=windows-1251">
+<meta name="description"
+content="Переводы по OpenGL, трехмерная графика, игры, мультимедия
+Translations Russian OpenGL
+">
+<meta name="keyword"
+content="Программирование,игры,3D,трехмерная графика,OpenGL,NeHe">
+<meta name="keyword"
+content="programming,C,C++,game,graphics">
+<title>Урок 39. Введение в физический симулятор</title>
+<link rel="stylesheet" href="pmg.css" type="text/css">
+</head>
+
+<body bgcolor="#b2d3e1" link="#800080" vlink="#800080">
+<script src='nehe.js' language="javascript">
+<!--
+//-->
+</script>
+
+<center>
+<div id="top">
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+        <td width="20%" align="center" valign="center">
+        <img src="nehelogo.jpg" align="left" hspace="0" width="125" height="50" alt="NeHe Tutorials">
+        </td>
+        <td width="60%" align="center">
+	<a href="index.html"
+	onmouseover=" return event_over(this,'NeHe Ru.')  "
+        onmouseout=" return event_out(this) ">
+        <font class="linksbig">
+        Народный учебник по OpenGL</font></a><br>
+        </td>
+        <td width="20%" align="center" valign="center">
+        <img src="nehe39.jpg" align="right" hspace="0" width="80" height="60" alt="Урок 39. OpenGL">
+        </td>
+    </tr>
+</table>
+</div>
+
+<div id="head">
+<p class="head1">
+Урок 39. Введение в физический симулятор</p>
+</div>
+<div id="main" bgcolor="#ADADFF">
+<p class="textnoalign" align="left">
+
+<a href="http://nehe.gamedev.net/data/lessons/lesson.asp?lesson=39" target="_blank"
+onmouseover=" return event_over(this,this)  "
+onmouseout=" return event_out(this) ">
+<font class="link"><b>Introduction to Physical Simulations</b></font></a>
+<br>
+</p><p class=textword>&nbsp;  </p>
+
+<p class=textword>Если вы знакомы с физикой и хотите 
+  написать физический симулятор – этот урок поможет вам. Для того чтобы достигнуть 
+  успеха вам понадобятся знания векторных операций в 3D и базовых физических понятий, 
+  таких как сила и скорость.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>В этом уроке вы найдете код очень 
+  простого движка физики. (Скорее просто пример, для движка все слишком упрощено 
+  – прим. переводчика).</p>
+<p class=textword> &nbsp; </p>
+<p class=head3word>Cодержание (в порядке следования):</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Дизайн:</p>
+<p class=textpreword> * class Vector3D           ---&gt; Объект представляющий 
+  3D - вектор или точку в пространстве</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Сила и движение:</p>
+<p class=textpreword> * class Mass               ---&gt; Объект представляющий 
+  массу.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Как работает симуляция:</p>
+<p class=textpreword> * class Simulation         ---&gt; Контейнер 
+  для симуляции масс.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Управление симуляцией из приложения:</p>
+<p class=textpreword> * class ConstantVelocity :</p>
+<p class=textpreword>   public Simulation        ---&gt; Объект создающий 
+  массу с постоянной скоростью.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Применение силы:</p>
+<p class=textpreword> * class MotionUnderGravitation :</p>
+<p class=textpreword>   public Simulation        ---&gt; Объект создающий 
+  массу, движущуюся под воздействием гравитации.</p>
+<p class=textpreword> * class MassConnectedWithSpring :</p>
+<p class=textpreword>   public Simulation        ---&gt; Объект создающий 
+  массу, соединенную с пружиной в точке.</p>
+<p class=textword> &nbsp; </p>
+<p class=head3word>Дизайн:</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Создание физического движка задача 
+  не всегда простая. Но есть несколько очевидных зависимостей: приложение зависит 
+  от движка, а движок в свою очередь зависит от библиотек математики. Наша задача 
+  получить контейнер для симуляции движения масс. Наш движок будет включать в 
+  себя класс «<b>Mass</b>» и класс «<b>Simulation</b>» - наш контейнер. После того как эти классы будут готовы, 
+  мы сможем писать приложения. Но, прежде всего нам понадобится математическая 
+  библиотека. Эта библиотека содержит только один класс «<b>Vector3D</b>», 
+  который используется для представления точек, векторов, положений, скорости 
+  и силы в 3D.</p>
+<p class=textword> &nbsp; </p>
+<p class=textpreword> * class Vector3D           ---&gt; Объект представляющий 
+  вектор или точку в пространстве</p>
+<p class=textword> &nbsp; </p>
+<p class=textword><b>Vector3D</b> – единственный класс нашей математической библиотеки. Он 
+  хранит значения <b>x</b>, <b>y</b> и <b>z</b> координат и реализует простейшие векторные операции: сложение, 
+  вычитание, умножение, деление. Поскольку этот урок, прежде всего о физике, я 
+  не буду вдаваться в детали, описывая этот класс. Если вы посмотрите Lesson39.h вам сразу станет ясно насколько 
+  он прост.</p>
+<p class=textword> &nbsp; </p>
+<p class=head3word>Cила и движение:</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Для работы с физикой нам необходимо 
+  понимать, что же такое масса. Масса имеет положение и скорость. Масса имеет 
+  вес на Земле, Луне, Марсе или в любом другом месте, где существует гравитация. 
+  Вес различается в зависимости от силы гравитации. (Точнее вес это сила, с которой 
+  тело (под воздействием гравитации) действует на горизонтальную опору или подвес 
+  – прим. переводчика). Масса тела остается постоянной при любых условиях.</p>
+<p class=textword> </p>
+<p class=textword>После того как мы поняли, что такое масса, давайте, разберемся 
+  с силой и движением. Масса с не нулевой скоростью в пространстве движется в 
+  направлении вектора скорости. Поэтому вектор скорости – одна из причин изменения 
+  положения массы в пространстве. Вторая причина – прошествие времени. Т.е. изменение 
+  положения зависит от того, насколько быстро движется масса и сколько времени 
+  прошло.  Если к этому месту что-то остается не ясным, обдумайте отношения между 
+  положением, скоростью и временем. (А так же сдуйте пыль с учебника физики 6-го 
+  класса, глава начала механики – прим. переводчика).</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Скорость массы изменяется, если существует 
+  сила, воздействующая на массу. Вектор скорости стремится к направлению силы. 
+  Эта тенденция пропорциональна силе и обратно пропорциональна массе. Изменение 
+  скорости за единицу времени называется ускорением. Чем больше сила, воздействующая 
+  на массу, тем больше ускорение. Чем больше масса, тем меньше ускорение. </p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Отсюда:</p>
+<p class=textword> &nbsp; </p>
+<p class=textword><b>ускорение = сила / масса</b></p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Из этого, знаменитая формула:</p>
+<p class=textword> &nbsp; </p>
+<p class=textword><b>сила = масса * ускорение</b></p>
+<p class=textword> &nbsp; </p>
+<p class=textword>(мы будем часто использовать формулу 
+  ускорения)</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>До подготовки «физического носителя» 
+  для симуляции, вы должны знать, в каком окружении мы будем работать. В этом 
+  уроке наше окружение – пустое пространство. ;)</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Во первых, мы должны определить в 
+  каких единицах мы будем выражать время и массу. Я решил в качестве единиц времени 
+  использовать секунды и для расстояния (положения) - метры. Отсюда единицы скорости 
+  – метры в секунду (м/с), ускорения (м/с/c или м/с<sup>2</sup>). Единицы массы 
+  – килограммы (кг). </p>
+<p class=textword> &nbsp; </p>
+<p class=textpreword>* class Mass                ---&gt; Объект представляющий 
+  массу. </p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Теперь начнем применять теорию! Мы 
+  должны написать класс представляющий массу. Он должен хранить значение массы, 
+  положение, скорость, и воздействующую силу.</p>
+<p class=textword> &nbsp; </p>
+<p class=textpreword>class Mass</p>
+<p class=textpreword>{</p>
+<p class=textpreword>public:</p>
+<p class=textpreword>         float     m;        // Значение массы.</p>
+<p class=textpreword>         Vector3D  pos;      // Положение в 
+  пространстве.</p>
+<p class=textpreword>         Vector3D  vel;      // Скорость.</p>
+<p class=textpreword>         Vector3D  force;    // Воздействующая 
+  сила.</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>         Mass(float m)       // Конструктор</p>
+<p class=textpreword>         {</p>
+<p class=textpreword>           this-&gt;m = m;</p>
+<p class=textpreword>         }</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>         ...</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Мы хотим воздействовать на массу силой. 
+  В единицу времени на массу может воздействовать несколько сил. Векторная сумма 
+  этих сил дает нам общее значение вектора силы в конкретную единицу времени. 
+  До того как мы начнем применять силы к массе нам необходимо обнулить силу в 
+  классе (<b>force</b>). После этого нам остается только добавлять силы.</p>
+<p class=textword> &nbsp; </p>
+<p class=textpreword>         (class Mass продолжение)</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>         void applyForce(Vector3D 
+  force)</p>
+<p class=textpreword>         {</p>
+<p class=textpreword>             this-&gt;force += force;    // 
+  Внешнюю силу прибавляем к «нашей».</p>
+<p class=textpreword>         }</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>         void init()          // Обнуляем «нашу» 
+  силу</p>
+<p class=textpreword>         {</p>
+<p class=textpreword>           force.x = 0;</p>
+<p class=textpreword>           force.y = 0;</p>
+<p class=textpreword>           force.z = 0;</p>
+<p class=textpreword>         }</p>
+<p class=textpreword>  </p>
+<p class=textpreword>         ...</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Итак, чтобы воздействовать силами 
+  на массу нам нужно:</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>         1. Сбросить силу ( метод <b>init()</b> )</p>
+<p class=textword>         2. Добавить все воздействующие силы ( 
+  <b>applyForce(Vector3D)</b> 
+  )</p>
+<p class=textword>         3. Итерационно изменить время</p>
+<p class=textword>   </p>
+<p class=textword>Здесь, изменение времени организовано 
+  по методу Эйлера (Euler). Метод Эйлера очень простой. Существуют и более продвинутые 
+  методы, но для большинства приложений этого метода достаточно. Большая часть 
+  игрушек использует именно его. Этот метод вычисляет скорость и положение массы, 
+  в следующий момент времени исходя из примененных сил и прошедшего времени. Итерации 
+  организованы в методе <b>void simulate(float 
+  dt)</b>:</p>
+<p class=textword> &nbsp; </p>
+<p class=textpreword>         (class Mass продолжение)</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>         void simulate(float 
+  dt)</p>
+<p class=textpreword>         {</p>
+<p class=textpreword>          vel += (force / m) * dt;  // Изменение 
+  в скорости добавляем к</p>
+<p class=textpreword>                                    // текущей 
+  скорости. Изменение</p>
+<p class=textpreword>                                    // пропорционально 
+  ускорению</p>
+<p class=textpreword>                                    // (сила/масса) 
+  и изменению времени</p>
+<p class=textpreword>          pos += vel * dt;          // Изменение 
+  в положении добавляем к</p>
+<p class=textpreword>                                    // текущему 
+  положению. Изменение в</p>
+<p class=textpreword>                                    // положении 
+  Скорость*время</p>
+<p class=textpreword>         }</p>
+<p class=textword> &nbsp; </p>
+<p class=head3word>Как должна происходить симуляция: 
+  </p>
+<p class=textword> &nbsp; </p>
+<p class=textword>В каждой итерации происходит один 
+  и тот же процесс. Силы обнуляются, добавляются все воздействующие силы, рассчитывается 
+  новая скорость и положение. Этот процесс продолжается до тех пор, пока изменяется 
+  время. Он организован в классе <b>Simulation</b>. </p>
+<p class=textword> &nbsp; </p>
+<p class=textpreword>* class Simulation          ---&gt; Контейнер для симуляции 
+  масс. </p>
+<p class=textword> &nbsp; </p>
+<p class=textword>(Автор выбрал не слишком удачное определение 
+  – этот класс просто организует массив и к контейнерам не имеет никакого отношения 
+  – прим. переводчика).</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Класс <b>Simulation</b> хранит массы как свои переменные. Задача этого класса создавать/удалять 
+  массы и проводить симуляцию.</p>
+<p class=textword> &nbsp; </p>
+<p class=textpreword>class Simulation</p>
+<p class=textpreword>{</p>
+<p class=textpreword>public:</p>
+<p class=textpreword>         int    numOfMasses;    // Количество 
+  масс в контейнере.</p>
+<p class=textpreword>         Mass** masses;         // Массы хранятся 
+  в 1d массиве</p>
+<p class=textpreword>                                // указателей</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>         // Конструктор создает numOfMasses 
+  масс с массой m.</p>
+<p class=textpreword>         </p>
+<p class=textpreword>         Simulation(int numOfMasses, 
+  float m)</p>
+<p class=textpreword>         {</p>
+<p class=textpreword>            this-&gt;numOfMasses = numOfMasses;</p>
+<p class=textpreword>            masses = new Mass*[numOfMasses]; // Создаем массив указателей.</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>            // Создаем Mass и заносим его в 
+  массив</p>
+<p class=textpreword>            for (int a = 0; 
+  a &lt; numOfMasses; ++a)</p>
+<p class=textpreword>                 masses[a] = new Mass(m);    
+</p>
+<p class=textpreword>         }</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>         virtual void release()      // Чистим массив масс</p>
+<p class=textpreword>         {</p>
+<p class=textpreword>           for (int a = 0; a &lt; numOfMasses; 
+  ++a)</p>
+<p class=textpreword>           {</p>
+<p class=textpreword>             delete(masses[a]);</p>
+<p class=textpreword>             masses[a] = NULL;</p>
+<p class=textpreword>           }</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>           delete(masses);</p>
+<p class=textpreword>           masses = NULL;</p>
+<p class=textpreword>         }</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>         Mass* getMass(int index)</p>
+<p class=textpreword>         {</p>
+<p class=textpreword>           // Если индекс выходит за рамки массива 
+  возвращаем null</p>
+<p class=textpreword>           if (index &lt; 0 
+  || index &gt;= numOfMasses) return NULL;</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>           // Возвращаем массу по индексу</p>
+<p class=textpreword>           return masses[index];</p>
+<p class=textpreword>         }</p>
+<p class=textpreword>         </p>
+<p class=textpreword>         ...</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Процедура симуляции имеет три шага:</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>      1. <b>init()</b> – устанавливаем силу (<b>Mass-&gt;force</b>) в 0</p>
+<p class=textword>      2. <b>solve()</b> – применяем силы</p>
+<p class=textword>      3. <b>simulate</b><b>(</b><b>float</b><b> </b><b>dt</b><b>)</b> – конец итерации</p>
+<p class=textword> &nbsp; </p>
+<p class=textpreword>         (class Simulation 
+  продолжение)</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>         virtual void init()      // вызываем 
+  init() для каждой массы</p>
+<p class=textpreword>         {</p>
+<p class=textpreword>            for (int a = 0; a &lt; numOfMasses; 
+  ++a)</p>
+<p class=textpreword>                 masses[a]-&gt;init();</p>
+<p class=textpreword>         }</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>         virtual void solve()</p>
+<p class=textpreword>         {</p>
+<p class=textpreword>           // Нет кода т.к. в базовом классе 
+  у нас нет сил</p>
+<p class=textpreword>           // В других контейнерах мы переопределим 
+  этот метод</p>
+<p class=textpreword>         }</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>         virtual void simulate(float dt)  // 
+  Итерация для каждой массы</p>
+<p class=textpreword>         {</p>
+<p class=textpreword>           for (int a = 0; a &lt; numOfMasses; 
+  ++a)</p>
+<p class=textpreword>                masses[a]-&gt;simulate(dt);  
+</p>
+<p class=textpreword>         }</p>
+<p class=textpreword>  </p>
+<p class=textpreword>         ...</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Объединим процедуру симуляции в один 
+  метод: </p>
+<p class=textword> &nbsp; </p>
+<p class=textpreword>        (class Simulation продолжение)</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>         virtual void operate(float dt) // Полная процедура симуляции.</p>
+<p class=textpreword>         {</p>
+<p class=textpreword>            init();            
+  // 1. Силу в 0</p>
+<p class=textpreword>            solve();           // 2. Применяем силы</p>
+<p class=textpreword>            simulate(dt);      // 3. Итерация</p>
+<p class=textpreword>         }</p>
+<p class=textpreword>      };</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Теперь у нас есть простейший движок 
+  физики. Он базируется на библиотеке математики и состоит из классов <b>Mass</b> и <b>Simulation</b>. Теперь мы готовы приступить к разработке приложений (реальных 
+  применений). Приложения, которые мы обсудим: </p>
+<p class=textword> &nbsp; </p>
+<p class=textword>      1. Масса с постоянной скоростью</p>
+<p class=textword>      2. Масса в условиях гравитации</p>
+<p class=textword>      3. Масса, соединенная с точкой пружиной</p>
+<p class=textword> &nbsp; </p>
+<p class=head3word>Управление симуляцией из приложения: 
+  </p>
+<p class=textword> &nbsp; </p>
+<p class=textword>До того как мы преступим к написанию 
+  специфических вариантов симуляции, нам необходимо узнать, как же мы будем управлять 
+  «процессом». В этом примере движок и приложение управляющее им, находятся в 
+  разных файлах. В файле приложения находится функция: </p>
+<p class=textword> &nbsp; </p>
+<p class=textpreword>void Update (DWORD milliseconds)    // обновление движения.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Эта функция вызывается при обновлении 
+  каждого кадра. &quot;<b>DWORD milliseconds</b>&quot; время прошедшее с момента предыдущего обновления кадра. 
+  Здесь нужно сказать, что приращение времени мы будем получать в миллисекундах, 
+  в этом случае процесс симуляции будет идти параллельно с реальным временем. 
+  Чтобы перейти к следующему шагу симуляции, мы вызываем метод <b>void operate(float dt)</b>, для этого нам необходимо знать значение <b>dt</b>. 
+  Поскольку этот метод получает время в секундах, мы должны сделать соответствующие 
+  поправки (см. код ниже). Затем мы используем <b>slowMotionRatio</b> – эта переменная определяет насколько медленно идет время 
+  по отношению к реальному. Мы делим <b>dt</b> на это значение и получаем новое <b>dt</b>.  
+  Теперь мы можем прибавить <b>dt</b> к <b>timeElapsed</b>. &quot;<b>timeElapsed</b>&quot; – время нашей симуляции. </p>
+<p class=textword> &nbsp; </p>
+<p class=textpreword>void Update (DWORD milliseconds)</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  ...</p>
+<p class=textpreword>  ...</p>
+<p class=textpreword>  ...</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>  float dt = milliseconds / 1000.0f; // Преобразуем миллисекунды в секунды</p>
+<p class=textpreword>  dt /= slowMotionRatio;             // Делим на slowMotionRatio</p>
+<p class=textpreword>  timeElapsed += dt;                 // Изменяем 
+  кол-во прошедшего времени</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>  ...</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Теперь <b>dt</b> практически готово, но есть еще один важный момент – <b>dt</b> влияет на точность симуляции. Если <b>dt</b> 
+  не достаточно мало, симуляция будет не стабильной, и движение будет рассчитываться 
+  не точно. Для того чтобы выяснить максимальное допустимое значение <b>dt</b> используется анализ стабильности. В этом уроке мы не будем 
+  останавливаться на таких подробностях – для серьезных научных расчетов это необходимо, 
+  но для большинства игр достаточно подобрать значение «на глаз».</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Например, в авто-симуляторе оправдано 
+  использовать <b>dt</b> от 2 до 5 миллисекунд для обычной машины и от 1 до 3 для 
+  гоночной. Для аркадных симуляторов значение <b>dt</b> может колебаться 10 до 200 мс. Чем меньше значение <b>dt</b>, тем больше процессорного времени потребуется для обсчетов. 
+  Именно поэтому физические движки так редко использовались в старых играх. (На 
+  самом деле все притянуто за уши, реальные причины отсутствия нормальной физики 
+  в старых играх несколько глубже – прим. переводчика).</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>В следующем коде мы определяем максимальное 
+  возможное значение <b>dt</b> 0.1c (100мс). С помощью этого значения мы получим количество 
+  итераций к моменту текущего обновления. Запишем формулу:</p>
+<p class=textword> &nbsp; </p>
+<p class=textpreword>      int numOfIterations = (int)(dt / maxPossible_dt) 
+  + 1; </p>
+<p class=textword> &nbsp; </p>
+<p class=textword><b>numOfIterations</b> это число итераций, которые необходимо выполнить. Скажем 
+  прога работает со скоростью 20fps, которые дают <b>dt=0.05 
+  с</b>. Количество итераций (<b>numOfIterations</b>) 
+  будет 1. (т.е 1 итерация в 0.05с.)  Если бы dt было 0.12 с. - <b>numOfIterations</b> 
+  было бы  2. Сразу после &quot;<b>int numOfIterations = (int)(dt / maxPossible_dt) + 1;</b>&quot;, 
+  <b>dt</b> 
+  рассчитывается еще раз, делим его на <b>numOfIterations</b> и получаем <b>dt = 0.12 
+  / 2 = 0.06. dt</b> было больше максимально допустимого значения  (0.1с). 
+  Теперь мы имеем <b>dt = 0.06</b>, но поскольку итерации 2 в результате получим 0.12 с. Изучите 
+  следующий кусок кода и удостоверьтесь, что все поняли. </p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>    ...</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>    float maxPossible_dt = 0.1f; // максимально 
+  возможное dt = 0.1 с</p>
+<p class=textpreword>                                 // Необходимо 
+  чтобы мы не «вылетели» за</p>
+<p class=textpreword>                                 // пределы 
+  точности.</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>    // Рассчитываем количество итераций, которые 
+  необходимо провести в ходе текущего</p>
+<p class=textpreword>    // обновления(зависит от maxPossible_dt 
+  и dt).</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>    int numOfIterations = (int)(dt / maxPossible_dt) 
+  + 1;  </p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>    if (numOfIterations != 0)      // Проверяем 
+  деление на 0</p>
+<p class=textpreword>        dt = dt / numOfIterations; // dt нужно 
+  обновить, опираясь на</p>
+<p class=textpreword>                                   // numOfIterations.</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>    // мы должны повторить симуляцию &quot;numOfIterations&quot; раз.</p>
+<p class=textpreword>    for (int a = 0; a &lt; numOfIterations; 
+  ++a)</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      constantVelocity-&gt;operate(dt);</p>
+<p class=textpreword>      motionUnderGravitation-&gt;operate(dt);</p>
+<p class=textpreword>      massConnectedWithSpring-&gt;operate(dt);</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>}</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Начнем писать приложения: </p>
+<p class=textword> &nbsp; </p>
+<p class=textword>1. Масса с постоянной скоростью</p>
+<p class=textword>         </p>
+<p class=textpreword>* class ConstantVelocity :</p>
+<p class=textpreword>  public Simulation         ---&gt; Объект создающий 
+  массу с постоянной скоростью.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Масса с постоянной скоростью не нуждается, 
+  в каких либо внешних силах. Нам всего лишь нужно создать 1 массу и установить 
+  ее скорость в (1.0f, 0.0f, 0.0f), т.е. она будет двигаться вдоль оси <b>x</b> со скоростью 1 м/с. 
+  Мы напишем наследника от класса <b>Simulation</b> – класс <b>ConstantVelocity</b>: </p>
+<p class=textword> &nbsp; </p>
+<p class=textpreword>class ConstantVelocity : public Simulation</p>
+<p class=textpreword>{</p>
+<p class=textpreword>public:</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>         // Конструктор сначала создает предка 
+  с 1й массой в 1 кг.</p>
+<p class=textpreword>         ConstantVelocity() 
+  : Simulation(1, 1.0f)</p>
+<p class=textpreword>         {</p>
+<p class=textpreword>           // Масса создалась, и мы устанавливаем 
+  ее координаты и скорость</p>
+<p class=textpreword>           masses[0]-&gt;pos 
+  = Vector3D(0.0f, 0.0f, 0.0f);</p>
+<p class=textpreword>           masses[0]-&gt;vel = Vector3D(1.0f, 
+  0.0f, 0.0f);</p>
+<p class=textpreword>         }</p>
+<p class=textpreword>};</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Метод <b>operate(float 
+  dt)</b> класса <b>ConstantVelocity</b> рассчитывает следующее положение массы. Он вызывается основным 
+  приложением до перерисовки окна. Скажем, приложение выполняется с 10 fps. Соответственно 
+  <b>dt</b> при вызове <b>operate(float 
+  dt)</b> будет 0.1 с. Когда произойдет вызов 
+  <b>simulate(float dt)</b> массы, ее новое положение будет увеличено на скорость <b>(velocity) * dt</b>, т.е.</p>
+<p class=textword> &nbsp; </p>
+<p class=textpreword>      Vector3D(1.0f, 0.0f, 
+  0.0f) * 0.1 = Vector3D(0.1f, 0.0f, 0.0f)</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>При каждой итерации масса двигается 
+  на 0.1 метра вправо. После 10 кадров она переместится вправо на 1 метр. Скорость 
+  была 1.0 м/с и масса перемещается на 1.0 м в течение 1 с. Это совпадение или 
+  логический результат? Если этот вопрос вызывает у вас затруднение, обдумайте 
+  рассуждения изложенные выше. </p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Когда вы запускаете приложение, вы 
+  видите массу, с постоянной скоростью перемещающуюся в направлении <b>x</b>. Приложение имеет два 
+  режима движения. При нажатии F3 время будет замедленно в 10 раз (по отношению 
+  к реальному). При нажатии F3 время будет идти параллельно реальному. На экране 
+  вы увидите линии представляющие координатную плоскость. Расстояние между этими 
+  линиями 1 метр. Используя эти линии не трудно заметить, что в режиме реального 
+  времени масса перемещается на 1 метр в секунду (соответственно, при замедленном 
+  времени 1 метр в 10 секунд). Техника, описанная выше обычна для симуляции в 
+  реальном времени. Для того чтобы ее применять, вам необходимо четко оговорить 
+  единицы. </p>
+<p class=textword> &nbsp; </p>
+<p class=head3word>Применение силы:</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>При симуляции массы движущейся с постоянной 
+  скоростью мы не применяем сил к массе, т.к. мы знаем, что в случае применения 
+  сил тело ускоряется. Когда мы хотим получить ускоренное движение, мы применяем 
+  силу. При симуляции мы применяем силы в методе &quot;<b>solve</b>&quot;. Когда операции доходят до фазы &quot;<b>simulate</b>&quot; мы имеем результирующий вектор силы (полученный суммированием 
+  всех векторов). Он определяет движение.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Скажем, мы хотим применить силу (=1) 
+  к массе в направлении <b>x</b>. Тогда мы пишем в методе <b>solve</b>: </p>
+<p class=textword> &nbsp; </p>
+<p class=textpreword>         mass-&gt;applyForce(Vector3D(1.0f, 
+  0.0f, 0.0f)); </p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Если мы хотим применить другую силу 
+  (=2) в направлении <b>y</b> мы добавим: </p>
+<p class=textword> &nbsp; </p>
+<p class=textpreword>         mass-&gt;applyForce(Vector3D(0.0f, 
+  2.0f, 0.0f)); </p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Таким образом, вы имеете возможность 
+  применять любые силы.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>2. Масса в условиях гравитации</p>
+<p class=textpreword>* class MotionUnderGravitation 
+  :</p>
+<p class=textpreword>  public Simulation         ---&gt; Объект создающий 
+  массу, движущуюся под воздействием гравитации.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Класс <b>MotionUnderGravitation</b> создает массу и применяет силу (гравитации) к ней. Сила гравитации 
+  равна массе умноженной на ускорение свободного падения (<b>g</b>): </p>
+<p class=textword> &nbsp; </p>
+<p class=textword><b>F = m * g</b></p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Ускорение свободного падения это ускорение 
+  свободного тела. На земле, когда вы бросаете предмет он наращивает скорость 
+  на 9.81 м/c в секунду (пока на него действует только сила гравитации). Ускорение 
+  свободного падения – константа для всех масс и равна 9.81 м/с/с. (Это не зависит 
+  от массы – все массы падают с одинаковым ускорением). </p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Класс <b>MotionUnderGravitation</b> имеет такой конструктор: </p>
+<p class=textword> &nbsp; </p>
+<p class=textpreword>         class MotionUnderGravitation 
+  : public Simulation</p>
+<p class=textpreword>         {</p>
+<p class=textpreword>           Vector3D gravitation;    // ускорение 
+  свободного падения</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>           // Конструктор сначала создает предка 
+  с 1й массой в 1 кг.</p>
+<p class=textpreword>           // Vector3D Gravitation - ускорение 
+  свободного падения</p>
+<p class=textpreword>         </p>
+<p class=textpreword>           MotionUnderGravitation(Vector3D gravitation):Simulation(1, 
+  1.0f)</p>
+<p class=textpreword>           {</p>
+<p class=textpreword>            this-&gt;gravitation = gravitation;</p>
+<p class=textpreword>            masses[0]-&gt;pos = Vector3D(-10.0f, 
+  0.0f, 0.0f);</p>
+<p class=textpreword>            masses[0]-&gt;vel = Vector3D(10.0f, 
+  15.0f, 0.0f);</p>
+<p class=textpreword>           }</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>           ...</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Конструктор получает <b>Vector3D</b> 
+  <b>gravitation</b>, 
+  который является ускорением свободного падения, затем приложение использует 
+  его в расчетах.</p>
+<p class=textword> &nbsp; </p>
+<p class=textpreword>           // Поскольку мы применяем силу, нам 
+  понадобится метод &quot;Solve&quot;.</p>
+<p class=textpreword>           virtual void solve()</p>
+<p class=textpreword>           {</p>
+<p class=textpreword>             // Применяем силу ко всем массам</p>
+<p class=textpreword>             for (int a = 0; 
+  a &lt; numOfMasses; ++a)</p>
+<p class=textpreword>               // Сила гравитации это F = m 
+  * g.</p>
+<p class=textpreword>                masses[a]-&gt;applyForce(gravitation 
+  * masses[a]-&gt;m);</p>
+<p class=textpreword>           }</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Вы, наверное, заметили в коде формулы 
+  силы <b>F=m*g</b>. Приложение создает <b>MotionUnderGravitation</b> с параметром <b>Vector3D(0.0f, 
+  -9.81f, 0.0f)</b>. -9.81 означает ускорение 
+  в направлении – <b>y</b>, таким образом, мы получаем «падающую» массу. Запустите приложение, 
+  и понаблюдайте что происходит.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>3. Масса, соединенная с точкой пружиной</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>* class MassConnectedWithSpring :</p>
+<p class=textpreword>  public Simulation         ---&gt; 
+  Объект создающий массу соединенную с точкой пружиной.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>В этом примере мы хотим присоединить 
+  массу к фиксированной точке пружиной. Пружина должна тянуть массу в сторону 
+  точки, к которой она присоединена. В конструкторе класс <b>MassConnectedWithSpring</b> 
+  устанавливает точку присоединения и положение массы. </p>
+<p class=textword> &nbsp; </p>
+<p class=textpreword>         class MassConnectedWithSpring 
+  : public Simulation</p>
+<p class=textpreword>         {</p>
+<p class=textpreword>           public:</p>
+<p class=textpreword>            float springConstant;    // больше springConstant, сильнее сила</p>
+<p class=textpreword>                                     // притяжения.</p>
+<p class=textpreword>            Vector3D connectionPos;  // Точка</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>            // Конструктор сначала создает предка 
+  с 1й массой в 1 кг.</p>
+<p class=textpreword>            MassConnectedWithSpring(float springConstant) 
+  : Simulation(1, 1.0f)</p>
+<p class=textpreword>            {</p>
+<p class=textpreword>             // установили springConstant.</p>
+<p class=textpreword>             this-&gt;springConstant = springConstant;</p>
+<p class=textpreword>             // и connectionPos.</p>
+<p class=textpreword>             connectionPos = Vector3D(0.0f, 
+  -5.0f, 0.0f);</p>
+<p class=textpreword>  </p>
+<p class=textpreword>             // положение массы на 10 метров правее connectionPos.</p>
+<p class=textpreword>             masses[0]-&gt;pos = connectionPos 
+  + Vector3D(10.0f, 0.0f, 0.0f);</p>
+<p class=textpreword>             // Скорость 0</p>
+<p class=textpreword>             masses[0]-&gt;vel = Vector3D(0.0f, 
+  0.0f, 0.0f);</p>
+<p class=textpreword>         }</p>
+<p class=textpreword> &nbsp; </p>
+<p class=textpreword>         ...</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Скорость массы 0 и положение на 10 
+  метров правее точки присоединения <b>connectionPos</b> соответственно в начале массу должно тянуть влево. Сила пружины 
+  определяется так</p>
+<p class=textword> &nbsp; </p>
+<p class=textword><b>F</b><b> 
+  = -</b><b>k</b><b> 
+  * </b><b>x</b><b></b></p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Значение<b> 
+  k</b> определяет насколько жесткой должна быть 
+  пружина, а <b>x</b> – расстояние от массы до точки присоединения. Отрицательный 
+  знак в формуле означает, что это сила притяжения. Если бы знак был положительным 
+  пружина толкала бы массу, что, в общем-то не удовлетворяет нашим требованиям 
+  ;). </p>
+<p class=textword> &nbsp; </p>
+<p class=textpreword>         virtual void solve() // Будет применяться 
+  сила пружины</p>
+<p class=textpreword>         {</p>
+<p class=textpreword>           for (int a = 0; a &lt; numOfMasses; 
+  ++a)</p>
+<p class=textpreword>           {</p>
+<p class=textpreword>            // Находим вектор от массы до точки 
+  притяжения</p>
+<p class=textpreword>            Vector3D springVector = masses[a]-&gt;pos 
+  - connectionPos;  </p>
+<p class=textpreword>            // Применяем силу опираясь на формулу</p>
+<p class=textpreword>            masses[a]-&gt;applyForce(-springVector 
+  * springConstant);</p>
+<p class=textpreword>           }</p>
+<p class=textpreword>         }</p>
+<p class=textword> &nbsp; </p>
+<p class=textword> &nbsp; </p>
+<p class=textword>Сила притяжения в коде выше такая 
+  же, как и в формуле <b>F=-k*x</b>. Здесь вместо <b>x</b> мы использовали <b>Vector3D</b> поскольку мы хотим работать в 3D. «<b>springVector</b>» 
+  определяет расстояние между положением массы и <b>connectionPos</b>, а <b>springConstant</b> заменяет <b>k</b>. Чем больше значение <b>springConstant</b>, тем больше сила, и тем быстрее движется масса.</p>
+<p class=textword> &nbsp; </p>
+<p class=textword>В этом уроке я попытался показать 
+  ключевую концепцию физической симуляции. Если вы интересовались физикой, у вас 
+  не займет много времени создать свой, новый движок. </p>
+<p class=textword> &nbsp; </p>
+
+<p class="textnoalign" align="right">
+<font color="#0000A0"><a href="mailto:erkintunca@icqmail.com"><b> © Erkin Tunca </b></a><br>
+<b>Jeff Molofee (NeHe)</a></b></font>
+</p>  
+
+</div>
+<div id="end">
+
+          <p><a href="http://pmg.org.ru/"
+			onmouseover=" return event_over(this,'Программирование магических игр')  "
+			onmouseout=" return event_out(this) "><font class="link"><b>PMG</b></font></a> 
+            <font class="comment">&nbsp;15 января 2003&nbsp;(c)&nbsp;</font> 
+        <a href="mailto:archer@deler.ru"
+	onmouseover=" return event_over(this,'Почта переводчику')  " 
+	onmouseout=" return event_out(this) "> <font class="link"><b>Артем Чирцов</b></font></a> 
+          </p>
+</div>
+</center>
+
+<script language="JavaScript">
+<!--
+form_print();
+//-->
+</script>
+
+</body>
+</html>

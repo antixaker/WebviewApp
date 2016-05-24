@@ -1,0 +1,1899 @@
+<!doctype html public "-//w3c//dtd html 3.2 final//ru">
+<html>
+
+<head>
+<meta http-equiv="Content-Type"
+content="text/html; charset=windows-1251">
+<meta name="description"
+content="Переводы по OpenGL, трехмерная графика, игры, мультимедия
+Translations Russian OpenGL
+">
+<meta name="keyword"
+content="Программирование,игры,3D,трехмерная графика,OpenGL,NeHe">
+<meta name="keyword"
+content="programming,C,C++,game,graphics">
+<title>Урок 32. Выбор, альфа смешивание, альфа тест, сортировка.</title>
+<link rel="stylesheet" href="pmg.css" type="text/css">
+</head>
+
+<body bgcolor="#b2d3e1" link="#800080" vlink="#800080">
+<script src='nehe.js' language="javascript">
+<!--
+//-->
+</script>
+
+<center>
+<div id="top">
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+        <td width="20%" align="center" valign="center">
+        <img src="nehelogo.jpg" align="left" hspace="0" width="125" height="50" alt="NeHe Tutorials">
+        </td>
+        <td width="60%" align="center">
+	<a href="index.html"
+	onmouseover=" return event_over(this,'NeHe Ru.')  "
+        onmouseout=" return event_out(this) ">
+        <font class="linksbig">
+        Народный учебник по OpenGL</font></a><br>
+        </td>
+        <td width="20%" align="center" valign="center">
+        <img src="nehe32.jpg" align="right" hspace="0" width="80" height="60" alt="Урок 32. OpenGL">
+        </td>
+    </tr>
+</table>
+</div>
+
+<div id="head">
+<p class="head1">
+Урок 32. Выбор, альфа смешивание, альфа тест, сортировка.</p>
+</div>
+<div id="main" bgcolor="#ADADFF">
+<p class="textnoalign" align="left">
+
+<a href="http://nehe.gamedev.net/data/lessons/lesson.asp?lesson=32" target="_blank"
+onmouseover=" return event_over(this,this)  "
+onmouseout=" return event_out(this) ">
+<font class="link"><b>Picking, Alpha Blending, Alpha Testing, Sorting</b></font></a>
+<br>
+</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Добро пожаловать на тридцать второй урок. Это, пожалуй, самый 
+  большой урок, который я написал. Более чем 1000 строк кода, и более чем 1540 
+  строк текста. Это также первый урок, в котором использован новый базовый код 
+  &quot;NeHeGL basecode&quot;. Этот урок отнял у меня много времени, но я думаю, 
+  он стоит этого. Вот некоторые из тем, которые рассматриваются в этом уроке: 
+  альфа смешивание, альфа тест, получение сообщений от мыши, одновременное использование 
+  ортографической и перспективной проекций, отображение собственного курсора, 
+  ручная сортировка объектов с учетом глубины, хранение кадров анимации в одной 
+  текстуре и, что, пожалуй, самое важное Вы овладеете ВЫБОРОМ (picking)!<br>
+  <br>
+</p>
+<p class=textword>В первоначальной версии этого урока на экране отображались три 
+  объекта, которые изменяли цвет, когда на них нажимали. Вам это интересно!?! 
+  Не возбуждает вообще! Как всегда, мои дорогие, я хотел впечатлить Вас крутым 
+  уроком высшего качества. Я хотел, чтобы урок вам понравился, набил ваши мозги 
+  ценной информацией и конечно... клево выглядел. Итак, после нескольких недель 
+  кодирования, урок сделан! Даже, если Вы не программируете, Вы можете просто 
+  наслаждаться результатом этого урока. Это полноценная игра! Вы будете стрелять 
+  по множеству целей, до тех пор, пока ваш боевой дух (morale) не упадет ниже 
+  предельной черты или ваши руки сведёт судорогой, и Вы больше не сможете щелкать 
+  по кнопке мыши.<br>
+  <br>
+</p>
+<p class=textword>Я уверен, что в мой адрес по поводу этого урока будет критика, 
+  но я очень счастлив, что создал этот урок! Такие малоприятные темы, как выбор 
+  и сортировка объектов по глубине, я превратил в забавные!<br>
+  <br>
+</p>
+<p class=textword>Несколько небольших замечаний о коде, я буду обсуждать только 
+  ту часть кода, которая находится в файле lesson32.cpp. Произошло несколько незначительных 
+  изменений в коде NeHeGL. Наиболее важное изменение то, что я добавил поддержку 
+  мыши в <b>WindowProc()</b>. Я также добавил <b>int mouse_x</b>, <b>mouse_y</b>, 
+  чтобы сохранить положение курсора мыши. В NeHeGL.h две следующие строки кода 
+  были добавлены: <b>extern int mouse_x; &amp; extern int mouse_y;</b>.<br>
+  <br>
+</p>
+<p class=textword>Все текстуры, которые используются в этом уроке, были сделаны 
+  в Adobe Photoshop. Каждый TGA файл – 
+  это 32-битное изображение с альфа-каналом. Если Вы не знаете, как добавить альфа-канал 
+  к изображению, то тогда купите себе хорошую книгу, посмотрите в Интернет или 
+  прочитайте помощь по Adobe Photoshop. Весь процесс создания изображения очень 
+  похож на тот, с помощью которого я создавал маски в уроке маскирования. Загрузите 
+  ваш объект в Adobe Photoshop (или другую программу для работы с изображениями, 
+  которая поддерживает альфа-канал). Произведите выбор области объекта по его 
+  контуру, например, выбором цветового диапазона. Скопируйте эту область. Создайте 
+  новое изображение. Вставьте выбранную область в новое изображение. Сделаете 
+  инверсию изображения так, чтобы область, где находится ваше изображение, стала 
+  черной. Сделайте область вокруг изображения белой. Выберите все изображение, 
+  и скопируйте его. Возвратитесь к первоначальному изображению, и создайте альфа-канал. 
+  Вставьте черно-белую маску, которую Вы только, что создали в альфа-канал. Сохраните 
+  изображение как 32 битный TGA файл. Проверьте, 
+  что сохранилась прозрачность, и проверьте, что Вы сохранили несжатое изображение!<br>
+  <br>
+</p>
+<p class=textword>Поскольку буду я надеяться, что вам понравится этот урок. Мне 
+  интересно знать, что Вы думаете о нем. Если у вас есть вопросы, или вы нашли 
+  ошибки в уроке, то сообщите мне об этом. Я быстро пройду по части урока, поэтому, 
+  если Вы находите, что какая-то часть урока трудна для понимания, то сообщите 
+  мне об этом, и я должен буду пробовать объяснить вещи по-другому или более подробно!</p>
+<p class=textword>&nbsp;</p>
+<p class=textpreword>#include &lt;windows.h&gt; // заголовочный 
+  файл для Windows</p>
+<p class=textpreword>#include &lt;stdio.h&gt;   // заголовочный файл для стандартного 
+  ввода/вывода</p>
+<p class=textpreword>#include &lt;stdarg.h&gt;  // заголовочный файл для манипуляций 
+  с переменными аргументами</p>
+<p class=textpreword>#include &lt;gl\gl.h&gt;   // заголовочный файл для библиотеки 
+  OpenGL32</p>
+<p class=textpreword>#include &lt;gl\glu.h&gt;  // заголовочный файл для библиотеки 
+  GLu32</p>
+<p class=textpreword>#include &lt;time.h&gt;    // для генерации псевдослучайных чисел</p>
+<p class=textpreword>#include &quot;NeHeGL.h&quot;  // заголовочный файл для NeHeGL</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>В уроке 1 я рассказал, как правильно подключить библиотеки OpenGL. 
+  В Visual C ++ надо выбрать Project 
+  / Settings / Link. И добавить в строчку &quot;Object/library 
+  modules&quot; следующую запись: OpenGL32.lib, GLu32.lib и glaux.lib. Если транслятор 
+  не сможет подключить нужную библиотеку, то это заставит его извергать ошибку 
+  за ошибкой. Именно то, что вы и не хотите! Это все обостряется, когда Вы включили 
+  библиотеки в режим отладки, и пробуете скомпилировать ваш в режиме без отладочной 
+  информации (release)... еще больше ошибок. Есть много людей, которые просматривают 
+  код. Большинство из них плохо знакомы с программированием. Они берут ваш код, 
+  и пробуют компилировать его. Они получают ошибки, удаляют код и ищут дальше.<br>
+  <br>
+</p>
+<p class=textword>Код ниже сообщит транслятору, что нужно прикомпоновать нужные 
+  библиотеки. Немного больше текста, но намного меньше головной боли, в конечном 
+  счете. В этом уроке, мы используем библиотеки OpenGL32, GLU32 и WinMM (для проигрывания 
+  звука). В этом уроке мы будем загружать TGA файлы, поэтому мы не нуждаемся в 
+  библиотеке glaux.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>#pragma comment( lib, 
+  &quot;opengl32.lib&quot; )  // Найти OpenGL32.lib во время линкования</p>
+<p class=textpreword>#pragma comment( lib, 
+  &quot;glu32.lib&quot; )     // Найти GLu32.lib во время линкования</p>
+<p class=textpreword>#pragma comment( lib, 
+  &quot;winmm.lib&quot; )     // Найти WinMM 
+  во время линкования</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>В трех строках ниже происходит проверка определения компилятором 
+  CDS_FULLSCREEN (используется в переключении видеорежима в функции ChangeDisplaySettings). 
+  Если это не так, то мы вручную задаем CDS_FULLSCREEN значение 4. Некоторые компиляторы 
+  не определяют CDS_FULLSCREEN и возвратят сообщение об ошибки, если CDS_FULLSCREEN 
+  используется! Чтобы предотвратить сообщение об ошибке, мы проверяем, был ли 
+  CDS_FULLSCREEN определен и если нет, то мы вручную задаем его. Это сделает жизнь 
+  немного проще для каждого. (Примечание переводчика: здесь ошибка, это определение 
+  нужно перенести в файл NeHeGL.cpp, так как там используется 
+  функция ChangeDisplaySettings).<br>
+  <br>
+</p>
+<p class=textword>Затем мы объявляем <b>DrawTargets</b>, и задаем переменные для 
+  нашего окна и обработки клавиатуры. Если Вы не знаете, как надо определять переменные, 
+  то пролистайте MSDN глоссарий. Имейте в виду, я не преподаю C/C++, купите хорошую 
+  книгу по этому языку, если Вам нужна справка не по GL коду!</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>#ifndef    CDS_FULLSCREEN     // CDS_FULLSCREEN не определен</p>
+<p class=textpreword>#define    CDS_FULLSCREEN 4   // компилятором. 
+  Определим его,</p>
+<p class=textpreword>#endif                        // 
+  чтобы избежать ошибок</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>void DrawTargets();           // декларация</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>GL_Window*  g_window;</p>
+<p class=textpreword>Keys*    g_keys;</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>В следующем разделе кода задаются наши пользовательские переменные. 
+  Переменная <b>base</b> будет использоваться для наших списков отображения для 
+  шрифта. Переменная <b>roll</b>  будет использоваться, чтобы перемещения земли 
+  и создания иллюзии прокрутки облаков. Переменная <b>level</b> (уровень) используется 
+  по прямому назначению (мы начинаем с уровня 1). Переменная <b>miss</b> отслеживает, 
+  сколько объектов не было сбито. Она также используется, чтобы показать боевой 
+  дух игрока (если не было промахов, то это означает высокий боевой дух). Переменная 
+  <b>kills</b> следит за тем, сколько целей было поражено на каждом уровне. В 
+  переменной <b>score</b> сохраняется общее число попаданий в объекты, и переменная 
+  <b>game</b> будет использоваться, чтобы сообщить о конце игры!<br>
+  <br>
+</p>
+<p class=textword>Последняя строка определяет нашу функцию сравнения. Функция 
+  <b>qsort</b> требует последний параметр с типом (const *void, const *void)..</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>// Наши пользовательские переменные</p>
+<p class=textpreword>GLuint   base;    
+  // Список отображения для шрифта</p>
+<p class=textpreword>GLfloat  roll;    
+  // Прокрутка облаков</p>
+<p class=textpreword>GLint    level=1; 
+  // Текущий уровень</p>
+<p class=textpreword>GLint    miss;    
+  // Пропущенные цели</p>
+<p class=textpreword>GLint    kills;   // Счетчик поражений для уровня</p>
+<p class=textpreword>GLint    score;   // Текущий счет</p>
+<p class=textpreword>bool     game;    
+  // Игра окончена?</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>typedef int (*compfn)(const void*, const 
+  void*); // Определение нашей функции сравнения</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Теперь о нашей структуре для объектов. Эта структура содержит 
+  всю информацию об объекте. Направление, в котором он вращается, попадание в 
+  него, положение на экране, и т.д.<br>
+  <br>
+</p>
+<p class=textword>Краткое описание переменных... Переменная <b>rot</b> определяет 
+  направление, в котором мы хотим вращать объект. Переменная <b>hit</b> равна 
+  ЛОЖЬ, если в объект еще не попали. Если объект был поражен или вручную помечен 
+  как пораженный, значение <b>hit</b> будет ИСТИННА.<br>
+  <br>
+</p>
+<p class=textword>Переменная <b>frame</b> используется, чтобы циклически повторять 
+  кадры анимации взрыва объекта. Поскольку <b>frame</b> увеличивается, то и произойдет 
+  смена текстуры взрыва. Далее мы остановимся на этом подробнее.<br>
+  <br>
+</p>
+<p class=textword>Чтобы следить за тем, в каком направлении наш объект перемещается, 
+  мы имеем переменную называемую <b>dir</b>. Переменная <b>dir</b> может принимать 
+  одно из 4 значений: 0 - объект перемещается влево, 1 - объект перемещает вправо, 
+  2 – объект перемещается вверх и, наконец, 3 - объект перемещается вниз.<br>
+  <br>
+</p>
+<p class=textword>Переменная <b>texid</b> может иметь любое значение от 0 до 4. 
+  Ноль задает текстуру BlueFace (голубая рожа), 1 - текстуру Bucket (ведро), 2 
+  – текстуру Target (мишень), 3 – Coke (банка кока-колы), и 4 - текстура Vase 
+  (ваза). Позже в коде загрузке текстуры, Вы увидите, что первые 5 текстур – изображения 
+  целей.<br>
+  <br>
+</p>
+<p class=textword>Обе переменные <b>x</b> и <b>y</b> используются для позиционирования 
+  объекта на экране. Переменная <b>x</b> задает позицию объекта по оси X, а переменная 
+  <b>y</b> задает позицию объекта по оси Y.<br>
+  <br>
+</p>
+<p class=textword>Объекты вращаются относительно оси Z в зависимости от значения 
+  переменной <b>spin</b>. Позже в коде, мы будем увеличивать или уменьшать вращение, 
+  основываясь на направлении перемещения объекта.<br>
+  <br>
+</p>
+<p class=textword>Наконец, переменная <b>distance</b> содержит значение расстояния 
+  нашего объекта от экрана. Переменная <b>distance</b> - чрезвычайно важная переменная, 
+  мы будем использовать ее, чтобы вычислить левую и правую стороны экрана, и сортировать 
+  объекты, так что дальние объекты были выведены прежде, чем ближайшие объекты.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>struct objects {</p>
+<p class=textpreword>  GLuint  rot;       
+  // Вращение (0-нет, 1-по часовой, 2-против)</p>
+<p class=textpreword>  bool  hit;         
+  // В объект попали?</p>
+<p class=textpreword>  GLuint  frame;     // Текущий кадр взрыва</p>
+<p class=textpreword>  GLuint  dir;       
+  // Направление объекта (0-лево, 1-право, 2-вверх, 3-низ)</p>
+<p class=textpreword>  GLuint  texid;     
+  // ID текстуры объекта</p>
+<p class=textpreword>  GLfloat  x;        // X позиция</p>
+<p class=textpreword>  GLfloat y;         // Y позиция</p>
+<p class=textpreword>  GLfloat  spin;     // Вращение</p>
+<p class=textpreword>  GLfloat  distance; 
+  // Расстояние</p>
+<p class=textpreword>};</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Абсолютно не зачем пояснять код ниже. Мы загружаем изображения 
+  в формате TGA в этом уроке вместо изображений в формате BMP. Структура ниже используется, чтобы хранить данные изображения, 
+  также как информацию об изображении в формате TGA. Прочитайте урок по работе 
+  с TGA файлами, если Вы нуждаетесь в детальном объяснении кода ниже.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>typedef struct         // Создаем структуру</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  GLubyte  *imageData; 
+  // Данные изображения</p>
+<p class=textpreword>  GLuint  bpp;         
+  // Цветность изображения в битах на пиксель.</p>
+<p class=textpreword>  GLuint  width;       
+  // Ширина изображения</p>
+<p class=textpreword>  GLuint  height;      // Высота изображения</p>
+<p class=textpreword>  GLuint  texID;       // ID текстуры используемый 
+  для выбора текстуры</p>
+<p class=textpreword>} TextureImage;        // Имя структуры</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Следующий код задает место для хранения наших 10 текстур и 30 
+  объектов. Если Вы хотите добавить еще объектов в игру, то проверьте, что Вы 
+  изменили значение от 30 на то число объектов, которое Вы хотите.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>TextureImage textures[10]; // Место для хранения 
+  10 текстур</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>objects  object[30];       
+  // Место для хранения 30 объектов</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Я не хочу ограничивать размер каждого объекта. Я хочу, чтобы 
+  ваза была более высокой, чем ведро, а ведро было более широкое, чем ваза. Чтобы 
+  упростить жизнь, я создаю структуру, в которой есть ширина объектов (<b>w</b>) 
+  и высота (<b>h</b>).<br>
+  <br>
+</p>
+<p class=textword>Затем я задаю ширину и высоту каждого объекта в последней строке 
+  кода. Чтобы получить ширину банки кока-колы (coke), 
+  я буду использовать вызов <b>size[3].w</b>. Для голубой рожи (Blueface) - 0, 
+  ведро (Bucket) - 1, мишень (Target) - 2, банка кока-колы (Coke) - 3 и ваза (Vase) - 4. Ширина задается <b>w</b>. Понятно?</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>struct dimensions {        // Размеры объекта</p>
+<p class=textpreword>  GLfloat  w;              // Ширина объекта</p>
+<p class=textpreword>  GLfloat h;               // Высота объекта</p>
+<p class=textpreword>};</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>// Размеры для объектов:Blueface,     
+  Bucket,      Target,       Coke,         Vase</p>
+<p class=textpreword>dimensions size[5] = { {1.0f,1.0f}, {1.0f,1.0f}, 
+  {1.0f,1.0f}, {0.5f,1.0f}, {0.75f,1.5f} };</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Следующий большой раздел кода загружает наше TGA изображение 
+  и конвертирует ее в текстуру. Это - тот же самый код, так который я использовал 
+  в уроке 25, если Вы нуждаетесь в детальном описании его, обратитесь к этому 
+  уроку. <br>
+  <br>
+</p>
+<p class=textword>Я использую изображения TGA, потому что у них есть возможность 
+  сохранять альфа-канал. Альфа-канал сообщает OpenGL, какие части изображения 
+  будут прозрачными, а какие части непрозрачны. Альфа-канал создается в программе 
+  редактирования изображений, и сохраняется вместе с изображением в файле TGA. 
+  OpenGL загружает изображение, и использует альфа-канал для задания величины 
+  прозрачности каждого пикселя в изображении.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>bool LoadTGA(TextureImage *texture, char *filename)   // 
+  Загрузка TGA файла в память</p>
+<p class=textpreword>{    </p>
+<p class=textpreword>  GLubyte    TGAheader[12]={0,0,2,0,0,0,0,0,0,0,0,0}; 
+  // Заголовок несжатого TGA</p>
+<p class=textpreword>  GLubyte    TGAcompare[12]; 
+  // Используется для сравнения заголовка TGA</p>
+<p class=textpreword>  GLubyte    header[6];      // Первые 6 полезных байт заголовка</p>
+<p class=textpreword>  GLuint     bytesPerPixel;  
+  // Число байт на пиксель в файле TGA</p>
+<p class=textpreword>  GLuint     imageSize;      // Используется для сохранения 
+  размера изображения</p>
+<p class=textpreword>  GLuint     temp;           // Временная переменная</p>
+<p class=textpreword>  GLuint     type=GL_RGBA;   // Режим GL по-умолчанию RBGA 
+  (32 BPP)</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  FILE *file = fopen(filename, &quot;rb&quot;); 
+  // Открыть TGA файл</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Если файл существует и 12 байт прочитаны и заголовок 
+  совпал и прочитаны</p>
+<p class=textpreword>  // следующие 6 байт, то все нормально, иначе не удача</p>
+<p class=textpreword>  if( file==NULL ||</p>
+<p class=textpreword>    fread(TGAcompare,1,sizeof(TGAcompare),file)!=sizeof(TGAcompare) 
+  ||</p>
+<p class=textpreword>    memcmp(TGAheader,TGAcompare,sizeof(TGAheader))!=0 
+  ||</p>
+<p class=textpreword>    fread(header,1,sizeof(header),file)!=sizeof(header))</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    if (file == NULL)          
+  // Файл не существует? *Добавлено Jim 
+  Strong*</p>
+<p class=textpreword>      return FALSE;            // вернуть 
+  FALSE</p>
+<p class=textpreword>    else                       // иначе</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      fclose(file);            // Закрыть файл</p>
+<p class=textpreword>      return FALSE;            // вернуть 
+  FALSE</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  texture-&gt;width  = header[1] * 256 + header[0]; 
+  // Определить ширину (highbyte*256+lowbyte)</p>
+<p class=textpreword>  texture-&gt;height = header[3] * 256 + header[2]; 
+  // Определить высоту (highbyte*256+lowbyte)</p>
+<p class=textpreword>    </p>
+<p class=textpreword>   if( texture-&gt;width 
+  &lt;=0 ||             // Ширина меньше или равна чем 0</p>
+<p class=textpreword>       texture-&gt;height &lt;=0 ||            
+  // Высота меньше или равна чем 0</p>
+<p class=textpreword>       (header[4]!=24 &amp;&amp; header[4]!=32)) // TGA 24 или 
+  32 бита?</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    fclose(file);              // Если не так, 
+  то закрыть файл</p>
+<p class=textpreword>    return FALSE;              // вернуть 
+  FALSE</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  texture-&gt;bpp 
+  = header[4];             // Получить число бит на пиксель 
+  (24 или 32)</p>
+<p class=textpreword>  bytesPerPixel = texture-&gt;bpp/8;       
+  // Разделить на 8, чтобы получить байт на пиксель</p>
+<p class=textpreword>                                        // Вычислить размер 
+  памяти для данных TGA</p>
+<p class=textpreword>  imageSize = texture-&gt;width*texture-&gt;height*bytesPerPixel;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  texture-&gt;imageData=(GLubyte *)malloc(imageSize); 
+  // Выделить память для данных TGA</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  if( texture-&gt;imageData==NULL ||       // 
+  Память выделена?</p>
+<p class=textpreword>       // Прочитано верное число байт?</p>
+<p class=textpreword>      fread(texture-&gt;imageData, 1, imageSize, file)!=imageSize)</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    if(texture-&gt;imageData!=NULL) // Если 
+  память выделена</p>
+<p class=textpreword>       free(texture-&gt;imageData); // Освободить 
+  память</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>    fclose(file);                // Закрыть 
+  файл</p>
+<p class=textpreword>    return FALSE;                // вернуть 
+  FALSE</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  for(GLuint i=0; i&lt;int(imageSize); i+=bytesPerPixel) 
+  // Цикл по данным</p>
+<p class=textpreword>  {                  // Смена местами первого и третьего 
+  байтов ('R'ed и 'B'lue)</p>
+<p class=textpreword>    temp=texture-&gt;imageData[i]; // Временно 
+  сохраняем значение</p>
+<p class=textpreword>    texture-&gt;imageData[i] = texture-&gt;imageData[i 
+  + 2]; // Третий байт на место первого</p>
+<p class=textpreword>    texture-&gt;imageData[i + 2] = temp; // 
+  Первый байт на место третьего</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  fclose (file); // Закрыть файл</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Построить текстуру из данных</p>
+<p class=textpreword>  glGenTextures(1, &amp;texture[0].texID); // 
+  Генерировать ID текстуры OpenGL</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  glBindTexture(GL_TEXTURE_2D, texture[0].texID); 
+  // Привязка текстуры</p>
+<p class=textpreword>  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, 
+  GL_LINEAR);  // Линейная</p>
+<p class=textpreword>  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, 
+  GL_LINEAR);  // фильтрация</p>
+<p class=textpreword>  </p>
+<p class=textpreword>  if (texture[0].bpp==24) // Если TGA 24 бита</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    type=GL_RGB;          // Тогда 
+  'type' равен GL_RGB</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  glTexImage2D(GL_TEXTURE_2D, 0, type,</p>
+<p class=textpreword>               texture[0].width, texture[0].height,</p>
+<p class=textpreword>               0, type, GL_UNSIGNED_BYTE, texture[0].imageData);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  return true; // Текстура построена, вернуть True</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Код вывода шрифта из 2D текстуры тот 
+  же самый, который я использовал в предыдущих уроках. Однако есть несколько небольших 
+  изменений. Первое, что Вы можете заметить это то, что мы генерируем только 95 
+  списков отображения. Если Вы посмотрите на текстуру шрифта, Вы увидите, что 
+  там есть только 95 символов. Второе, что Вы можете заметить то, что мы делим 
+  на 16.0f для получения <b>cx</b>, и мы 
+  делим на 8.0f для <b>cy</b>. Это делается, потому что 
+  текстура шрифта широкая (256 пикселей), а высота равна половине ширины (128 
+  пикселей). Поэтому, вычисляя <b>cx,</b> мы делим на 16.0f, и, вычисляя <b>cy</b>, 
+  мы делим на 8.0f.<br>
+  <br>
+</p>
+<p class=textword>Если Вы не понимаете код ниже, возвратитесь к уроку 17. Код 
+  вывода шрифта подробно объясняется в уроке 17!</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>GLvoid BuildFont(GLvoid)              // Построить наш список отображения для 
+  фонта</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  base=glGenLists(95);                
+  // Создание 95 списков отображения</p>
+<p class=textpreword>  glBindTexture(GL_TEXTURE_2D, textures[9].texID); 
+  // Привязка нашей текстуры фонта</p>
+<p class=textpreword>  for (int loop=0; loop&lt;95; loop++)   // 
+  Цикл по спискам</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    float cx=float(loop%16)/16.0f;    // X позиция 
+  текущего символа</p>
+<p class=textpreword>    float cy=float(loop/16)/8.0f;     // Y позиция 
+  текущего символа</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>    glNewList(base+loop,GL_COMPILE);  // Начало 
+  построения списка</p>
+<p class=textpreword>      glBegin(GL_QUADS);              // Использовать 
+  четырехугольник для символа</p>
+<p class=textpreword>        // Координаты текстуры / вершин (Низ Лево)</p>
+<p class=textpreword>        glTexCoord2f(cx,          1.0f-cy-0.120f); glVertex2i(0,0);</p>
+<p class=textpreword>        // Координаты текстуры / вершин (Низ Право)</p>
+<p class=textpreword>        glTexCoord2f(cx+0.0625f, 1.0f-cy-0.120f);  glVertex2i(16,0);</p>
+<p class=textpreword>        // Координаты текстуры / вершин (Верх Право)</p>
+<p class=textpreword>        glTexCoord2f(cx+0.0625f, 1.0f-cy);         glVertex2i(16,16);</p>
+<p class=textpreword>        // Координаты текстуры / вершин (Низ Лево)</p>
+<p class=textpreword>        glTexCoord2f(cx,         1.0f-cy);         glVertex2i(0,16);</p>
+<p class=textpreword>      glEnd();                        // Конец построения нашего четырехугольника 
+  (символ)</p>
+<p class=textpreword>      glTranslated(10,0,0);           // Сдвиг 
+  вправо на символ</p>
+<p class=textpreword>    glEndList();                      // Завершение 
+  построения списка отображения</p>
+<p class=textpreword>  }                                   // Цикл по всем символам</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Код вывода строки такой же, как в уроке 17, но был изменен, 
+  чтобы дать возможность нам вывести счет, уровень и мораль на экран (переменные, 
+  которые непрерывно изменяются).</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>GLvoid glPrint(GLint x, GLint y, const char 
+  *string, ...) // Здесь печать</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  char       text[256];           // Место для 
+  строки</p>
+<p class=textpreword>  va_list    ap;                  // Указатель 
+  на список аргументов</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  if (string == NULL)             // Если нет 
+  текста</p>
+<p class=textpreword>    return;                       // то ничего не делаем</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  va_start(ap, 
+  string);           // Разбор строки из переменных</p>
+<p class=textpreword>      vsprintf(text, string, ap); // Конвертирование 
+  символов в числа</p>
+<p class=textpreword>  va_end(ap);                     // Значения 
+  сохраняются в текст</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  glBindTexture(GL_TEXTURE_2D, textures[9].texID);   
+  // Выбор нашей текстуры шрифта</p>
+<p class=textpreword>  glPushMatrix();                 // Сохранить 
+  матрицу вида модели</p>
+<p class=textpreword>  glLoadIdentity();               // Сброс матрицы 
+  вида модели</p>
+<p class=textpreword>  glTranslated(x,y,0);            
+  // Позиционирование текста (0,0 – низ лево)</p>
+<p class=textpreword>  glListBase(base-32);            // Выбор набора 
+  символов</p>
+<p class=textpreword>  glCallLists(strlen(text), GL_UNSIGNED_BYTE, 
+  text); // Нарисовать текст списками</p>
+<p class=textpreword>  glPopMatrix();                  // Восстановить 
+  матрицу</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Этот код будет вызываться позже из функции qsort. Он нужен для 
+  сравнения расстояний в двух структурах и возвращает значение -1, если расстояние 
+  в первой структуре было меньше чем во второй, и значение 1, если расстояние 
+  в первой структуре больше чем во второй, и значение 0, если расстояние в обеих 
+  структурах равно.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>int Compare(struct objects *elem1, struct 
+  objects *elem2) // Функция сравнения</p>
+<p class=textpreword>{</p>
+<p class=textpreword>   // Если расстояние в первой структуре меньше чем во второй</p>
+<p class=textpreword>   if ( elem1-&gt;distance &lt; elem2-&gt;distance)</p>
+<p class=textpreword>      return -1; // Вернуть –1</p>
+<p class=textpreword>   // Если расстояние в первой структуре больше чем во второй</p>
+<p class=textpreword>   else if (elem1-&gt;distance &gt; elem2-&gt;distance)</p>
+<p class=textpreword>      return 1;  // Вернуть 1</p>
+<p class=textpreword>   else          // Иначе (Если расстояние равно)</p>
+<p class=textpreword>      return 0;  // Вернуть 0</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>В коде функции <b>InitObject()</b> мы инициализируем каждый 
+  объект. Мы начинаем, с установки <b>rot</b> в 1. При 
+  этом объект будет вращаться по часовой стрелке. Затем мы инициализируем анимацию 
+  взрыва для кадра 0 (мы не хотим, чтобы взрыв был показан с половины анимационной 
+  последовательности). Затем мы устанавливаем <b>hit</b> в ЛОЖЬ, что означает, 
+  что объект еще не был сбит или подвергся самоуничтожению. Для выбора текстурного 
+  объекта, переменной <b>texid</b> присваивается случайное значение от 0 до 4. 
+  Ноль - текстура blueface, и 4 - текстура vase. Это даст нам один из 5 случайных 
+  объектов.<br>
+  <br>
+</p>
+<p class=textword>Переменной <b>distance</b> будет присвоено случайное число от 
+  -0.0f до -40.0f (4000/100 равно 40). Когда мы будем рисовать объект, мы смещаем 
+  его на 10 единиц в экран. Поэтому, когда объект нарисован, он будет нарисован 
+  от -10.0f до -50.0f единиц в глубине экрана (и не близко и не далеко). Я делю 
+  случайное число на 100.0f, чтобы получить более точное значение с плавающей 
+  запятой.<br>
+  <br>
+</p>
+<p class=textword>После того как мы задали случайное значение дистанции до объекта, 
+  мы задаем объекту случайное значение по <b>y</b>. Мы не хотим, чтобы объект 
+  был ниже чем -1.5f, иначе он будет под землей, и мы не хотим, чтобы объект был 
+  выше, чем 3.0f. Поэтому диапазон наших случайных чисел не может быть больше 
+  чем 4.5f (-1.5f+4.5f=3.0f).<br>
+  <br>
+</p>
+<p class=textword>Для вычисления позиции <b>x</b>, мы используем довольно хитрый 
+  способ. Мы берем наше расстояние, и мы вычитаем 15.0f из него. Затем мы делим 
+  результат на 2 и вычитаем 5*level. Наконец, мы вычитаем случайное число от 0.0f 
+  до 5 умноженное на текущий уровень. Мы вычитаем 5*level и случайное число от 
+  0.0f до 5*level так, чтобы наш объект появлялся дальше от экрана на более высоких 
+  уровнях. Если бы мы не делали этого, объекты появились бы один за другим, при 
+  этом попасть в них было бы труднее, чем в этом варианте.<br>
+  <br>
+</p>
+<p class=textword>Наконец мы выбираем случайное направление (<b>dir</b>) от 0 
+  (слева) до 1 (направо).<br>
+  <br>
+</p>
+<p class=textword>Вот пример, чтобы вам было все это понятно. Скажем, что расстояние 
+  равно -30.0f, а текущий уровень равен 1:</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>object[num].x=((-30.0f-15.0f)/2.0f)-(5*1)-float(rand()%(5*1));<br>
+  object[num].x=(-45.0f/2.0f)-5-float(rand()%5);<br>
+  object[num].x=(-22.5f)-5-{давайте скажем 3.0f};<br>
+  object[num].x=(-22.5f)-5-{3.0f};<br>
+  object[num].x=-27.5f-{3.0f};<br>
+  object[num].x=-30.5f; <br>
+  <br>
+  </p>
+<p class=textword>Запомним, что мы сдвигаем на 10 единиц в экран прежде, чем мы 
+  выводим наши объекты, и расстояние в примере выше равно -30.0f. Можно с уверенностью 
+  сказать, что наше фактическое расстояние вглубь экрана будет равно -40.0f. Используя 
+  код перспективы из файла NeHeGL.cpp, с уверенностью можно будет предположить, 
+  что, если расстояние равно -40.0f, левый край экрана будет -20.0f, и правый 
+  край будет +20.0f. В коде выше наше значение <b>x</b> равно -22.5f (т.е. за 
+  левым краем экрана). Затем мы вычитаем 5 и наше случайное значение 3, которое 
+  гарантирует, что объект начнет перемещаться за экраном (с -30.5f) - это означает, 
+  что объект должен будет переместить приблизительно на 8 единиц вправо прежде, 
+  чем он появится на экране.<br>
+  <br>
+</p>
+<p class=textpreword>GLvoid InitObject(int num)     // Инициализация объекта</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  object[num].rot=1;           // Вращение по 
+  часовой</p>
+<p class=textpreword>  object[num].frame=0;         // Сброс кадра 
+  взрыва в ноль</p>
+<p class=textpreword>  object[num].hit=FALSE;       // Сброс статуса 
+  попадания в объект</p>
+<p class=textpreword>  object[num].texid=rand()%5;  // Назначение 
+  новой текстуры</p>
+<p class=textpreword>  object[num].distance=-(float(rand()%4001)/100.0f);  
+  // Случайная дистанция</p>
+<p class=textpreword>  object[num].y=-1.5f+(float(rand()%451)/100.0f);     
+  // Случайная Y позиция</p>
+<p class=textpreword>  // Случайное начальная X позиция, 
+  основанная на расстоянии объекта</p>
+<p class=textpreword>  // и случайном числе для задержки (Положительное значение)</p>
+<p class=textpreword>  object[num].x=((object[num].distance-15.0f)/2.0f)-(5*level)-float(rand()%(5*level));</p>
+<p class=textpreword>  object[num].dir=(rand()%2);  // Взять случайное 
+  направление</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Теперь мы проверим, в каком направлении объект собирается лететь. 
+  Код ниже проверяет, перемещается ли объект влево. Если это так, то мы должны 
+  изменить вращение так, чтобы объект вращался против часовой стрелки. Мы делаем 
+  это, изменяя значение <b>rot</b> на 2.<br>
+  <br>
+</p>
+<p class=textword>Наше значение <b>x</b> по умолчанию будет отрицательным числом. 
+  Однако на правой стороне экрана будут положительные значения. Поэтому в завершении 
+  мы инвертируем знак текущего значения<b> </b><b>x</b>. 
+  По-русски говоря, мы делаем положительное значение <b>x</b> 
+  вместо отрицательного значения.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  if (object[num].dir==0)          // Направление вправо</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    object[num].rot=2;             
+  // Вращение против часовой стрелки</p>
+<p class=textpreword>    object[num].x=-object[num].x;  // Начнем с левой стороны (Отрицательное 
+  значение)</p>
+<p class=textpreword>  }</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Теперь мы проверяем <b>texid</b>, чтобы выяснить какой случайный 
+  объект компьютер выбрал. Если <b>texid</b> равно 0, то компьютер выбрал объект 
+  blueface. Парни с голубыми рожами всегда катятся по земле. Чтобы быть уверенными, 
+  что они начинают свое путешествие на наземном уровне, мы принудительно устанавливаем 
+  значение <b>y</b> в -2.0f.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  if (object[num].texid==0)        // Голубая 
+  рожа</p>
+<p class=textpreword>    object[num].y=-2.0f;           
+  // Всегда катится по земле</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Затем мы проверяем, равно ли <b>texid</b> 1. Если это так, то 
+  компьютер выбрал ведро. Ведро не путешествует слева направо, оно падает с неба. 
+  Поэтому вначале мы должны установить <b>dir</b> в 3. Это сообщит компьютеру, 
+  что наш ковш падает или перемещается вниз.<br>
+  <br>
+</p>
+<p class=textword>Наш код инициализации предполагает, что объект будет путешествовать 
+  слева направо. Поскольку ковш падает, мы должны дать ему новое случайное значение 
+  по <b>x</b>. Если бы мы этого не делали, ковш никогда не был бы видим. Он падал 
+  бы или за  левым краем экрана или за правым краем экрана. Чтобы назначить новое 
+  значение, мы выбираем случайное значение, которое получается на основании расстояния 
+  от экрана. Вместо того чтобы вычитать 15, мы вычитаем только 10. Это дает нам 
+  более маленький диапазон, и сохраняет объект на экране. Назначив наше расстояние 
+  в -30.0f, мы будем иметь случайное значение от 0.0f до 40.0f. Если Вы спрашиваете 
+  себя, почему от 0.0f до 40.0f? Разве оно не должно быть от 0.0f до -40.0f? Ответ 
+  прост. Функция <b>rand()</b> всегда возвращает положительное число. Поэтому 
+  независимо от числа, мы получим обратно положительное значение. Так или иначе... вернемся. Поэтому мы имеем положительное число 
+  от 0.0f до 40.0f. Затем мы добавляем расстояние (отрицательное значение) минус 
+  10.0f деленное на 2. Для примера ... пусть случайное значение 15, а расстояние 
+  равно -30.0f:<br>
+  <br>
+</p>
+<p class=textpreword>object[num].x=float(rand()%int(-30.0f-10.0f))+((-30.0f-10.0f)/2.0f); 
+  <br>
+  object[num].x=float(rand()%int(-40.0f)+(-40.0f)/2.0f); <br>
+  object[num].x=float(15 {пусть будет 15))+(-20.0f); <br>
+  object[num].x=15.0f-20.0f; <br>
+  object[num].x=-5.0f; <br>
+  <br>
+  </p>
+<p class=textword>В завершении мы должны задать значение <b>y</b>. Мы хотим, чтобы 
+  ведро падало с неба. Мы не хотим, что бы оно проходило сквозь облака. Поэтому 
+  мы устанавливаем значение <b>y</b> в 4.5f. Немного ниже облаков.<br>
+  <br>
+</p>
+<p class=textpreword>  if (object[num].texid==1)        // Ведро</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    object[num].dir=3;             // Падает 
+  вниз</p>
+<p class=textpreword>    object[num].x=float(rand()%int(object[num].distance-10.0f))+</p>
+<p class=textpreword>                   ((object[num].distance-10.0f)/2.0f);</p>
+<p class=textpreword>    object[num].y=4.5f;            
+  // Случайное X, начинаем с верха экрана</p>
+<p class=textpreword>  }</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Мы хотим, чтобы мишень вылетела из земли и поднялась в воздух. 
+  Мы проверяем объект действительно мишень (<b>texid</b> 
+  ранвно 2). Если это так, то мы задаем направление (<b>dir</b>) равным 2 (верх). 
+  Мы используем точно тот же самый код, как и выше, чтобы получить случайное положение 
+  по <b>x</b>.<br>
+  <br>
+</p>
+<p class=textword>Мы не хотим, чтобы мишень вылетала выше земли. Поэтому мы задаем 
+  начальное значение <b>y</b> равным -3.0f (под землей). Затем мы вычитаем случайное 
+  значение от 0.0f до 5 умноженное на текущий уровень. Мы делаем это затем, чтобы 
+  мишень НЕМЕДЛЕННО НЕ появилась. На более высоких уровнях мы хотим ввести задержку 
+  прежде, чем мишень появится. Без задержки, мишени бы вылетали одна за другой, 
+  отводя Вам, мало времени, чтобы сбить их.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  if (object[num].texid==2)       // Мишень</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    object[num].dir=2;            // Вверх</p>
+<p class=textpreword>    // Случайное X, старт из под земли + случайное значение</p>
+<p class=textpreword>    object[num].x=float(rand()%int(object[num].distance-10.0f))+</p>
+<p class=textpreword>                  ((object[num].distance-10.0f)/2.0f);</p>
+<p class=textpreword>    object[num].y=-3.0f-float(rand()%(5*level));</p>
+<p class=textpreword>  }</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Все другие объекты путешествуют слева направо, поэтому нет смысла 
+  для них что-то менять. Они должны прекрасно работать со случайными значениями, 
+  которые уже были назначены.<br>
+  <br>
+</p>
+<p class=textword>Теперь интересное! &quot;Для правильно работы техники использующей 
+  альфа смешивание прозрачные примитивы должны быть выведены от дальних к ближним 
+  и не должны пересекаться&quot;. Когда рисуются объекты с альфа смешиванием очень 
+  важно, чтобы дальние объекты были выведены вначале, а ближние объекты выведены 
+  последними.<br>
+  <br>
+</p>
+<p class=textword>Причина этого проста... Z буфер не допускает 
+  рисование OpenGL пикселей, которые уже сзади выведенных пикселей. Поэтому может 
+  так случится, что объекты, выведенные сзади прозрачных объектов, не обнаруживаются. 
+  Поэтому Вы можете увидеть квадратную форму вокруг перекрывающихся объектов... 
+  Не хорошо!<br>
+  <br>
+</p>
+<p class=textword>Мы уже знаем глубину каждого объекта. Поэтому после инициализации 
+  нового объекта, мы можем обойти эту проблему, сортируя объекты, используя функцию 
+  qsort (быстрая сортировка). При помощи сортировки объектов, мы можем убедиться, 
+  что первый выведенный объект – это тот объект, который дальше всего. Поэтому, 
+  когда мы выводим объекты, мы начинаем с первого объекта, дальние объекты будут 
+  выведены вначале. Ближние объекты будут видеть предварительно выведенные объекты 
+  позади них, и смешивание пройдет должным образом!<br>
+  <br>
+</p>
+<p class=textword>Как отмечено в комментариях ниже: я нашел этот код в MSDN после 
+  нескольких часов поиска в Интернете. Этот код работает хорошо и позволяет Вам 
+  сортировать структуры целиком. Функция qsort имеет 4 параметра. Первый параметр 
+  указывает на массив объектов (массив, который нужно сортировать). Второй параметр 
+  - число массивов, которые мы хотим сортировать... Конечно, мы хотим сортировать 
+  все объекты, которые в настоящее время отображаются (число объектов задается 
+  уровнем). Третий параметр определяет размер нашей структуры объектов, и четвертый 
+  параметр указывает на нашу функцию сравнения.<br>
+  <br>
+</p>
+<p class=textword>Есть, вероятно, более лучший способ сортировать структуры, но 
+  qsort () работает... Это быстро и удобно!<br>
+  <br>
+</p>
+<p class=textword>Важно обратить внимание на то, что, если Вы хотите использовать 
+  <b>glAlphaFunc()</b> и <b>glEnable (GL_ALPHA_TEST)</b>, в сортировке нет необходимости. 
+  Однако, используя только альфа-тест (позволяет принять или отклонить фрагмент, 
+  основываясь на значение его альфа-канала, но не смешивает) Вы ограничены полностью 
+  прозрачным или полностью непрозрачным смешиванием, но при этом не возникает 
+  реального смешивания. С сортировкой и использованием <b>Blendfunc()</b> надо 
+  немного больше работы, но при этом учитываются полупрозрачные объекты.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  // Сортировка объектов по расстоянию:</p>
+<p class=textpreword>  //  *** Код MSDN модифицирован 
+  в этом уроке ***</p>
+<p class=textpreword>  //                Начальный адрес нашего массива объектов</p>
+<p class=textpreword>  //                Число сортируемых элементов</p>
+<p class=textpreword>  //                Размер каждого элемента</p>
+<p class=textpreword>  //                Указатель на нашу функцию сравнения</p>
+<p class=textpreword>  qsort((void *) &amp;object, level, sizeof(struct 
+  objects), (compfn)Compare );</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Код инициализации тот же самый, как и всегда. В первых двух 
+  строках сохраняется информация о нашем окне и нашем обработчике клавиатуры. 
+  Затем используем <b>srand()</b> чтобы сделать нашу игру более случайную, основываясь 
+  на времени. После этого мы загружаем наши TGA изображения и конвертируем их 
+  в текстуры, используя <b>LoadTGA()</b>. Первые 5 изображений - объекты, которые 
+  будут летать по экрану. Далее, загрузим текстуры Explode (взрыв) – анимация 
+  взрыва, ground (земля) и sky (небо) - фон сцены, crosshair (перекрестье) - курсор, 
+  который показывает текущее положение мыши на экране, и, наконец, font 
+  - шрифт для отображения счета, заголовка, и морали. Если какое-то из изображений 
+  не загрузиться, будет возвращено ЛОЖЬ, и программа закроется. Важно обратить 
+  внимание на то, что этот основной код не будет выводить сообщение о неудавшейся 
+  инициализации.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>BOOL Initialize (GL_Window* window, Keys* 
+  keys) // Инициализация OpenGL</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  g_window  = window;</p>
+<p class=textpreword>  g_keys    = keys;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  srand( (unsigned)time( NULL ) );          
+  // Привнесение случайности</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  if ((!LoadTGA(&amp;textures[0],&quot;Data/BlueFace.tga&quot;)) 
+  ||// Загрузка текстуры BlueFace</p>
+<p class=textpreword>    (!LoadTGA(&amp;textures[1],&quot;Data/Bucket.tga&quot;)) 
+  ||    // Загрузка текстуры Bucket</p>
+<p class=textpreword>    (!LoadTGA(&amp;textures[2],&quot;Data/Target.tga&quot;)) 
+  ||    // Загрузка текстуры Target</p>
+<p class=textpreword>    (!LoadTGA(&amp;textures[3],&quot;Data/Coke.tga&quot;)) 
+  ||      // Загрузка текстуры Coke</p>
+<p class=textpreword>    (!LoadTGA(&amp;textures[4],&quot;Data/Vase.tga&quot;)) 
+  ||      // Загрузка текстуры Vase</p>
+<p class=textpreword>    (!LoadTGA(&amp;textures[5],&quot;Data/Explode.tga&quot;)) 
+  ||   // Загрузка текстуры Explosion</p>
+<p class=textpreword>    (!LoadTGA(&amp;textures[6],&quot;Data/Ground.tga&quot;)) 
+  ||    // Загрузка текстуры Ground</p>
+<p class=textpreword>    (!LoadTGA(&amp;textures[7],&quot;Data/Sky.tga&quot;)) 
+  ||       // Загрузка текстуры Sky</p>
+<p class=textpreword>    (!LoadTGA(&amp;textures[8],&quot;Data/Crosshair.tga&quot;)) 
+  || // Загрузка текстуры Crosshair</p>
+<p class=textpreword>    (!LoadTGA(&amp;textures[9],&quot;Data/Font.tga&quot;)))        
+  // Загрузка текстуры Font</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    return FALSE;              // Если не удачно, то вернем False</p>
+<p class=textpreword>  }</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Если все изображения были загружены и конвертированы в текстуры 
+  успешно, мы можем продолжать инициализацию. Текстура шрифта загружена, поэтому 
+  можно создать наш шрифт. Мы делаем это, вызывая <b>BuildFont()</b>.<br>
+  <br>
+</p>
+<p class=textword>Затем мы настраиваем OpenGL. 
+  Цвет фона - черный, альфа в 0.0f. Буфер глубины включен и разрешен с тестом 
+  меньше или равно.<br>
+  <br>
+</p>
+<p class=textword>Функция <b>glBlendFunc()</b> - очень важная строка кода. Мы 
+  задаем функцию смешивания как (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA). При этом 
+  объект смешивается со всем, что на экране, используя альфа значения, которые 
+  есть в текстуре объекта. После настройки режима смешивания, мы разрешаем смешивание. 
+  Затем разрешаем 2D наложение текстуры, и, наконец, мы 
+  разрешаем GL_CULL_FACE. При этом удаляются задние грани каждого объекта (нет 
+  смысла выводить то, что мы не видим). Мы выводим все наши четырехугольники против 
+  часовой стрелки, поэтому будет выбрана правильная грань.<br>
+  <br>
+</p>
+<p class=textword>Ранее я говорил об использовании <b>glAlphaFunc()</b> вместо 
+  альфа смешивания. Если Вы хотите использовать альфа тест, закомментируйте 2 
+  строки кода смешивания и уберите комментарий с 2 строк сразу за <b>glEnable(GL_BLEND)</b>. 
+  Вы можете также закомментировать функцию <b>qsort() </b>в <b>InitObject()</b>.<br>
+  <br>
+</p>
+<p class=textword>Программа запуститься, но текстуры неба при этом не будет. Причина 
+  этого в том, что текстура неба имеет альфа-значение равное 0.5f. Когда я говорил 
+  об альфа тесте раньше, я упомянул, что он работает только с альфа значениями 
+  0 или 1. Вы должны будете изменить альфа канал для текстуры неба, если Вы хотите, 
+  чтобы оно появилось! Еще раз, если Вы хотите использовать альфа тест, Вы не 
+  должны сортировать объекты. Оба метода хороши! Ниже небольшая цитата с сайта 
+  SGI:<br>
+  <br>
+</p>
+<p class=textword>&quot;Альфа тест отклоняет фрагменты вместо рисования их в буфер 
+  кадра. Поэтому сортировка примитивов не нужна (если другой какой-то режим подобно 
+  альфа смешиванию не разрешен). Недостаток альфа теста в том, что пиксели должны 
+  быть полностью непрозрачные или полностью прозрачные&quot;.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  BuildFont();                    
+  // Построение списков отображения для шрифта</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // Черный 
+  фон</p>
+<p class=textpreword>  glClearDepth(1.0f);             
+  // Настройка буфера глубины</p>
+<p class=textpreword>  glDepthFunc(GL_LEQUAL);         // Тип теста 
+  глубины</p>
+<p class=textpreword>  glEnable(GL_DEPTH_TEST);        // Разрешен 
+  тест глубины</p>
+<p class=textpreword>  // Разрешено альфа-смешивание (запрет альфа теста)</p>
+<p class=textpreword>  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);</p>
+<p class=textpreword>  glEnable(GL_BLEND);              
+  // Разрешено смешивание  (запрет альфа теста)</p>
+<p class=textpreword>//  glAlphaFunc(GL_GREATER,0.1f);  
+  // Настройка альфа теста (запрет смешивания)</p>
+<p class=textpreword>//  glEnable(GL_ALPHA_TEST);       
+  // Разрешен альфа тест   (запрет смешивания)</p>
+<p class=textpreword>  glEnable(GL_TEXTURE_2D);         
+  // Разрешено наложение текстуры</p>
+<p class=textpreword>  glEnable(GL_CULL_FACE);          // Удалить 
+  заднюю грань</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>До этой части программы, ни один из объектов не был задан. Поэтому 
+  мы делаем цикл по всем тридцати объектам, вызывая <b>InitObject()</b> для каждого 
+  объекта.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  for (int loop=0; loop&lt;30; loop++) // Цикл 
+  по 30 объектам</p>
+<p class=textpreword>    InitObject(loop);               // Инициализация 
+  каждого объекта</p>
+<p class=textpreword>  </p>
+<p class=textpreword>  return TRUE;                      // Возврат TRUE (Инициализация успешна)</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>В нашем коде инициализации, мы вызывали <b>BuildFont()</b>, 
+  для создания наших 95 списков отображения. Следующая строка кода удаляет все 
+  95 списков отображения перед выходом программы.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>void Deinitialize (void)            
+  // Любая пользовательская деинициализация здесь</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  glDeleteLists(base,95);           
+  // Уничтожить все 95 списков отображения фонта</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Теперь немного хитрого кода ... Кода, который фактически делает 
+  выбор объектов. В первой строке кода ниже создается буфер, который мы можем 
+  использовать, чтобы хранить информацию о наших выбранных объектах. В переменной 
+  попадания (<b>hits</b>) будет храниться число обнаруженных 
+  попаданий в режиме выбора.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>void Selection(void)                // Здесь происходит выбор</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  GLuint  buffer[512];              // Настройка 
+  буфера выбора</p>
+<p class=textpreword>  GLint  hits;                      // Число 
+  объектов, которые мы выбрали</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Вначале, мы проверяем, окончена ли игра. Если это так, то нет 
+  никакого смысла выбирать, поэтому мы производим выход из функции. Если игра 
+  еще не окончена, мы проигрываем звук выстрела с использование функции <b>Playsound()</b>. 
+  Функция <b>Selection()</b> вызывается только тогда, когда кнопка мыши была нажата, 
+  и каждый раз, когда кнопка мыши нажата, мы хотим проиграть звук выстрела. Звук 
+  запускается в асинхронном режиме для того, чтобы не остановить программу, во 
+  время проигрывания звука.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  if (game)                
+  // Игра окончена?</p>
+<p class=textpreword>    return;                // Если так, 
+  то выбирать нечего</p>
+<p class=textpreword>  </p>
+<p class=textpreword>  PlaySound(&quot;data/shot.wav&quot;,NULL,SND_ASYNC); 
+  // Проигрывание звука выстрела</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Теперь мы настроим область просмотра. Массив <b>viewport[]</b> 
+  хранит x, y, длину и ширину текущей области просмотра (окно OpenGL).<br>
+  <br>
+</p>
+<p class=textword>Функция <b>glGetIntegerv(GL_VIEWPORT, viewport)</b> возвращает 
+  границы текущей области просмотра и помещает <b>viewport[]</b>. Первоначально, 
+  границы равны размерам окна OpenGL. Вызов функции <b>glSelectBuffer(512, buffer)</b> 
+  сообщает OpenGL, что надо использовать <b>buffer</b> для буфера выбора.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  // Размер области просмотра. [0] - &lt;x&gt;, 
+  [1] - &lt;y&gt;, [2] - &lt;length&gt;, [3] - &lt;width&gt;</p>
+<p class=textpreword>  GLint  viewport[4];</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Помещаем в массив &lt;viewport&gt; 
+  размеры и положение на экране относительно окна</p>
+<p class=textpreword>  glGetIntegerv(GL_VIEWPORT, viewport);</p>
+<p class=textpreword>  glSelectBuffer(512, buffer); // Скажем OpenGL использовать этот массив для выбора</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Следующий код очень важен. В первой строке OpenGL переключается 
+  в режим выбора. В режиме выбора, ничего не выводится на экран. Вместо этого, 
+  вся информация о визуализированных объектах будет сохранена в буфере выбора. 
+  <br>
+  <br>
+</p>
+<p class=textword>Далее мы инициализируем стек имен, вызывая <b>glInitNames()</b> 
+  и <b>glPushName(0)</b>. Важно обратить внимание на то, что, если программа не 
+  в режиме выбора, запрос к <b>glPushName()</b> будет игнорирован. Конечно, мы 
+  находимся в режиме выбора, но это важно иметь в виду.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  // Переключить OpenGL в режим выбора. Ничего не будет нарисовано.</p>
+<p class=textpreword>  // Идентификатор объекта и его размеры будут сохранены 
+  в буфере.</p>
+<p class=textpreword>  (void) glRenderMode(GL_SELECT);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  glInitNames();                // Инициализация 
+  стека имен</p>
+<p class=textpreword>  glPushName(0);                // 
+  Поместить 0 в стек (наименьший первый элемент)</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>После подготовки стека имен, мы должны ограничить область рисования 
+  только под нашим курсором. Чтобы это сделать, мы должны выбрать матрицу проецирования. 
+  После выбора матрицы проецирования мы помещаем ее в стек. Затем сбрасываем матрицу 
+  проецирования используя <b>glLoadIdentity()</b>.<br>
+  <br>
+</p>
+<p class=textword>Мы ограничим рисование, используя <b>gluPickMatrix() </b>(задает 
+  область выбора). Первый параметр - наша текущая позиция мыши по оси X, второй 
+  параметр - текущая позиция мыши по оси Y, затем ширина и высота области выбора. 
+  Наконец, <b>viewport[]</b>. Массив viewport[] указывает текущие границы области 
+  просмотра. Переменные mouse_x и mouse_y будут в центре 
+  области выбора.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  glMatrixMode(GL_PROJECTION);   
+  // Выбор матрицы проецирования</p>
+<p class=textpreword>  glPushMatrix();                
+  // Поместить матрицу проецирования</p>
+<p class=textpreword>  glLoadIdentity();              // Сброс матрицы</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Создание матрицы, которая будет задавать маленькую часть 
+  экрана под мышью.</p>
+<p class=textpreword>  gluPickMatrix((GLdouble) mouse_x, (GLdouble) 
+  (viewport[3]-mouse_y), 1.0f, 1.0f, viewport);</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Вызов <b>gluPerspective()</b> умножает перспективную матрицу 
+  на матрицу выбора, которая ограничивает область рисования, которая задана <b>gluPickMatrix()</b>.<br>
+  <br>
+</p>
+<p class=textword>Затем мы выбираем матрицу вида модели и выводим наши цели при 
+  помощи вызова <b>DrawTargets()</b>. Мы выводим цели в <b>DrawTargets()</b>, 
+  а не в <b>Draw()</b> потому что мы хотим, чтобы в режиме выбора были проверены 
+  попадания только в объекты (цели), а не с небом, землей или курсором.<br>
+  <br>
+</p>
+<p class=textword>После отрисовки наших целей, мы выбираем снова матрицу проецирования 
+  и возвращаем сохраненную матрицу из стека. Затем мы выбираем снова матрицу вида 
+  модели.<br>
+  <br>
+</p>
+<p class=textword>В последней строке кода ниже мы переключаемся обратно в режим 
+  визуализации так, чтобы объекты, которые мы выводим, появились на экране. Переменная 
+  <b>hits</b> будет содержать число объектов, которые были визуализированы в области 
+  просмотра, которая задана <b>gluPickMatrix()</b>.</p>
+<p class=Normal style='margin:0cm;margin-bottom:.0001pt'>&nbsp;  </p>
+<p class=textpreword>  // Применить перспективную матрицу</p>
+<p class=textpreword>  gluPerspective(45.0f, (GLfloat) (viewport[2]-viewport[0])/(GLfloat) 
+  (viewport[3]-viewport[1]),</p>
+<p class=textpreword>                 0.1f, 100.0f);</p>
+<p class=textpreword>  glMatrixMode(GL_MODELVIEW);   // Выбор матрицы 
+  вида модели</p>
+<p class=textpreword>  DrawTargets();                // Визуализация 
+  целей в буфер выбора</p>
+<p class=textpreword>  glMatrixMode(GL_PROJECTION);  // Выбор матрицы 
+  проецирования</p>
+<p class=textpreword>  glPopMatrix();                // 
+  Получить матрицу проецирования</p>
+<p class=textpreword>  glMatrixMode(GL_MODELVIEW);   // Выбор матрицы вида модели</p>
+<p class=textpreword>  hits=glRenderMode(GL_RENDER); // Выбор режима 
+  визуализации, найти как много</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Теперь мы проверяем больше ли нуля число зарегистрированных 
+  попаданий. Если это так, то мы присваиваем переменной <b>choose </b>имя первого 
+  объекта, нарисованного в области выбора. Переменной <b>depth</b> присваивается 
+  значение расстояния объекта от экрана (глубина).<br>
+  <br>
+</p>
+<p class=textword>Каждое попадание помещает 4 элемента в буфер. Первый элемент 
+  - число имен в стеке имен, когда произошло попадание. Второй элемент - значение 
+  минимума <b>z</b> всех вершин, которые пересекают видимую область во время попадания. 
+  Третий элемент - значение максимума <b>z</b> всех вершин, которые пересекают 
+  видимую область во время попадания, и последний элемент – содержимое стека имен 
+  во время попадания (имя объекта). В этом уроке нам необходимо только значение 
+  минимума <b>z</b> и имя объекта.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  if (hits &gt; 0)                // Если есть 
+  попадания</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    int  choose = buffer[3];   // Сделать наш 
+  выбор первым объектом</p>
+<p class=textpreword>    int  depth = buffer[1];    // Сохранить 
+  как далеко он</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Затем мы делаем цикл по всем попаданиям, для того чтобы проверить, 
+  что ни один из объектов не ближе чем первый объект. Если бы мы этого не сделали, 
+  и два объекта будут накладываться один на другой, и первый объект будет позади 
+  другого объекта, то по щелчку мыши будет выбран первый объект, даже притом, 
+  что он был позади другого объекта. Когда Вы стреляете, то самый близкий объект 
+  должен быть выбран.<br>
+  <br>
+</p>
+<p class=textword>Поэтому, мы проверяем все попадания. Вспомните, что на каждый 
+  объект приходится 4 элемента в буфере, поэтому чтобы перейти на следующее попадание 
+  мы должны умножить текущее значение цикла на 4. Мы добавляем 1, чтобы получить 
+  глубину каждого объекта. Если глубина - меньше чем текущая глубина выбранного 
+  объекта, мы сохраняем имя более близкого объекта в <b>choose</b>, и мы сохраняем 
+  в <b>depth</b> глубину более близкого объекта. После завершения цикла по всем 
+  нашим попаданиям, в <b>choose</b> будет находиться имя самого близкого объекта, 
+  а в <b>depth</b> будет содержаться глубина его.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>    for (int loop = 1; loop &lt; hits; loop++) 
+  // Цикл по всем обнаруженным попаданиям</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      // Если этот объект ближе, 
+  чем выбранный</p>
+<p class=textpreword>      if (buffer[loop*4+1] &lt; GLuint(depth))</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        choose = buffer[loop*4+3];          
+  // Выбрать ближний объект</p>
+<p class=textpreword>        depth = buffer[loop*4+1];           
+  // Сохранить как далеко он</p>
+<p class=textpreword>      }       </p>
+<p class=textpreword>    }</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Все, что мы должны сделать – пометить, что в этот объект попали. 
+  Мы проверяем, что объект уже не был помечен. Если он не был помечен, то мы отмечаем, 
+  что в него попали, задавая <b>hit</b> ИСТИНА. Мы увеличиваем счет игрока на 
+  единицу, и мы увеличиваемся счетчик поражений на 1.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>    if (!object[choose].hit)          // Если в объект еще 
+  не попадали</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      object[choose].hit=TRUE;        
+  // Пометить, что в объект попали</p>
+<p class=textpreword>      score+=1;            // Увеличить счет</p>
+<p class=textpreword>      kills+=1;            // Увеличить число поражений</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Я использую <b>kills</b>, чтобы знать, сколько объектов были 
+  уничтожены на каждом уровне. Я хочу на каждом уровне иметь большее количество 
+  объектов (чтобы каждый следующий уровень проходился тяжелее). Поэтому я проверяю, 
+  если игрок уничтожил объектов, больше чем значение текущего уровня, умноженного 
+  на 5, то он переходит на следующий уровень. На уровне 1, игрок должен уничтожить 
+  5 объектов (1*5). На уровне 2 игрок должен уничтожить 10 объектов (2*5). Уровень 
+  трудности прогрессивно повышается.<br>
+  <br>
+</p>
+<p class=textword>Поэтому, в первой строке кода проверки смотрим, выше ли число 
+  поражений, чем уровень, умноженный на 5. Если это так, то мы устанавливаем <b>miss</b> 
+  в 0. Это задает боевой дух игрока обратно в 10 из 10 (боевой дух равен с <b>10-</b><b>miss</b>). 
+  Затем устанавливаем число поражений в 0 (начинаем процесс подсчета снова).<br>
+  <br>
+</p>
+<p class=textword>Наконец, мы увеличиваем значение уровня 1 и проверяем, достигли 
+  ли мы последнего уровня. Я установил максимальный уровень в 30 по следующим 
+  двум причинам... Уровень 30 безумно труден. Я уверен, что никто не доиграет 
+  до этого уровня. Вторая причина... Выше, мы задаем 30 объектов. Если Вы хотите 
+  большее количество объектов, Вы должны увеличить значение соответственно.<br>
+  <br>
+</p>
+<p class=textword>Очень важно обратить внимание, на что Вы можете иметь максимум 
+  64 объекта на экране (0-63). Если Вы пробуете визуализировать 65 или более объектов, 
+  выбор становится путанным, и не верным. Каждый из объектов, случайно может привести 
+  к остановке вашего компьютера. Это - физический предел в OpenGL 
+  (точно так же как 8 источников света).<br>
+  <br>
+</p>
+<p class=textword>Если вдруг Вы - бог, и Вы закончили уровень 30, <b>level</b> 
+  больше не будет увеличиваться, и ваш счет тоже. Ваш боевой дух также сбросится 
+  к 10, каждый раз Вы, когда вы заканчиваете 30-ый уровень.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>      if (kills&gt;level*5)   // Новый уровень?</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        miss=0;            // Сброс числа промахов</p>
+<p class=textpreword>        kills=0;           // Сброс число поражений</p>
+<p class=textpreword>        level+=1;          // Увеличение уровня</p>
+<p class=textpreword>        if (level&gt;30)      // Больше чем 
+  30?</p>
+<p class=textpreword>          level=30;        // Поэтому уровень30 (Вы бог?)</p>
+<p class=textpreword>      }</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>В функции <b>Update()</b> проверяется нажатие клавиш, и обновляется 
+  положение объектов. Одна из приятных особенностей <b>Update()</b> – миллисекундный 
+  таймер. Вы можете использовать миллисекундный таймер, чтобы переместить объекты, 
+  основываясь на времени, которое прошло, с того момента, как <b>Update()</b> 
+  была вызвана последний раз. Важно обратить внимание на то, что движущийся объект 
+  будет перемещаться с той же самой скоростью на любом процессоре... НО есть и 
+  недостатки! Пусть имеется объект, который перемещается на 5 единиц за 10 секунд. 
+  На быстрой системе, компьютер будет перемещать объект на половину единицы за 
+  каждую секунду. На медленной системе, это произойдет через 2 секунды прежде, 
+  чем даже процедура обновления будет вызвана. Поэтому, когда объект двигается, 
+  будет казаться, что он дергается. Мультипликация не будет плавной на более медленной 
+  системе. (Примечание: это несколько преувеличенный пример... любой компьютер 
+  будет обновлять экран быстрее, чем раз в две секунды).<br>
+  <br>
+</p>
+<p class=textword>Так или иначе... возвращаемся... к коду. В коде ниже делается 
+  проверка, для того чтобы увидеть, нажата ли клавиша выхода из программы. Если 
+  это так, то мы выходим из приложения, вызывая функцию <b>TerminateApplication()</b>. 
+  В переменной <b>g_window</b> находится информация о 
+  нашем окне.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>void Update(DWORD milliseconds)             // Обновление 
+  движения здесь</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  if (g_keys-&gt;keyDown[VK_ESCAPE])           
+  // ESC нажата?</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    TerminateApplication (g_window);        
+  // Прервать программу</p>
+<p class=textpreword>  }</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Далее проверяем, нажата ли клавиша &quot;пробел&quot;, и при 
+  этом игра окончена. Если оба условия истинны, мы инициализируем все 30 объектов 
+  (даем им новые направления, присваиваем текстуры, и т.д). Мы устанавливаем <b>game</b> 
+  в ЛОЖЬ, сообщая программе, что игра продолжается. Мы сбрасываем <b>score</b> 
+  в 0, <b>level</b> в 1, <b>kills</b> в 0, и, наконец, мы устанавливаем переменную 
+  <b>miss</b> в ноль. При этом перезапуск игры будет с первым уровнем, с полной 
+  моралью и счетом 0.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  if (g_keys-&gt;keyDown[' '] &amp;&amp; game)          // Пробел нажат после того как окончена игра?</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    for (int loop=0; loop&lt;30; loop++)        
+  // Цикл по 30 объектам</p>
+<p class=textpreword>      InitObject(loop);      // Инициализация 
+  каждого объекта</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>    game=FALSE;              // Установка 
+  game в False</p>
+<p class=textpreword>    score=0;                 // Установка score в 0</p>
+<p class=textpreword>    level=1;                 // Установка level в 1</p>
+<p class=textpreword>    kills=0;                 // Установка Kills в 0</p>
+<p class=textpreword>    miss=0;                  // Установка miss в 0</p>
+<p class=textpreword>  }</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>В коде ниже проверяет нажатие клавиши F1. Если клавиша F1 нажата, 
+  то <b>ToggleFullscreen</b> переключит из оконного в полноэкранный режим 
+  или из полноэкранного режима в оконный режим.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  if (g_keys-&gt;keyDown[VK_F1])            
+  // F1 нажата?</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    ToggleFullscreen (g_window);         // 
+  Переключение видеорежима</p>
+<p class=textpreword>  }</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Для создания иллюзии движущихся облаков и перемещения земли, 
+  мы уменьшаем <b>roll</b> на 0.00005f, умноженное на число прошедших миллисекунд. 
+  При этом облака будут перемещаться с той же самой скоростью на всех системах 
+  (быстро или медленно).<br>
+  <br>
+</p>
+<p class=textword>Затем создаем цикл по всем объектам на экране. На уровне 1 имеется 
+  один объект, на уровне 10 имеется 10 объектов, и т.д.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  roll-=milliseconds*0.00005f;            // 
+  Прокрутка облаков</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  for (int loop=0; loop&lt;level; loop++)    
+  // По всем объектам</p>
+<p class=textpreword>  {</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Мы должны выяснить, каким способом объект должен вращаться. 
+  Мы делаем это при помощи проверки значения <b>rot</b>. Если <b>rot</b> равняется 
+  1, мы должны вращать объект по часовой стрелке. Для того чтобы сделать это, 
+  мы уменьшаем значение <b>spin</b>. Мы уменьшаем <b>spin</b> на 0.2f, умноженное 
+  на значение <b>loop</b> плюс число прошедших миллисекунд. Используя миллисекунды, 
+  объекты будут вращать с той же самой скоростью на всех системах. Добавляя <b>loop</b>, 
+  мы заставляем каждый НОВЫЙ объект вращаться чуточку быстрее, чем последний объект. 
+  Поэтому второй объект будет вращаться быстрее, чем первый объект, и третий объект 
+  будет вращаться быстрее, чем второй объект.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>    if (object[loop].rot==1)          
+  // Вращение по часовой</p>
+<p class=textpreword>      object[loop].spin-=0.2f*(float(loop+milliseconds));</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Затем проверим, равняется ли <b>rot</b> двум. Если <b>rot</b> 
+  равняется двум, то мы должны вращать против часовой стрелки. Единственное отличие 
+  от кода выше то, что мы увеличиваем значение вращения вместо уменьшения его. 
+  Это заставляет объект вращаться в противоположном направлении.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>    if (object[loop].rot==2)          // Вращение против 
+  часовой</p>
+<p class=textpreword>      object[loop].spin+=0.2f*(float(loop+milliseconds));</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Теперь код перемещения. Мы проверяем значение <b>dir</b>, если 
+  оно равно 1, мы увеличиваем <b>x</b> позицию объекта 
+  на значение 0.012f умноженное на миллисекунды. При этом объект перемещается 
+  вправо. Поскольку мы используем миллисекунды, объекты должны перемещаться с 
+  той же самой скоростью на всех системах.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>    if (object[loop].dir==1)          // Смещение 
+  вправо</p>
+<p class=textpreword>      object[loop].x+=0.012f*float(milliseconds);</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Если <b>dir</b> равняется 0, объект перемещается влево. Мы перемещаем 
+  объект, влево уменьшая <b>x</b> координату объекта на 
+  прошедшее время в миллисекундах, умноженное на заранее заданное значение 0.012f.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>    if (object[loop].dir==0)          // Направление 
+  налево</p>
+<p class=textpreword>      object[loop].x-=0.012f*float(milliseconds);</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>На сей раз, мы проверяем, равняется ли <b>dir</b> 2. Если это 
+  так, то мы увеличиваем <b>y</b> координату объекта. 
+  При этом объект двигается вверх по экрану. Имейте в виду, что положительная 
+  ось Y направлена вверх экрана, а отрицательная ось Y - вниз. Поэтому увеличение 
+  <b>y</b> перемещает объект снизу вверх. Снова используется время.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>    if (object[loop].dir==2)          // Направление 
+  вверх</p>
+<p class=textpreword>      object[loop].y+=0.012f*float(milliseconds);</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>И последнее, если <b>dir</b> равняется три, то мы хотим переместить 
+  объект вниз экрана. Мы делаем это, увеличивая <b>y</b> координату объекта на 
+  прошедшее время. Заметьте, что мы передвигаем объекты вниз медленнее чем, мы 
+  вверх. Когда объект падает, наша константа падения 0.0025f. Когда объект поднимается 
+  - 0.012f.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>    if (object[loop].dir==3)          // Направление вниз</p>
+<p class=textpreword>      object[loop].y-=0.0025f*float(milliseconds);</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>После перемещения наших объектов мы должны проверить попадают 
+  ли они еще в поле зрения. Код ниже проверяет, где наш объект находится на экране. 
+  Мы можем, приближено вычислить, как далеко сдвинулся объект влево, взяв расстояние 
+  объекта от экрана минус 15.0f (чтобы быть уверенными, что это небольшой выход 
+  за экран) и разделив это на 2. Для тех, кто не знает... Если Вы сдвинулись на 
+  20 единиц в экран, в зависимости от способа, которым Вы задаете перспективу, 
+  Вы имеете примерно 10 единиц в левой части экрана и 10 в правой части. Поэтому 
+  -20.0f (расстояние)-15.0f (дополнительно) =-35.0f... делим это на 2, и получаем 
+  -17.5f. Это примерно на 7.5 единиц за левым краем экрана. Что означает, что 
+  наш объект полностью вне поля зрения.<br>
+  <br>
+</p>
+<p class=textword>Так или иначе... После проверки, как далеко объект за левой 
+  стороной экрана, мы проверяем, двигается ли он влево (dir=0). Если он не перемещается 
+  влево, то нам не надо заботимся о том, что он за левым краем экрана!<br>
+  <br>
+</p>
+<p class=textword>Наконец, мы проверяем, было ли попадание в объект. Если объект 
+  за экраном, он перемещается влево, и в него не попали, то в этом случае игрок 
+  в него уже никогда не попадет. Поэтому мы увеличиваем значение <b>miss</b>. 
+  При этом понижаем боевой дух и увеличивает число не сбитых объектов. Мы задаем 
+  значение <b>hit</b> объекта в ИСТИНА, поэтому компьютер будет думать, что в 
+  этот объект попали. Это вынуждает объект самоуничтожится (позволить нам присвоить 
+  объекту новую текстуру, направления, вращение, и т.д).</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>    // Если мы за левым краем, направление влево и в объект 
+  не попали</p>
+<p class=textpreword>    if ((object[loop].x&lt;(object[loop].distance-15.0f)/2.0f) 
+  &amp;&amp;</p>
+<p class=textpreword>        (object[loop].dir==0) &amp;&amp; !object[loop].hit)</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      miss+=1;               // Увеличиваем miss (Промазали по объекту)</p>
+<p class=textpreword>      object[loop].hit=TRUE; // Задать hit в True вручную убив объект</p>
+<p class=textpreword>    }</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Следующий код делает тоже самое как и код выше, но проверяет 
+  вышел ли объект за правый край экрана. Мы также проверяем перемещается ли объект 
+  вправо, а не в другом направлении. Если объект за экраном, мы увеличиваем значение 
+  <b>miss</b> и вынуждаем объект самоуничтожится, сообщая нашей программе, что 
+  в него попали.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>    // Если мы за правым краем, направление вправо и в объект 
+  не попали</p>
+<p class=textpreword>    if ((object[loop].x&gt;-(object[loop].distance-15.0f)/2.0f) &amp;&amp;</p>
+<p class=textpreword>        (object[loop].dir==1) &amp;&amp; !object[loop].hit)</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      miss+=1;               // Увеличиваем miss (Промазали по объекту)</p>
+<p class=textpreword>      object[loop].hit=TRUE; // Задать hit в True вручную убив объект</p>
+<p class=textpreword>    }</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Код падения довольно прост. Мы проверяем, попал ли объект в 
+  землю. Мы не хотим, чтобы объект провалился сквозь землю, которая расположена 
+  на отметке -3.0f. Вместо этого, мы проверяем, находится ли объект ниже -2.0f. 
+  Затем проверяем, что объект действительно падает (<b>dir=3</b>), и что в объект 
+  еще не попали. Если объект ниже -2.0f по оси Y, мы увеличиваем <b>miss</b> и 
+  задаем значение <b>hit</b> объекта в ИСТИНА (вынуждая объект самоуничтожиться, 
+  поскольку он упал на землю)... неплохой трюк.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>    // Если мы за нижним краем, направление вниз и в объект 
+  не попали</p>
+<p class=textpreword>    if ((object[loop].y&lt;-2.0f) &amp;&amp; 
+  (object[loop].dir==3) &amp;&amp; !object[loop].hit)</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      miss+=1;               // Увеличиваем miss (Промазали по объекту)</p>
+<p class=textpreword>      object[loop].hit=TRUE; // Задать hit в True вручную убив объект</p>
+<p class=textpreword>    }</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>В отличие от предыдущего кода, этот код немного отличается. 
+  Мы не хотим, чтобы объект улетел за облака! Мы проверяем больше ли переменная 
+  <b>y</b> объекта, чем 4.5f (близко к облакам). Мы также 
+  проверяем, что объект двигается вверх (<b>dir=2</b>). Если значение переменной 
+  <b>y</b> объекта больше, чем 4.5f, вместо разрушения объекта, мы 
+  изменяем его направление. Таким образом, объект быстро упадет на землю (вспомните, 
+  что вверх быстрее, чем вниз) и как только он долетит до потолка, мы изменяем 
+  его направление, поэтому он начинает падать на землю.<br>
+  <br>
+</p>
+<p class=textword>Нет необходимости уничтожать объект, или увеличивать переменную 
+  <b>miss</b>. Если Вы промазали в объект, поскольку он улетел в небо, есть всегда 
+  шанс, чтобы попасть в него, поскольку он падает. Код падения обработает финальное 
+  разрушение объекта.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>    // Если мы за верхним краем и направление 
+  вверх</p>
+<p class=textpreword>    if ((object[loop].y&gt;4.5f) &amp;&amp; 
+  (object[loop].dir==2))</p>
+<p class=textpreword>      object[loop].dir=3;          // Изменим 
+  на направление вверх</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Следующим идет код рисования объекта. Я хотел иметь наиболее 
+  быстрый и простой способ вывода игровых объектов, вместе с перекрестьем, и обойтись при этом небольшим кодом 
+  насколько это возможно. Функции <b>Object</b> надо указать 3 параметра. Вначале 
+  ширину, она задает насколько будет широк объект, когда он будет выведен. Затем 
+  высота, она задает насколько будет высоким объект, когда он будет выведен. Наконец, 
+  мы имеем <b>texid</b>. Переменная <b>texid</b> 
+  выбирает текстуру, которую мы хотим использовать. Если мы хотим вывести ведро, 
+  которое задается текстурой 1, мы передаем значение 1 для <b>texid</b>. 
+  Довольно просто!<br>
+  <br>
+</p>
+<p class=textword>Мы выбираем текстуру, и затем выводим четырехугольник. Мы используем 
+  стандартные текстурные координаты, поэтому вся текстура накладывается на лицевую 
+  часть четырехугольника. Четырехугольник выведен против часовой стрелки (что 
+  требуется для отсечения).</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>// Отрисовка объекта используя требуемые ширину, высоту и 
+  текстуру</p>
+<p class=textpreword>void Object(float width,float height,GLuint 
+  texid)</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  glBindTexture(GL_TEXTURE_2D, textures[texid].texID); 
+  // Выбор правильной текстуры</p>
+<p class=textpreword>  glBegin(GL_QUADS); // Начала рисования четырехугольника</p>
+<p class=textpreword>    glTexCoord2f(0.0f,0.0f); glVertex3f(-width,-height,0.0f);  
+  // Лево Низ</p>
+<p class=textpreword>    glTexCoord2f(1.0f,0.0f); glVertex3f( width,-height,0.0f);  
+  // Право Низ</p>
+<p class=textpreword>    glTexCoord2f(1.0f,1.0f); glVertex3f( width, 
+  height,0.0f);  // Право Верх</p>
+<p class=textpreword>    glTexCoord2f(0.0f,1.0f); glVertex3f(-width, 
+  height,0.0f);  // Лево Верх</p>
+<p class=textpreword>  glEnd();           // Конец рисования 
+  четырехугольника</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Функции отрисовки взрыва <b>Explosion</b> надо указать один параметр. Переменная <b>num</b> – идентификатор объекта. Для создания 
+  корректной отрисовки взрыва, мы должны захватить часть текстуры взрыва, таким 
+  же способом, каким мы захватываем каждый символ из текстуры шрифта. В двух строках 
+  ниже вычисляются столбец (<b>ex</b>) и строка (<b>ey</b>) 
+  из одного числа (<b>frame</b>).<br>
+  <br>
+</p>
+<p class=textword>В первой строке берется текущий кадр и делится на 4. Деление 
+  на 4 должно замедлить мультипликацию. Выражение %4 сохраняет значение в диапазоне 
+  0-3. Если бы значение будет выше, чем 3, то они вернутся и начнутся снова с 
+  0. Если бы значение было 5, то оно станет 1. Значения от 0 до 9 становятся значениями 
+  0,1,2,3,0,1,2,3,0. Мы делим конечный результат 4.0f, потому что координаты текстуры 
+  находятся в диапазоне от 0.0f до 1.0f. Наша текстура взрыва имеет 4 изображения 
+  взрыва слева направо и 4 сверху вниз.<br>
+  <br>
+</p>
+<p class=textword>Надеюсь, что вы не растерялись. Поэтому, если наше число до 
+  деления может только быть 0,1,2 или 3, наше число после деления на 4.0f может 
+  только быть 0.0f, 0.25f (1/4), 0.50f (2/4) или 0.75f (3/4). Это дает нам нашу 
+  слева направо координату текстуры (<b>ex</b>).<br>
+  <br>
+</p>
+<p class=textword>Затем мы вычисляем строку (<b>ey</b>). 
+  Мы берем текущий кадр объекта и делим его на 4, чтобы немного замедлить мультипликацию. 
+  Затем мы делим на 4 снова, чтобы исключить полную строку. Наконец мы делим на 
+  4 последний раз, чтобы получить нашу вертикальную координату текстуры.<br>
+  <br>
+</p>
+<p class=textword>Небольшой пример. Если наш текущий кадр равен 16. Тогда <b>ey</b> 
+  = ((16/4)/4)/4 или 4/4/4 или 0.25f. Одна строка вниз. Если наш текущий кадр 
+  равен 60. Тогда <b>ey</b> = ((60/4)/4)/4 или 15/4/4 или 3/4 или 0.75f. Причина, по 
+  которой 15/4 - не равно 3.75 та, что мы работаем с целыми числами вплоть до 
+  того, как мы делаем последнее деление. Удерживая это в памяти, мы можем сказать, 
+  что значение <b>ey</b> может только быть одним из 4 значений: 
+  0.0f, 0.25f, 0.50f или 0.75f. Принимая это мы остаемся в пределах нашей текстуры 
+  (предотвращая превышения текущего кадра выше значения 63).<br>
+  <br>
+</p>
+<p class=textword>Надеюсь, это имеет смысл... Это - простая, но наводящая ужас 
+  математика.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>void Explosion(int num)                // Нарисовать анимированный взрыв для объекта 
+  &quot;num&quot;</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  float ex = (float)((object[num].frame/4)%4)/4.0f; 
+  // Вычислить X (0.0f - 0.75f)</p>
+<p class=textpreword>  float ey = (float)((object[num].frame/4)/4)/4.0f; 
+  // Вычислить Y (0.0f - 0.75f)</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Теперь, когда мы вычислили координаты текстуры, все, что нам 
+  осталось нарисовать наш текстурированный четырехугольник. Координаты вершины 
+  фиксированы от -1.0f до 1.0f. Вы видите, что мы вычитаем <b>ey</b> 
+  из 1.0f. Если бы мы этого не делали, анимация была бы в обратном порядке ... 
+  Взрыв должен быть большим, а потом постепенно исчезать. Эффект должен быть правильным!<br>
+  <br>
+</p>
+<p class=textword>Вначале мы привязываем текстуру взрыва, до вывода текстурированного 
+  четырехугольника. Снова, четырехугольник выводится против часовой стрелки.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  glBindTexture(GL_TEXTURE_2D, textures[5].texID);  
+  // Выбор текстуры взрыва</p>
+<p class=textpreword>  glBegin(GL_QUADS);      // Нарисовать четырехугольник</p>
+<p class=textpreword>    glTexCoord2f(ex      ,1.0f-(ey      )); 
+  glVertex3f(-1.0f,-1.0f,0.0f);  // Лево Низ</p>
+<p class=textpreword>    glTexCoord2f(ex+0.25f,1.0f-(ey      )); 
+  glVertex3f( 1.0f,-1.0f,0.0f);  // Право Низ</p>
+<p class=textpreword>    glTexCoord2f(ex+0.25f,1.0f-(ey+0.25f)); 
+  glVertex3f( 1.0f, 1.0f,0.0f);  // Право Верх</p>
+<p class=textpreword>    glTexCoord2f(ex      ,1.0f-(ey+0.25f)); 
+  glVertex3f(-1.0f, 1.0f,0.0f);  // Лево Верх</p>
+<p class=textpreword>  glEnd();                // Четырехугольник 
+  нарисован</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Ранее я упомянул о том, что значение кадра не должно быть больше 
+  63, иначе анимация повторится. Поэтому мы увеличиваем значение кадра, и проверяем 
+  его большее ли оно, чем 63. Если это так, то мы вызываем <b>InitObject(</b><b>num)</b>, 
+  который уничтожает объект и дает ему новые значения, чтобы создать полностью 
+  новый объект.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  object[num].frame+=1;         // Увеличим 
+  текущий кадр взрыва</p>
+<p class=textpreword>  if (object[num].frame&gt;63)     // Отрисованы 
+  все 16 кадров?</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    InitObject(num);            // Инициализируем 
+  объект (назначим новые значения)</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>В этой часть кода выводятся все цели на экран. Мы начинаем со 
+  сброса матрицы вида модели. Затем мы сдвигаемся на 10 единиц в экран и запускаем 
+  цикл от 0 до текущего уровня игрока.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>void DrawTargets(void)                  // Нарисуем цель</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  glLoadIdentity();                     // Сброс 
+  матрицы вида модели</p>
+<p class=textpreword>  glTranslatef(0.0f,0.0f,-10.0f);       // Переход 
+  на 10 единиц в экран</p>
+<p class=textpreword>  for (int loop=0; loop&lt;level; loop++)  // 
+  Цикл по объектам</p>
+<p class=textpreword>  {</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Первой строке кода происходит назначение имени (номера) на каждый 
+  объект. Первый выведенный объект будет 0. Второй объект будет 1, и т.д ... Если 
+  бы цикл продолжался до 29, последнему выведенному объекту дали бы имя 29. После 
+  назначения имени объекту, мы помещаем матрицу вида модели в стек. Важно обратить 
+  внимание на то, что вызовы <b>glLoadName()</b> игнорируются, если программа 
+  не в режиме выбора.<br>
+  <br>
+</p>
+<p class=textword>Затем мы перемещаемся на то место на экране, где мы хотим, чтобы 
+  наш объект был выведен. Мы используем <b>object[loop].x</b>, чтобы позиционировать 
+  объект по оси X, <b>object[loop].y</b> чтобы позиционировать объект по оси Y 
+  и <b>object[loop].distance</b>, чтобы позиционировать объект по оси Z (глубина). 
+  Мы уже переместились на 10 единиц в экран, поэтому фактическое расстояние, на 
+  которое объект будет выведен, равно <b>object[loop].distance-10.0f</b>.</p>
+<p class=Normal style='margin:0cm;margin-bottom:.0001pt'>&nbsp;  </p>
+<p class=textpreword>    glLoadName(loop);            // Назначение 
+  имени объекта (ID)</p>
+<p class=textpreword>    glPushMatrix();              // Поместить в стек матрицу</p>
+<p class=textpreword>                                 // Позиционирование объекта 
+  (x,y)</p>
+<p class=textpreword>    glTranslatef(object[loop].x,object[loop].y,object[loop].distance);</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>До того как мы выведем объект, мы должны проверить попали ли 
+  в него или нет. Мы делаем это, проверяя равно ли значение <b>object[loop].hit</b> 
+  ИСТИНА. Если это так, то мы вызываем <b>Explosion(loop)</b>, которая анимирует 
+  взрыв вместо фактического объекта. Если в объект не попали, мы вращаем объект 
+  по оси Z на <b>object[loop].spin</b> градусов до того как мы вызовем <b>Object(…)</b>.<br>
+  <br>
+</p>
+<p class=textword>В функцию <b>Object()</b> передаются 3 параметра. Первый - ширина, 
+  второй - высота, и третий - номер текстуры. Чтобы получить ширину и высоту, 
+  мы используем массив <b>size[object[loop].texid].w</b> и <b>size[object[loop].texid].h</b>. 
+  Так мы найдем ширину и высоту из нашего заранее определенного в начале этой 
+  программы массива размеров объектов. Причина, по которой мы используем <b>object[loop].texid</b> 
+  состоит в том, что <b>texid</b> указывает на тип объекта, 
+  который мы выводим. Если <b>texid</b> 
+  равно 0, то это всегда голубая рожа... 
+  <b>texid</b> равно 3, то это всегда кока-кола, 
+  и т.д.<br>
+  <br>
+</p>
+<p class=textword>После отрисовки объекта, мы возвращаем матрицу из стека, сбрасывая 
+  вид, поэтому наш следующий объект будет выведен в нужном положении на экране.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>    if (object[loop].hit)       // В объект попали</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      Explosion(loop);          // Нарисовать 
+  взрыв</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>    else                        // 
+  Иначе</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>                                // Вращать объект</p>
+<p class=textpreword>      glRotatef(object[loop].spin,0.0f,0.0f,1.0f);</p>
+<p class=textpreword>                                // нарисовать 
+  объект</p>
+<p class=textpreword>      Object(size[object[loop].texid].w,size[object[loop].texid].h,object[loop].texid);</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>    glPopMatrix();              // Вытолкнуть 
+  матрицу</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Далее то место, где происходит рисование. Мы начинаем с очистки 
+  экран, и сбрасывая матрицу вида модели.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>void Draw(void)                  // Нарисовать нашу сцену</p>
+<p class=textpreword>{</p>
+<p class=textpreword>                                 // Очистка 
+  экрана и буфера глубины</p>
+<p class=textpreword>  glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);</p>
+<p class=textpreword>  glLoadIdentity();              // Сброс матрицы 
+  просмотра вида</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Затем мы помещаем матрицу вида модели в стек и выбираем текстуру 
+  неба (текстура 7). Небо сделано из 4 текстурированных четырехугольников. Первые 
+  4 вершины рисуют полоску неба, в половину общей высоты неба начиная от земли. 
+  Текстура этого четырехугольника будет двигаться довольно медленно. Следующие 
+  4 вершины выводят небо там же, но текстура неба будет двигаться быстрее. Две 
+  текстуры смешаются вместе в режиме альфа смешивания, чтобы создать красивый 
+  слоистый эффект.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  glPushMatrix();                // Запомнить матрицу</p>
+<p class=textpreword>  glBindTexture(GL_TEXTURE_2D, textures[7].texID); 
+  // Выбор текстуры неба</p>
+<p class=textpreword>  glBegin(GL_QUADS);              // Начало 
+  рисования четырехугольников</p>
+<p class=textpreword>    glTexCoord2f(1.0f,roll/1.5f+1.0f); glVertex3f( 
+  28.0f,+7.0f,-50.0f);  // Право Верх</p>
+<p class=textpreword>    glTexCoord2f(0.0f,roll/1.5f+1.0f); glVertex3f(-28.0f,+7.0f,-50.0f);  
+  // Лево Верх</p>
+<p class=textpreword>    glTexCoord2f(0.0f,roll/1.5f+0.0f); glVertex3f(-28.0f,-3.0f,-50.0f);  
+  // Лево Низ</p>
+<p class=textpreword>    glTexCoord2f(1.0f,roll/1.5f+0.0f); glVertex3f( 
+  28.0f,-3.0f,-50.0f);  // Право Низ</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>    glTexCoord2f(1.5f,roll+1.0f); glVertex3f( 
+  28.0f,+7.0f,-50.0f);    // Право Верх</p>
+<p class=textpreword>    glTexCoord2f(0.5f,roll+1.0f); glVertex3f(-28.0f,+7.0f,-50.0f);    
+  // Лево Верх</p>
+<p class=textpreword>    glTexCoord2f(0.5f,roll+0.0f); glVertex3f(-28.0f,-3.0f,-50.0f);    
+  // Лево Низ</p>
+<p class=textpreword>    glTexCoord2f(1.5f,roll+0.0f); glVertex3f( 
+  28.0f,-3.0f,-50.0f);    // Право Низ</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Чтобы создать иллюзию, что небо движется к зрителю, мы выводим 
+  еще два четырехугольника, но на сей раз мы рисуем их в верхней полоске неба. 
+  Первые 4 вершины выводят медленно движущиеся облака, и оставшиеся 4 выводит 
+  более быстро перемещающиеся облака. Эти два уровня смешаются вместе в режиме 
+  альфа смешивания, чтобы создать слоистый эффект. Второй уровень облаков сдвинут 
+  на 0.5f так, чтобы две текстуры не совпадали друг с другом. Тоже самое с двумя 
+  слоями облаков выше. Второй слой смещен на 0.5f.<br>
+  <br>
+</p>
+<p class=textword>После вывода всех 4 четырехугольников получится эффект движения 
+  неба, при котором будет казаться, что оно движется вначале вверх, а потом на 
+  зрителя. Я мог бы использовать текстурированную полусферу для неба, но мне было 
+  лень это делать, и полученный эффект все таки хороший.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>    glTexCoord2f(1.0f,roll/1.5f+1.0f); glVertex3f( 
+  28.0f,+7.0f,0.0f);  // Право Верх</p>
+<p class=textpreword>    glTexCoord2f(0.0f,roll/1.5f+1.0f); glVertex3f(-28.0f,+7.0f,0.0f);  
+  // Лево Верх</p>
+<p class=textpreword>    glTexCoord2f(0.0f,roll/1.5f+0.0f); glVertex3f(-28.0f,+7.0f,-50.0f);  
+  // Лево Низ</p>
+<p class=textpreword>    glTexCoord2f(1.0f,roll/1.5f+0.0f); glVertex3f( 
+  28.0f,+7.0f,-50.0f);  // Право Низ</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>    glTexCoord2f(1.5f,roll+1.0f); glVertex3f( 
+  28.0f,+7.0f,0.0f);    // Право Верх</p>
+<p class=textpreword>    glTexCoord2f(0.5f,roll+1.0f); glVertex3f(-28.0f,+7.0f,0.0f);    
+  // Лево Верх</p>
+<p class=textpreword>    glTexCoord2f(0.5f,roll+0.0f); glVertex3f(-28.0f,+7.0f,-50.0f);    
+  // Лево Низ</p>
+<p class=textpreword>    glTexCoord2f(1.5f,roll+0.0f); glVertex3f( 
+  28.0f,+7.0f,-50.0f);    // Право Низ</p>
+<p class=textpreword>  glEnd();                // Кончили 
+  рисовать</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>После отрисовки неба пришло время<a name=a1></a> нарисовать 
+  землю. Мы выводим землю с того места, где начали выводить текстуру неба. Текстура 
+  земли движется с той же самой скоростью как быстро двигающиеся облака.<br>
+  <br>
+</p>
+<p class=textword>Текстура повторяется 7 раз слева направо и 4 раза от горизонта 
+  до зрителя для увеличения детализации и предотвращения появления на текстуре 
+  больших блочных пикселей (blocky). Это делается при 
+  помощи увеличения диапазона координат текстуры от 0.0f - 1.0f до 0.0f - 7.0f 
+  (слева направо) и 0.0f - 4.0f (вверх и вниз).</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  glBindTexture(GL_TEXTURE_2D, textures[6].texID); 
+  // Выбор текстуры земли</p>
+<p class=textpreword>  glBegin(GL_QUADS);      
+  // Начало рисования четырехугольника</p>
+<p class=textpreword>    glTexCoord2f(7.0f,4.0f-roll); glVertex3f( 27.0f,-3.0f,-50.0f);  
+  // Право Верх</p>
+<p class=textpreword>    glTexCoord2f(0.0f,4.0f-roll); glVertex3f(-27.0f,-3.0f,-50.0f);  
+  // Лево Верх</p>
+<p class=textpreword>    glTexCoord2f(0.0f,0.0f-roll); glVertex3f(-27.0f,-3.0f,0.0f);  
+  // Лево Низ</p>
+<p class=textpreword>    glTexCoord2f(7.0f,0.0f-roll); glVertex3f( 
+  27.0f,-3.0f,0.0f);  // Право Низ</p>
+<p class=textpreword>  glEnd();                // Кончили 
+  рисовать</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>После того как мы нарисовали небо и землю, мы переходим к разделу 
+  кода, который выводит все наши цели в <b>DrawTargets()</b>.<br>
+  <br>
+</p>
+<p class=textword>После вывода целей, мы возвращаем матрицу вида модели (восстанавливая 
+  ее к предыдущему состоянию).</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  DrawTargets();                // 
+  Нарисовать наши цели</p>
+<p class=textpreword>  glPopMatrix();                // Возврат матрицы</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Следующий код выводит перекрестье. Вначале мы получаем текущие 
+  размеры нашего окна. Мы делаем это каждый раз, так размеры окна могут быть изменены 
+  в оконном режиме. Функция <b>GetClientRect</b> возвращает размеры и сохраняет 
+  их в <b>window</b>. Затем мы выбираем нашу матрицу проецирования и помещаем 
+  ее в стек. Мы сбрасываем вид вызовом <b>glLoadIdentity()</b> 
+  и затем переключаем экран режим ортографической проекции вместо перспективной. 
+  Окно начинается с 0 до <b>window.right</b> слева направо, и от 0 до <b>window.bottom</b> 
+  с нижнего края экрана до верхнего.<br>
+  <br>
+</p>
+<p class=textword>Третий параметр <b>glOrtho()</b> задает значение нижнего края, 
+  но я поменял значения нижнего и верхнего края местами. Я сделал это, потому 
+  что перекрестье выводится в направлении против часовой стрелки. Если 0 будет 
+  сверху, а <b>window.bottom</b> в низу, обход вершин при отображении будет в 
+  противоположном направлении, и перекрестье с текстом не будут отображаться. 
+  <br>
+  <br>
+</p>
+<p class=textword>После настройки ортографического вида, мы выбираем матрицу вида 
+  модели, и устанавливаем перекрестье. Поскольку экран перевернут снизу верх, 
+  мы должны также инвертировать мышь. Иначе наше перекрестье двигалось бы вниз, 
+  если бы мы переместили бы мышь верх, и наше перекрестье двигалось бы верх, если 
+  бы мы переместили бы мышь вниз. Чтобы сделать это, мы вычитаем текущее значение 
+  <b>mouse_y</b> из значения нижнего края окна (<b>window.bottom</b>).<br>
+  <br>
+</p>
+<p class=textword>После переноса в текущую позицию мыши, мы выводим перекрестье. Мы делаем это, вызывая <b>Object()</b>. 
+  Вместо единиц, мы задаем ширину и высоту в пикселях. Перекрестье будет размером 
+  16x16 пикселей, и используется текстура от восьмого объекта (текстура перекрестья).<br>
+  <br>
+</p>
+<p class=textword>Я решил использовать не стандартный курсор по двум причинам. 
+  Первая причина и наиболее важная состоит в том, что это выглядит привлекательно, 
+  и курсор можно изменить, используя любую программу рисования, которая поддерживает 
+  альфа канал. Во-вторых, некоторые видео платы не отображают курсор в полноэкранном 
+  режиме. Играть без курсора в полноэкранном режиме не просто :).</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  // Перекрестье (Ортографический просмотр)</p>
+<p class=textpreword>  RECT window;                   // Размеры окна</p>
+<p class=textpreword>  GetClientRect (g_window-&gt;hWnd,&amp;window); 
+  // Получить их</p>
+<p class=textpreword>  glMatrixMode(GL_PROJECTION);            // 
+  Выбор матрицы проекции</p>
+<p class=textpreword>  glPushMatrix();                // Сохранить 
+  матрицу</p>
+<p class=textpreword>  glLoadIdentity();              // Сброс матрицы</p>
+<p class=textpreword>  glOrtho(0,window.right,0,window.bottom,-1,1);     
+  // Настройка ортографического экрана</p>
+<p class=textpreword>  glMatrixMode(GL_MODELVIEW);    // Выбор матрицы 
+  вида модели</p>
+<p class=textpreword>  glTranslated(mouse_x,window.bottom-mouse_y,0.0f); 
+  // Перенос в текущую позицию мыши</p>
+<p class=textpreword>  Object(16,16,8);               // 
+  Нарисовать перекрестье</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>В этом разделе кода выводится заголовок сверху экрана, и отображает 
+  уровень и счет внизу слева и справа в углах экрана. Причина, по которой я поместил 
+  этот код здесь состоит в том, что проще точно позиционировать текст ортографическом 
+  режиме.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  // Счет и Заголовок игры</p>
+<p class=textpreword>  glPrint(240,450,&quot;NeHe Productions&quot;); 
+  // Заголовок</p>
+<p class=textpreword>  glPrint(10,10,&quot;Level: %i&quot;,level);    
+  // Уровень</p>
+<p class=textpreword>  glPrint(250,10,&quot;Score: %i&quot;,score);   
+  // Счет</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>В этом разделе проверяется, пропустил ли игрок больше чем 10 
+  объектов. Если так, то мы устанавливаем число промахов (<b>miss</b>) в 9, и 
+  мы задаем <b>game</b> в ИСТИНА. Если <b>game</b> равно ИСТИНА, то игра закончена!</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  if (miss&gt;9)              
+  // Пропустил 10 объектов?</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    miss=9;                // Предел равен 10</p>
+<p class=textpreword>    game=TRUE;             // Конец игры</p>
+<p class=textpreword>  }</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>В коде ниже, мы проверяем, является ли <b>game</b> ИСТИННА. 
+  Если <b>game</b> ИСТИННА, мы выводим сообщение - ИГРА ОКОНЧЕНА. Если <b>game</b> 
+  ЛОЖЬ, мы выводим боевой дух игрока (до 10). Боевой дух вычисляется, вычитая 
+  число промахов игрока (<b>miss</b>) из 10. Чем больше промахов, тем более низкий 
+  у него боевой дух.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  if (game)       
+           // Игра окончена?</p>
+<p class=textpreword>    glPrint(490,10,&quot;GAME OVER&quot;); // Сообщение о том, что 
+  игра окончена</p>
+<p class=textpreword>  else</p>
+<p class=textpreword>    glPrint(490,10,&quot;Morale: %i/10&quot;,10-miss); 
+  // Вывод морали #/10</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Последнее, что мы делаем выбор матрицы проецирования, восстановление 
+  нашей матрицы в предыдущее состояние, выбор матрицы вида модели и сброс буфера, 
+  чтобы быть уверенным, что все объекты выведены.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  glMatrixMode(GL_PROJECTION);  
+  // Выбор матрицы проецирования</p>
+<p class=textpreword>  glPopMatrix();                // Восстановление старой 
+  матрицы</p>
+<p class=textpreword>  glMatrixMode(GL_MODELVIEW);   // Выбор матрицы 
+  вида модели</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  glFlush();                    // Сброс конвейера 
+  GL</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Этот урок появился после многих ночей, и многих многих часов 
+  кодирования и редактирования HTML. По окончанию этого урока Вы должны хорошо 
+  понимать, как работает выбор, сортировка, альфа смешивание и альфа тест. Выбор 
+  позволяет Вам создавать процедуры для позиционирования и выбора объектов. Любая 
+  игра – это иллюзия графического интерфейса. Лучшая возможность выбора заключается 
+  в том, что Вы не должны следить за тем, где ваши объекты. Вы назначаете имя 
+  и проверяете попадания. Это просто! Используя альфа смешивание и альфа тест 
+  Вы может делать ваши объекты полностью непрозрачными, или полностью прозрачными 
+  только в отдельных местах. Результаты великолепны, и Вы не должны волноваться 
+  о просвечивании через ваши объекты фона за ним, если Вы не хотите этого! Как 
+  всегда, я буду надеяться, что Вы получите наслаждение от этого урока, и надеюсь 
+  увидеть новые крутые игры, или проекты, основанные на коде этого урока. Если 
+  у Вас есть вопросы, или Вы нашли ошибки в уроке, пожалуйста, сообщите мне об 
+  этом ... Я всего лишь человек :).<br>
+  <br>
+</p>
+<p class=textword>Я мог потратить намного больше времени, добавив, например физику, 
+  или улучшив графику, или звук, и т.д. Но это только урок! И я не писал этот 
+  урок так, чтобы поразить вас. Я написал его, чтобы обучить Вас OpenGL с наименьшими отклонениями от темы насколько 
+  это возможно. Я надеюсь увидеть модификации кода. Если Вы добавите что-то в 
+  урок, то вышлите мне демонстрационную версию своей программы. Если это великолепная 
+  модификация, я помещу ее на страницах &quot;Download&quot;. 
+  Если я получу достаточно модификаций, я могу изменить этот урок! Я должен здесь 
+  дать Вам точку опоры. Все остальное за Вами :) .<br>
+  <br>
+</p>
+
+<p class="textnoalign" align="right">
+<font color="#0000A0"><b> © Jeff Molofee (NeHe)</a></b></font>
+</p>  
+
+</div>
+<div id="end">
+
+          <p><a href="http://pmg.org.ru/"
+			onmouseover=" return event_over(this,'Программирование магических игр')  "
+			onmouseout=" return event_out(this) "><font class="link"><b>PMG</b></font></a> 
+            <font class="comment">&nbsp;22 апреля 2003&nbsp;(c)&nbsp;</font> 
+        <a href="mailto:anis@pmg.org.ru"
+	onmouseover=" return event_over(this,'Почта переводчику')  " 
+	onmouseout=" return event_out(this) "> <font class="link"><b>Сергей Анисимов</b></font></a> 
+          </p>
+</div>
+</center>
+
+<script language="JavaScript">
+<!--
+form_print();
+//-->
+</script>
+
+</body>
+</html>
