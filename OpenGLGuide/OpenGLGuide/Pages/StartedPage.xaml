@@ -1,6 +1,18 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <ContentPage xmlns="http://xamarin.com/schemas/2014/forms" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" x:Class="OpenGLGuide.Pages.StartedPage">
     <StackLayout>
-        <ListView x:Name="_mainMenuView" ItemsSource="{Binding MenuItems}" />
+        <ListView x:Name="_mainMenuView" ItemsSource="{Binding MenuItems}">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <ViewCell>
+                        <StackLayout Orientation="Horizontal" VerticalOptions="Center" Padding="16,0,21,0" Spacing="9" HeightRequest="62">
+                            <Image Source="{Binding ImageSource}" HeightRequest="18" WidthRequest="18" HorizontalOptions="Start" VerticalOptions="Center" />
+                            <Label Text="{Binding ItemText}" HorizontalOptions="Start" />
+                            <!--                            <Label HorizontalOptions="EndAndExpand" VerticalTextAlignment="Center" Text="{Binding IsAccordionOpened,Converter={StaticResource BoolToArrowTypeConverter}}" TextColor="White" FontFamily="fontawesome" />-->
+                        </StackLayout>
+                    </ViewCell>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
     </StackLayout>
 </ContentPage>

@@ -28,7 +28,7 @@ namespace OpenGLGuide.Pages
             var vm = BindingContext as StartedViewModel;
             if (vm != null)
             {
-//                vm.RedirectFromItem(item);
+                vm.OpenPage(item);
             }
         }
     }

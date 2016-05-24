@@ -4,31 +4,50 @@ using System.Windows.Input;
 using Xamarin.Forms;
 using FreshMvvm;
 using PropertyChanged;
+using System.Collections.ObjectModel;
 
 namespace OpenGLGuide.ViewModels
 {
     [ImplementPropertyChanged]
     public class StartedViewModel : FreshBasePageModel
     {
-        private Command _openPage;
+
+        private readonly Lazy<List<MenuItemViewModel>> _lazyLessonsSubItems;
+        private Lazy<List<MenuItemViewModel>> _lazyLabWorksSubItems;
 
         public StartedViewModel()
         {
-            MenuItems = new List<string>(){ "Уроки по OpenGL", "Лабораторные работы" };
+            MenuItems = new ObservableCollection<MenuItemViewModel>() { 
+                new MenuItemViewModel("Уроки по OpenGL", null, OpenGLGuide.Enums.MenuItemTypes.GroupItem),
+                new MenuItemViewModel("Лабораторные работы", null, OpenGLGuide.Enums.MenuItemTypes.GroupItem) 
+            };
+
+            _lazyLessonsSubItems = new Lazy<List<MenuItemViewModel>>(
+                () => new List<MenuItemViewModel>() {
+                    new MenuItemViewModel("Урок 1", "nehe01.jpg")
+                });
         }
 
-        public List<string> MenuItems { get; set; }
+        public ObservableCollection<MenuItemViewModel> MenuItems { get; set; }
 
-        public Command OpenPage
+        public void OpenPage(object item)
         {
-            get
+            var itemViewModel = item as MenuItemViewModel;
+            if (itemViewModel == null)
+                return;
+                
+            if (itemViewModel.ItemType == OpenGLGuide.Enums.MenuItemTypes.GroupItem)
             {
-                return _openPage ?? (_openPage = new Command(() =>
+                if (itemViewModel.ItemText == "Уроки по OpenGL")
+                {
+                    var startindex = 0;
+                    foreach (var itemValue in _lazyLessonsSubItems.Value)
                     {
-                    }));
-            } 
+                        MenuItems.Insert(++startindex, itemValue);
+                    }
+                }
+            }
         }
-
 
     }
 }
