@@ -1,0 +1,415 @@
+<!doctype html public "-//w3c//dtd html 3.2 final//ru">
+<html>
+
+<head>
+<meta http-equiv="Content-Type"
+content="text/html; charset=windows-1251">
+<meta name="description"
+content="Переводы по OpenGL, трехмерная графика, игры, мультимедия
+Translations Russian OpenGL
+">
+<meta name="keyword"
+content="Программирование,игры,3D,трехмерная графика,OpenGL,NeHe">
+<meta name="keyword"
+content="programming,C,C++,game,graphics">
+<title>Урок 23. Квадратирование со сферическим наложением в OpenGL</title>
+<link rel="stylesheet" href="pmg.css" type="text/css">
+</head>
+
+<body bgcolor="#b2d3e1" link="#800080" vlink="#800080">
+<script src='nehe.js' language="javascript">
+<!--
+//-->
+</script>
+
+<center>
+<div id="top">
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+        <td width="20%" align="center" valign="center">
+        <img src="nehelogo.jpg" align="left" hspace="0" width="125" height="50" alt="NeHe Tutorials">
+        </td>
+        <td width="60%" align="center">
+	<a href="index.html"
+	onmouseover=" return event_over(this,'NeHe Ru.')  "
+        onmouseout=" return event_out(this) ">
+        <font class="linksbig">
+        Народный учебник по OpenGL</font></a><br>
+        </td>
+        <td width="20%" align="center" valign="center">
+        <img src="nehe23.jpg" align="right" hspace="0" width="80" height="60" alt="Урок 23. OpenGL">
+        </td>
+    </tr>
+</table>
+</div>
+
+<div id="head">
+<p class="head1">
+Урок 23. Квадратирование со сферическим наложением в OpenGL</p>
+</div>
+<div id="main" bgcolor="#ADADFF">
+<p class="textnoalign" align="left">
+
+<a href="http://nehe.gamedev.net/data/lessons/lesson.asp?lesson=23" target="_blank"
+onmouseover=" return event_over(this,this)  "
+onmouseout=" return event_out(this) ">
+<font class="link"><b>Sphere Mapping Quadrics In OpenGL</b></font></a>
+<br>
+</p><p class=textword>&nbsp;  </p>
+
+<p class=textword>Сферическое наложение текстур окружения дает возможность быстро 
+  создавать отражения в металлических или зеркальных поверхностях в кадре. Этот 
+  метод не столь точен, как кубическая карта окружения, и уж тем более отличается 
+  от реальной жизни, зато он гораздо быстрее! За основу возьмем код Урока 18. 
+  Кроме того, мы не будем пользоваться текстурами оттуда, взамен них создадим 
+  две новые: сферическую карту и фоновое изображение. <br>
+  </p><p class=textword>&nbsp;  </p>
+<p class=textword>Прежде чем мы начнем… &quot;Красная книга&quot; определяет сферическую 
+  карту как изображение сцены на металлическом шаре из бесконечно удаленной точки 
+  с бесконечным фокусным расстоянием. Конечно, в реальности это недостижимо. Лучший 
+  способ создать сферическую карту, не пользуясь линзой &quot;рыбий глаз&quot;, 
+  какой я обнаружил, это поработать в Фотошопе. <br>
+  </p><p class=textword>&nbsp;  </p>
+<p class=textword>Создание сферической карты в Фотошопе: <br>
+  </p><p class=textword>&nbsp;  </p>
+<p class=textword>Прежде всего, нужно изображение, которое вы намерены использовать 
+  для сферического наложения. Откройте изображение в Фотошопе и выделите его целиком. 
+  Скопируйте, создайте новый файл (при создании его размеры будут предложены Фотошопом, 
+  они будут совпадать с размерами скопированного изображения) и вставьте туда 
+  содержимое буфера. Смысл операции состоит в том, чтобы получить возможность 
+  использовать все фильтры Фотошопа. Другой способ добиться этого&nbsp;— изменить 
+  текущий режим изображения на RGB через соответствущий пункт меню. <br>
+  </p><p class=textword>&nbsp;  </p>
+<p class=textword>Затем изображение нужно промасштабировать так, чтобы его размеры 
+  были степенью двойки. Как вы помните, чтобы изображение можно было использовать 
+  в качестве текстуры, оно должно иметь размер 128х128, 256х256 точек и так далее. 
+  В меню &quot;Изображение&quot; выберите &quot;Размер изображения&quot;, снимите 
+  галочку напротив опции сохранения пропорций и измените размеры так, чтобы подогнать 
+  их к размерам текстуры. Если исходное изображение, скажем, 100х90 точек, предпочтительно 
+  сделать его 128х128, а не 64х64 точки, чтобы максимально сохранить детали. <br>
+  </p><p class=textword>&nbsp;  </p>
+<p class=textword>Наконец, из меню &quot;Фильтры&quot; надо выбрать &quot;Искажения&quot; 
+  и в них &quot;Сферизацию&quot;. После применения этого фильтра центр изображения 
+  станет выпуклым, как шарик. В нормальной сферической карте изображение по мере 
+  приближения к краю должно темнеть и уходить в черноту, но сейчас это неважно. 
+  Сохраните полученный результат в формате BMP, и можно приступать к кодированию! 
+  <br>
+  </p><p class=textword>&nbsp;  </p>
+<p class=textword>На этот раз мы не станем вводить никаких глобальных переменных, 
+  только модифицируем массив текстур так, чтобы он мог хранить их 6 штук.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>GLuint  texture[6];                // Хранилище для 6 текстур 
+  ( ИЗМЕНЕНО )</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textword>Следующее, что я сделал&nbsp;— модифицировал функцию LoadGLTextures() 
+  так, чтобы она могла загружать 2 картинки и создавать 3 фильтра (похоже на то, 
+  как это было в уроках по обычному текстурированию). Там выполнялись два цикла, 
+  и в каждом создавалось три текстуры с использованием разных режимов фильтрации. 
+  Почти весь этот код переписан или изменен.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>int LoadGLTextures()                // Загрузить картинки 
+  и создать текстуры</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  int Status=FALSE;                 // Индикатор 
+  статуса</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  AUX_RGBImageRec *TextureImage[2]; // Выделим место для 
+  хранения текстур</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  memset(TextureImage,0,sizeof(void *)*2);         
+  // Сбросим эти указатели</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Загрузим картинку, проверим на ошибки, 
+  если картинка не найдена - выйдем</p>
+<p class=textpreword>  if ((TextureImage[0]=LoadBMP(&quot;Data/BG.bmp&quot;)) 
+  &amp;&amp;  // Фоновая текстура</p>
+    <p class=textpreword>    (TextureImage[1]=LoadBMP(&quot;Data/Reflect.bmp&quot;))) 
+      // Текстура отражения</p>
+    <p class=textpreword>                                                   // 
+      (сферическая карта)</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    Status=TRUE;                    // Установить 
+  индикатор в TRUE</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>    glGenTextures(6, &amp;texture[0]);  // Создадим три текстуры</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>    for (int loop=0; loop&lt;=1; loop++)</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      // Создадим текстуры без фильтрации</p>
+<p class=textpreword>      glBindTexture(GL_TEXTURE_2D, texture[loop]); 
+  // Текстуры 0 и 1</p>
+<p class=textpreword>      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);</p>
+<p class=textpreword>      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);</p>
+<p class=textpreword>      glTexImage2D(GL_TEXTURE_2D, 0, 3, TextureImage[loop]-&gt;sizeX,</p>
+<p class=textpreword>                   TextureImage[loop]-&gt;sizeY, 
+  0, GL_RGB, GL_UNSIGNED_BYTE,</p>
+<p class=textpreword>                   TextureImage[loop]-&gt;data);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>      // Создадим линейно фильтрованные текстуры</p>
+<p class=textpreword>      glBindTexture(GL_TEXTURE_2D, texture[loop+2]);    // 
+  Текстуры 2, 3 и 4</p>
+<p class=textpreword>      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);</p>
+<p class=textpreword>      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);</p>
+<p class=textpreword>      glTexImage2D(GL_TEXTURE_2D, 0, 3, TextureImage[loop]-&gt;sizeX,</p>
+<p class=textpreword>                   TextureImage[loop]-&gt;sizeY, 
+  0, GL_RGB, GL_UNSIGNED_BYTE,</p>
+<p class=textpreword>                   TextureImage[loop]-&gt;data);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>      // мип-мап текстуры</p>
+<p class=textpreword>      glBindTexture(GL_TEXTURE_2D, texture[loop+4]);    // 
+  Текстуры 4 и 5</p>
+<p class=textpreword>      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);</p>
+<p class=textpreword>      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);</p>
+<p class=textpreword>      gluBuild2DMipmaps(GL_TEXTURE_2D, 3, TextureImage[loop]-&gt;sizeX,</p>
+<p class=textpreword>                        TextureImage[loop]-&gt;sizeY, 
+  GL_RGB, GL_UNSIGNED_BYTE,</p>
+<p class=textpreword>                        TextureImage[loop]-&gt;data);</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>    for (loop=0; loop&lt;=1; loop++)</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>          if (TextureImage[loop])                  // Если 
+  текстура существует</p>
+<p class=textpreword>        {</p>
+<p class=textpreword>              if (TextureImage[loop]-&gt;data)        // 
+  Если существует изображение текстуры</p>
+<p class=textpreword>            {</p>
+<p class=textpreword>                  free(TextureImage[loop]-&gt;data);  // 
+  Освободим память изображения текстуры</p>
+<p class=textpreword>          }</p>
+    <p class=textpreword>          free(TextureImage[loop]);                // Освободим 
+      память</p>
+    <p class=textpreword>                                                   // 
+      структуры изображения</p>
+<p class=textpreword>      }</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  return Status; // Вернем статус</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Теперь слегка изменим код рисования куба. Вместо 1.0 и -1.0 
+  в качестве значений нормали используем 0.5 и -0.5. Так у нас появится возможность 
+  увеличивать и уменьшать карту отражений. Если значение нормали велико, то отраженное 
+  изображение станет больше и, возможно, на нем будут заметны квадратики. А если 
+  нормаль уменьшить до 0.5, изображение тоже уменьшится и качество картинки повысится. 
+  Если еще сильнее уменьшить значение нормали, то мы получим нежелательные результаты.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>GLvoid glDrawCube()</p>
+<p class=textpreword>{</p>
+<p class=textpreword>    glBegin(GL_QUADS);</p>
+<p class=textpreword>    // Передняя грань</p>
+<p class=textpreword>    glNormal3f( 0.0f, 0.0f, 0.5f);          ( Изменено )</p>
+<p class=textpreword>    glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f,  1.0f);</p>
+<p class=textpreword>    glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f, 
+  -1.0f,  1.0f);</p>
+<p class=textpreword>    glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f,  
+  1.0f,  1.0f);</p>
+<p class=textpreword>    glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  
+  1.0f,  1.0f);</p>
+<p class=textpreword>    // Задняя грань</p>
+<p class=textpreword>    glNormal3f( 0.0f, 0.0f,-0.5f);          ( Изменено )</p>
+<p class=textpreword>    glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);</p>
+<p class=textpreword>    glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f,  
+  1.0f, -1.0f);</p>
+<p class=textpreword>    glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f,  
+  1.0f, -1.0f);</p>
+<p class=textpreword>    glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f, 
+  -1.0f, -1.0f);</p>
+<p class=textpreword>    // Верхняя грань</p>
+<p class=textpreword>    glNormal3f( 0.0f, 0.5f, 0.0f);          ( Изменено )</p>
+<p class=textpreword>    glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  1.0f, -1.0f);</p>
+<p class=textpreword>    glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f,  
+  1.0f,  1.0f);</p>
+<p class=textpreword>    glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f,  
+  1.0f,  1.0f);</p>
+<p class=textpreword>    glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f,  
+  1.0f, -1.0f);</p>
+<p class=textpreword>    // Нижняя грань</p>
+<p class=textpreword>    glNormal3f( 0.0f,-0.5f, 0.0f);          
+  ( Изменено )</p>
+<p class=textpreword>    glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f, 
+  -1.0f, -1.0f);</p>
+<p class=textpreword>    glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f, 
+  -1.0f, -1.0f);</p>
+<p class=textpreword>    glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f, 
+  -1.0f,  1.0f);</p>
+<p class=textpreword>    glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, 
+  -1.0f,  1.0f);</p>
+<p class=textpreword>    // Правая грань</p>
+<p class=textpreword>    glNormal3f( 0.5f, 0.0f, 0.0f);          ( Изменено )</p>
+<p class=textpreword>    glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f, -1.0f, -1.0f);</p>
+<p class=textpreword>    glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f,  
+  1.0f, -1.0f);</p>
+<p class=textpreword>    glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f,  
+  1.0f,  1.0f);</p>
+<p class=textpreword>    glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f, 
+  -1.0f,  1.0f);</p>
+<p class=textpreword>    // Левая грань</p>
+<p class=textpreword>    glNormal3f(-0.5f, 0.0f, 0.0f);          ( Изменено )</p>
+<p class=textpreword>    glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);</p>
+<p class=textpreword>    glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, 
+  -1.0f,  1.0f);</p>
+<p class=textpreword>    glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f, 
+   1.0f,  1.0f);</p>
+<p class=textpreword>    glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  
+  1.0f, -1.0f);</p>
+<p class=textpreword>  glEnd();</p>
+<p class=textpreword>}</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textword>Теперь в InitGL будут добавлены два новых вызова, устанавливающих 
+  режим генерации текстур для S и T для использования при сферическом текстурировании. 
+  Текстурные координаты S, T, R и Q определенным образом соответствуют координатам 
+  объекта x, y, z и w. Если вы применяете одномерную текстуру (1D), то будете 
+  использовать координату S. Если текстура двумерная, то кроме S применяется и 
+  координата T. <br>
+  </p><p class=textword>&nbsp;  </p>
+<p class=textword>Следующий фрагмент кода заставляет OpenGL генерировать координаты 
+  S и T, основываясь на формуле сферического наложения. Координаты R и Q обычно 
+  игнорируются. Координата Q может быть использована в расширениях продвинутых 
+  техник текстурирования, а координата R, возможно, станет полезной, когда в библиотеку 
+  OpenGL будет добавлено 3D текстурирование. Сейчас же мы проигнорируем и R, и 
+  Q. Координата S идет горизонтально через плоскость нашего полигона, а координата 
+  T&nbsp;— вертикально.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>  // Изменить для S режим генерации текстур на &quot;сферическое наложение&quot; 
+  ( Новое )</p>
+<p class=textpreword>  glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);</p>
+<p class=textpreword>  // Изменить для T режим генерации текстур на &quot;сферическое наложение&quot; 
+  ( Новое )</p>
+<p class=textpreword>  glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Мы практически закончили! Остается настроить визуализацию. Я 
+  убрал несколько квадратичных объектов, потому что они плохо подходят для наложения 
+  текстур окружения. Сначала надо разрешить генерацию текстур. Затем выбрать текстуру, 
+  представляющую отражение, и нарисовать объект. После того, как объекты, для 
+  которых планируется сферическое текстурирование, будут отрисованы, генерацию 
+  текстур придется запретить, иначе сферически текстурированным окажется вообще 
+  все. Наложение текстур мы отключим перед тем, как начнем рисовать задний план 
+  (потому что не планируем сферически текстурировать и его). Вы увидите, что команды 
+  привязки текстур производят впечатление чрезвычайно сложных. На самом деле все, 
+  что мы делаем&nbsp;— это выбираем фильтр, который надо использовать при наложении 
+  сферической карты или фонового изображения.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>int DrawGLScene(GLvoid)          // Здесь происходит все 
+  рисование</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // 
+  Очистим экран и буфер глубины</p>
+<p class=textpreword>  glLoadIdentity();              // Сбросим вид</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  glTranslatef(0.0f,0.0f,z);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  glEnable(GL_TEXTURE_GEN_S);    // Включим генерацию координат 
+  текстуры для S ( НОВОЕ )</p>
+<p class=textpreword>  glEnable(GL_TEXTURE_GEN_T);    // Включим генерацию координат 
+  текстуры для T ( НОВОЕ )</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // Выберем сферическое текстурирование ( ИЗМЕНЕНО )</p>
+<p class=textpreword>  glBindTexture(GL_TEXTURE_2D, texture[filter+(filter+1)]);</p>
+<p class=textpreword>  glPushMatrix();</p>
+<p class=textpreword>  glRotatef(xrot,1.0f,0.0f,0.0f);</p>
+<p class=textpreword>  glRotatef(yrot,0.0f,1.0f,0.0f);</p>
+<p class=textpreword>  switch(object)</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>  case 0:</p>
+<p class=textpreword>    glDrawCube();</p>
+<p class=textpreword>    break;</p>
+<p class=textpreword>  case 1:</p>
+<p class=textpreword>    glTranslatef(0.0f,0.0f,-1.5f);               
+  // Отцентруем цилиндр</p>
+<p class=textpreword>    gluCylinder(quadratic,1.0f,1.0f,3.0f,32,32); 
+  // Цилиндр радиусом 0.5 и высотой 2</p>
+<p class=textpreword>    break;</p>
+<p class=textpreword>  case 2:</p>
+<p class=textpreword>    // Сфера радиусом 1, состоящая из 16 сегментов по долготе/широте</p>
+<p class=textpreword>    gluSphere(quadratic,1.3f,32,32);</p>
+<p class=textpreword>    break;</p>
+<p class=textpreword>  case 3:</p>
+<p class=textpreword>    glTranslatef(0.0f,0.0f,-1.5f);          
+        // Отцентруем конус</p>
+    <p class=textpreword>    // Конус с радиусом основания 0.5 и высотой 2</p>
+    <p class=textpreword>    gluCylinder(quadratic,1.0f,0.0f,3.0f,32,32);</p>
+<p class=textpreword>    break;</p>
+<p class=textpreword>  };</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  glPopMatrix();</p>
+    <p class=textpreword>  glDisable(GL_TEXTURE_GEN_S);        // Отключим генерацию 
+      текстурных координат ( НОВОЕ )</p>
+    <p class=textpreword>  glDisable(GL_TEXTURE_GEN_T);        // Отключим генерацию 
+      текстурных координат ( НОВОЕ )</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  glBindTexture(GL_TEXTURE_2D, texture[filter*2]); // Выберем 
+  фоновую текстуру ( НОВОЕ )</p>
+<p class=textpreword>  glPushMatrix();</p>
+<p class=textpreword>    glTranslatef(0.0f, 0.0f, -24.0f);</p>
+<p class=textpreword>    glBegin(GL_QUADS);</p>
+<p class=textpreword>      glNormal3f( 0.0f, 0.0f, 1.0f);</p>
+<p class=textpreword>      glTexCoord2f(0.0f, 0.0f); glVertex3f(-13.3f, 
+  -10.0f,  10.0f);</p>
+<p class=textpreword>      glTexCoord2f(1.0f, 0.0f); glVertex3f( 
+  13.3f, -10.0f,  10.0f);</p>
+<p class=textpreword>      glTexCoord2f(1.0f, 1.0f); glVertex3f( 
+  13.3f,  10.0f,  10.0f);</p>
+<p class=textpreword>      glTexCoord2f(0.0f, 1.0f); glVertex3f(-13.3f,  
+  10.0f,  10.0f);</p>
+<p class=textpreword>    glEnd();</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  glPopMatrix();</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  xrot+=xspeed;</p>
+<p class=textpreword>  yrot+=yspeed;</p>
+<p class=textpreword>  return TRUE; // Продолжим</p>
+<p class=textpreword>}</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textword>Последнее, что надо сделать&nbsp;— обновить процедуру обработки 
+  нажатия пробела, чтобы отразить изменения, внесенные нами в изображаемые квадратичные 
+  объекты (были удалены диски).</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>        if (keys[' '] &amp;&amp; !sp)</p>
+<p class=textpreword>        {</p>
+<p class=textpreword>          sp=TRUE;</p>
+<p class=textpreword>          object++;</p>
+<p class=textpreword>          if(object&gt;3)</p>
+<p class=textpreword>            object=0;</p>
+<p class=textpreword>        }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textword>Мы закончили! Теперь, пользуясь наложением текстур окружения, 
+  вы можете делать разные впечатляющие вещи, например, почти точное отражение 
+  содержимого комнаты. Я планировал показать, как делать кубическое наложение, 
+  но моя видеокарточка не поддерживает этот режим. Может быть, через месяц или 
+  около того я куплю GeForce2 :). Кроме того, описанное текстурирование я изучал 
+  самостоятельно (в основном из-за того, что по этому вопросу практически нет 
+  информации), так что если в этом уроке есть какие-то неточности, сообщите о 
+  них либо мне по почте, либо сразу NeHe. <br>
+  </p><p class=textword>&nbsp;  </p>
+<p class=textword>Спасибо. Удачи! <br>
+  </p><p class=textword>&nbsp;  </p>
+
+<p class="textnoalign" align="right">
+<font color="#0000A0"><a href="mailto:tiptup@net4tv.com"><b> © GB Schmick (TipTup) </b></a></font><br>
+<b><a href="http://www.tiptup.com/">http://www.tiptup.com/</a></b>
+</p>  
+
+</div>
+<div id="end">
+
+          <p><a href="http://pmg.org.ru/"
+			onmouseover=" return event_over(this,'Программирование магических игр')  "
+			onmouseout=" return event_out(this) "><font class="link"><b>PMG</b></font></a> 
+            <font class="comment">&nbsp;15 января 2002&nbsp;(c)&nbsp;</font> 
+        <a href="mailto:vech2001@mail.ru"
+	onmouseover=" return event_over(this,'Почта переводчику')  " 
+	onmouseout=" return event_out(this) "> <font class="link"><b>Vasily Chernikov</b></font></a> 
+          </p>
+</div>
+</center>
+
+<script language="JavaScript">
+<!--
+form_print();
+//-->
+</script>
+
+</body>
+</html>

@@ -1,0 +1,746 @@
+<!doctype html public "-//w3c//dtd html 3.2 final//ru">
+<html>
+
+<head>
+<meta http-equiv="Content-Type"
+content="text/html; charset=windows-1251">
+<meta name="description"
+content="Переводы по OpenGL, трехмерная графика, игры, мультимедия
+Translations Russian OpenGL
+">
+<meta name="keyword"
+content="Программирование,игры,3D,трехмерная графика,OpenGL,NeHe">
+<meta name="keyword"
+content="programming,C,C++,game,graphics">
+<title>Урок 28. Фрагменты поверхностей Безье.</title>
+<link rel="stylesheet" href="pmg.css" type="text/css">
+</head>
+
+<body bgcolor="#b2d3e1" link="#800080" vlink="#800080">
+<script src='nehe.js' language="javascript">
+<!--
+//-->
+</script>
+
+<center>
+<div id="top">
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+        <td width="20%" align="center" valign="center">
+        <img src="nehelogo.jpg" align="left" hspace="0" width="125" height="50" alt="NeHe Tutorials">
+        </td>
+        <td width="60%" align="center">
+	<a href="index.html"
+	onmouseover=" return event_over(this,'NeHe Ru.')  "
+        onmouseout=" return event_out(this) ">
+        <font class="linksbig">
+        Народный учебник по OpenGL</font></a><br>
+        </td>
+        <td width="20%" align="center" valign="center">
+        <img src="nehe28.jpg" align="right" hspace="0" width="80" height="60" alt="Урок 28. OpenGL">
+        </td>
+    </tr>
+</table>
+</div>
+
+<div id="head">
+<p class="head1">
+Урок 28. Фрагменты поверхностей Безье.</p>
+</div>
+<div id="main" bgcolor="#ADADFF">
+<p class="textnoalign" align="left">
+
+<a href="http://nehe.gamedev.net/data/lessons/lesson.asp?lesson=28" target="_blank"
+onmouseover=" return event_over(this,this)  "
+onmouseout=" return event_out(this) ">
+<font class="link"><b>Bezier Patches </b></font></a>
+<br>
+</p>
+
+<p class=textword>&nbsp;</p>
+<p class=textword>В этом уроке пойдет речь о поверхностях Безье, и я буду надеяться, 
+  что кто-то, прочитав этот урок, покажет нам более интересные варианты использования 
+  их, чем я. Здесь не пойдет речь о библиотеке фрагментов поверхностей Безье (Bezier patch, или патчи Безье, или лоскуты 
+  Безье), а скорее я попытаюсь ознакомить вас концепцией того, как реально эти 
+  кривые поверхности работают. Так как это, скорее всего не формальное изложение, 
+  то я иногда делаю небольшие отступления от формальной терминологии, для лучшего 
+  понимания сути дела. Я надеюсь, что это поможет. Если вы уже знакомы с Безье, 
+  и вы читаете эту статью, что бы посмотреть что я тут накрутил, то позор Вам! 
+  Но, если я действительно где-то ошибся, сообщите мне об этой ошибке или NeHe, 
+  в конце концов, никто не совершенен. И еще одно, код в уроке не оптимизирован, 
+  в противоположность моей обычной практики, это потому что я хочу дать всем возможность 
+  точно понять, как это работает. Отлично, хватит вводных слов, смотрите!</p>
+<p class=textword>&nbsp; </p>
+<p class=head3word>Математика – дьявольская музыка:: (предупреждаю, вероятно, 
+  это длинная секция)</p>
+<p class=head3word>&nbsp; </p>
+<p class=textword>Отлично, Вам будет очень трудно понять поверхности Безье без 
+  минимума математики, стоящей за этим, однако, если Вы не чувствуете в себе сил 
+  и желания читать эту секцию, или Вы уже знакомы с этой математикой, Вы можете 
+  опустить ее. Вначале мы займемся кривыми Безье, затем рассмотрим фрагменты Безье.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Даже, если Вы не знакомы ранее с таким термином, как кривые 
+  Безье, но работали в каком-нибудь редакторе графики (например, CorelDraw), то, скорее всего Вы знакомы с кривыми Безье, пусть 
+  даже и не под таким названием. Так как это основной метод рисования кривых линий. 
+  Обыкновенно для работы этого метода необходимо четыре точки, при чем две точки, 
+  изображают касательные, которые идут слева и справа. Вот как это выглядит:</p>
+<p class=textword>&nbsp; </p>
+<p class=textword style='text-align:center'><img width=281 height=131 src="curve1.jpg"> </p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Из разных форм представления кривой Безье – это наиболее простая 
+  (удлинять кривые можно присоединяя их друг к другу (много раз без вмешательства 
+  пользователя)). Эта кривая обычно задается только четырьмя точками: двумя концевыми 
+  контрольными точками и двумя средними контрольными точками. Для компьютера все 
+  точки идентичны, но для упрощения работы пользователя мы часто соединяем первые 
+  и последние две, соответственно, поскольку эти линии всегда будут касательными 
+  к конечной точке. Этот тип кривых задается параметрически и рисуется при помощи 
+  нахождения заданного числа равноотстоящих друг от друга точек на кривой и последующего 
+  их соединения прямыми линями. Таким образом, мы может контролировать разрешение 
+  фрагмента (patch) и скорость вычислений. Наиболее стандартный способ использовать 
+  это при тесселяции (разбиении), т.е. уменьшать количество разбиений поверхности 
+  при большом удалении от камеры и увеличивать количество разбиений при приближении 
+  к наблюдателю, чтобы изогнутая поверхность всегда была гладкой и при этом скорость 
+  вывода была наилучшей.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Кривые Безье базируются на простой функции, из которой получаются 
+  более сложные версии. Вот эта функция:</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>t + (1 - t) 
+  = 1</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Не правда ли выглядит удивительно просто? Это действительно 
+  Безье, вернее наиболее простая кривая Безье, кривая первой степени. Как можно 
+  догадаться из последней фразы, кривые Безье – это полиномы, и как мы помним 
+  из алгебры, полином первой степени – это всего лишь прямая линия; что не очень 
+  интересно для нас. Хорошо, поскольку это простая функция истинна для всех значений 
+  t, мы можем взять квадрат, куб, любую степень этого 
+  выражения с обеих сторон, и это все еще будет истиной? Отлично, давайте попробуем 
+  кубическую степень.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>(t + (1-t))^3 = 1^3 </p>
+<p class=textword>&nbsp; </p>
+<p class=textword>t^3 + 3*t^2*(1-t) + 3*t*(1-t)^2 + (1-t)^3 = 
+  1 </p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Это уравнение мы и будем использовать для вычисления наиболее 
+  общей кривой Безье третьей степени. Это наиболее общее уравнение по двум причинам: 
+  a) это полином с наиболее низкой степенью, который не 
+  обязательно должен лежать в плоскости (есть четыре контрольных точки) и b) 
+  касательные линии к сторонам не зависят одна от другой (в полиноме со второй 
+  степенью есть только три контрольных точки). Поэтому вы уже видите кривую Безье? 
+  Хе-хе, по мне так ни то ни другое, так как я должен добавить еще кое-что.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Отлично, так как с левой стороны стоит единица, то можно предположить, 
+  что когда мы сложим все компоненты, то они все еще будут равны единице. Это 
+  похоже на то, что можно описать, как много каждой контрольной точки будет использоваться 
+  для вычисления точки кривой? (Подсказка: скажите да ;)). Хорошо Вы правы! Когда 
+  мы хотим вычислить значение точки находящейся на кривой, мы просто умножаем 
+  каждую компоненту уравнения на свою контрольную точку (как вектор) и находим 
+  сумму. Вообще, мы работаем с 0 &lt;= t &lt;= 1, но это технически не обязательно. Непонятно? Вот 
+  эта функция.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>P1*t^3 + P2*3*t^2*(1-t) + P3*3*t*(1-t)^2 + 
+  P4*(1-t)^3 = P<sub>new</sub> <br>
+  <br>
+  </p>
+<p class=textword>Поскольку полиномы всегда непрерывны, это хороший способ сделать 
+  морфинг между 4 точками. Хотя фактически достижимы (интерполируются) только 
+  точки P1 и P4, когда t = 1 и t 
+  =0, соответственно. Точки P2 и P3 только аппроксимируются, т.е. 
+  кривая проходит рядом с ними, но не через них.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Теперь все прекрасно, но как я могу это использовать в 3D? Хорошо, довольно просто дальше сформировать фрагмент Безье. 
+  Для этого нам надо 16 контрольных точек (4*4), и две переменные t 
+  и v. Далее вы вычисляете точки v 
+  вдоль 4 параллельных кривых, затем используете эти 4 точки для создания новой 
+  кривой и вычисления t вдоль этой кривой. Вычисляя нужное 
+  количество этих точек, мы можем нарисовать треугольную полоску для соединения 
+  их, таким образом, рисуя фрагмент Безье. (Примечание переводчика. Так как каждая 
+  концевая точка четырехугольника фрагмента относится к двум сторонам, то всего 
+  для их представления надо 8 точек. Затем надо по две контрольные точки на каждую 
+  сторону для формирования кривых Безье на этих сторонах. Вначале надо вычислить 
+  кривую Безье на одной стороне четырехугольника, затем надо вычислить следующую 
+  параллельную ей кривую Безье и так далее. Конечно, для формирования полосок 
+  из треугольников необходимо иметь две кривые и рисовать полоски между ними.)</p>
+<p class=textword>&nbsp; </p>
+<p class=textword style='text-align:center'> <img width=290 height=156 src="curve2.jpg"> </p>
+<p class=textword>&nbsp;  </p>
+<p class=textword style='text-align:center'> <img width=290 height=156 src="curve3.jpg"> </p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Хорошо, я думаю, пока хватит математики, давайте посмотрим код!</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>#include &lt;windows.h&gt;       // Заголовочный файл для 
+  Windows</p>
+<p class=textpreword>#include &lt;math.h&gt;          // Заголовочный файл для математической библиотеки</p>
+<p class=textpreword>#include &lt;stdio.h&gt;         // Заголовочный файл для стандартного ввода/вывода</p>
+<p class=textpreword>#include &lt;stdlib.h&gt;        // Заголовочный файл для стандартной библиотеки</p>
+<p class=textpreword>#include &lt;gl\gl.h&gt;         // 
+  Заголовочный файл для библиотеки OpenGL32</p>
+<p class=textpreword>#include &lt;gl\glu.h&gt;        // Заголовочный файл 
+  для библиотеки GLu32</p>
+<p class=textpreword>#include &lt;gl\glaux.h&gt;      // Заголовочный файл 
+  для GLaux библиотеки</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>typedef struct point_3d {  // Структура для 3D точки( НОВОЕ 
+  )</p>
+<p class=textpreword>  double x, y, z;</p>
+<p class=textpreword>} POINT_3D;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>typedef struct bpatch {    // Структура для полинома 
+  фрагмента Безье 3 степени (НОВОЕ)</p>
+<p class=textpreword>  POINT_3D  anchors[4][4]; // Сетка 4x4 
+  анкерных (anchor) точек</p>
+<p class=textpreword>  GLuint    dlBPatch;      // Список для фрагмента 
+  Безье</p>
+<p class=textpreword>  GLuint    texture;       // Текстура для фрагмента</p>
+<p class=textpreword>} BEZIER_PATCH;</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>HDC       hDC=NULL;        
+  // Контекст устройства</p>
+<p class=textpreword>HGLRC     hRC=NULL;        
+  // Контекст визуализации</p>
+<p class=textpreword>HWND      hWnd=NULL;       
+  // Дескриптор окна</p>
+<p class=textpreword>HINSTANCE hInstance;       // Экземпляр приложения</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>bool      keys[256];       // Массив 
+  для работы с клавиатурой</p>
+<p class=textpreword>bool      active=TRUE;     
+  // Флаг активности приложения</p>
+<p class=textpreword>bool      fullscreen=TRUE; 
+  // Флаг полноэкранного режима</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>DEVMODE      DMsaved;      
+  // Сохранить настройки предыдущего режима ( НОВОЕ )</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>GLfloat      rotz 
+  = 0.0f;  // Вращение по оси Z</p>
+<p class=textpreword>BEZIER_PATCH    mybezier;  // Фрагмент Безье 
+  для использования ( НОВОЕ )</p>
+<p class=textpreword>BOOL      showCPoints=TRUE;// 
+  Переключатель отображения контрольных точек сетки ( НОВОЕ )</p>
+<p class=textpreword>int      divs 
+  = 7;         // Число интерполяции (Контроль разрешения полигона) ( НОВОЕ )</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>LRESULT  CALLBACK 
+  WndProc(HWND, UINT, 
+  WPARAM, LPARAM);      // Декларация 
+  для WndProc</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textword>Далее идут несколько функций для оперирования векторами. Если 
+  вы фанат C++, то вы может использовать вместо них какой-то 
+  класса 3D точки.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>// Сложить 2 точки.</p>
+<p class=textpreword>POINT_3D pointAdd(POINT_3D p, POINT_3D q) 
+  {</p>
+<p class=textpreword>  p.x += q.x;    p.y += q.y;    p.z += q.z;</p>
+<p class=textpreword>  return p;</p>
+<p class=textpreword>}</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>// Умножение точки на константу</p>
+<p class=textpreword>POINT_3D pointTimes(double c, POINT_3D p) 
+  {</p>
+<p class=textpreword>  p.x *= c;  p.y *= c;  p.z *= c;</p>
+<p class=textpreword>  return p;</p>
+<p class=textpreword>}</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>// Функция для упрощения создания точки</p>
+<p class=textpreword>POINT_3D makePoint(double a, double b, double 
+  c) {</p>
+<p class=textpreword>  POINT_3D p;</p>
+<p class=textpreword>  p.x = a;  p.y = b;  p.z = c;</p>
+<p class=textpreword>  return p;</p>
+<p class=textpreword>}</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textword>Затем идет функция для вычисления полиномов третьей степени 
+  (каждый член в уравнении кривой Безье, является одним из так называемых полиномов 
+  Берштейна), ей надо передать переменную <b>u</b> и массив 
+  из 4 точек <b>p</b> и вычислить точку на кривой. Изменяя 
+  <b>u</b> на одинаковые приращения между 0 и 1, мы получим 
+  хорошую аппроксимацию кривой.</p>
+<p class=textword> </p>
+<p class=textpreword>// Вычисляем полином 3 степени на основании массива из 4 
+  точек</p>
+<p class=textpreword>// и переменной u, которая обычно 
+  изменяется от 0 до 1</p>
+<p class=textpreword>POINT_3D Bernstein(float u, POINT_3D *p) 
+  {</p>
+<p class=textpreword>  POINT_3D  a, b, c, d, r;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  a = pointTimes(pow(u,3), p[0]);</p>
+<p class=textpreword>  b = pointTimes(3*pow(u,2)*(1-u), p[1]);</p>
+<p class=textpreword>  c = pointTimes(3*u*pow((1-u),2), p[2]);</p>
+<p class=textpreword>  d = pointTimes(pow((1-u),3), p[3]);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  r = pointAdd(pointAdd(a, b), pointAdd(c, d));</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  return r;</p>
+<p class=textpreword>}</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textword>Эта функция делает львиную долю работы, генерируя все полоски 
+  треугольников и сохраняя их в списке отображения. Мы это делаем, для того чтобы 
+  не перевычислять фрагмент каждый кадр. Между прочим, вы можете попробовать использовать 
+  урок о Морфинге для морфинга контрольных точек фрагмента. При этом получиться 
+  интересный эффект сглаженного морфинга с относительно небольшими затратами (вы 
+  только делает морфинг 16 точек, но вы должны перевычислить их). Массив &quot;last&quot; 
+  используется для сохранения предыдущей линии точек (поскольку для треугольных 
+  полосок необходимы обе строки). Также координаты текстуры вычисляются при помощи 
+  использования <b>u</b> и <b>v</b> 
+  значений в виде процентов (плоское наложение).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Одну вещь мы не делаем – вычисление нормалей для освещения. 
+  Когда вы начнете это делать, в общем, вы будете иметь два параметра. Первый 
+  параметр, который вы должны найти – это центр каждого треугольника, и затем 
+  использовать побитное исчисление и вычисление тангенса обоих осей x и y, затем сделать векторное произведение 
+  чтобы получить перпендикуляр к обоим осям, ЗАТЕМ нормализовать вектор и использовать 
+  его как нормаль. ИЛИ (это более быстрый путь) вы можете, для того чтобы получить 
+  хорошую аппроксимацию, использовать только нормаль треугольника (вычисленную 
+  на ваш любимый манер). Я предпочитаю последний способ, так как, по моему мнению,  
+  не стоит жертвовать скоростью взамен не большому улучшению реализма.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>// Создание списков отображения на основе данных фрагмента</p>
+<p class=textpreword>// и числе разбиений</p>
+<p class=textpreword>GLuint genBezier(BEZIER_PATCH patch, int 
+  divs) {</p>
+<p class=textpreword>  int    u = 0, v;</p>
+<p class=textpreword>  float    py, px, pyold; </p>
+<p class=textpreword>  GLuint    drawlist 
+  = glGenLists(1);  // Создать список отображения</p>
+<p class=textpreword>  POINT_3D  temp[4];</p>
+<p class=textpreword>  POINT_3D  *last = (POINT_3D*)malloc(sizeof(POINT_3D)*(divs+1));</p>
+<p class=textpreword>        // Массив точек для отметки первой линии 
+  полигонов</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  if (patch.dlBPatch != NULL)          // Удалить 
+  старые списки отображения</p>
+<p class=textpreword>    glDeleteLists(patch.dlBPatch, 1);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  temp[0] = patch.anchors[0][3];       
+  // Первая производная кривая (Вдоль оси X)</p>
+<p class=textpreword>  temp[1] = patch.anchors[1][3];</p>
+<p class=textpreword>  temp[2] = patch.anchors[2][3];</p>
+<p class=textpreword>  temp[3] = patch.anchors[3][3];</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  for (v=0;v&lt;=divs;v++) {              // 
+  Создание первой линии точек</p>
+<p class=textpreword>    px = ((float)v)/((float)divs);     // Процент 
+  вдоль оси Y</p>
+<p class=textpreword>    // Используем 4 точки 
+  из производной кривой для вычисления точек вдоль кривой</p>
+<p class=textpreword>    last[v] = Bernstein(px, temp);</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  glNewList(drawlist, GL_COMPILE);     // Начнем 
+  новый список отображения</p>
+<p class=textpreword>  glBindTexture(GL_TEXTURE_2D, patch.texture); 
+  // Присоединим к текстуре</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  for (u=1;u&lt;=divs;u++) {</p>
+<p class=textpreword>    py    = ((float)u)/((float)divs);          
+  // Процент вдоль оси Y</p>
+<p class=textpreword>    pyold = ((float)u-1.0f)/((float)divs);     
+  // Процент вдоль старой оси Y</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>    temp[0] = Bernstein(py, patch.anchors[0]); 
+  // Вычислим новые точки Безье</p>
+<p class=textpreword>    temp[1] = Bernstein(py, patch.anchors[1]);</p>
+<p class=textpreword>    temp[2] = Bernstein(py, patch.anchors[2]);</p>
+<p class=textpreword>    temp[3] = Bernstein(py, patch.anchors[3]);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>    glBegin(GL_TRIANGLE_STRIP);        
+  // Начнем новую полоску треугольников</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>    for (v=0;v&lt;=divs;v++) {</p>
+<p class=textpreword>      px = ((float)v)/((float)divs);   // Процент вдоль оси X</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>      glTexCoord2f(pyold, px);         // Применим 
+  старые координаты текстуры</p>
+<p class=textpreword>      glVertex3d(last[v].x, last[v].y, last[v].z);  
+  // Старая точка</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>      last[v] = Bernstein(px, temp);   // Генерируем 
+  новую точку</p>
+<p class=textpreword>      glTexCoord2f(py, 
+  px);            // Применим новые координаты текстуры</p>
+<p class=textpreword>      glVertex3d(last[v].x, last[v].y, last[v].z);  // Новая 
+  точка</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>    glEnd();            // Конец полоски треугольников</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>  </p>
+<p class=textpreword>  glEndList();          // Конец списка</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  free(last);           // Освободить старый 
+  массив вершин</p>
+<p class=textpreword>  return drawlist;      // Вернуть список отображения</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Далее зададим значения контрольных точек фрагмента, которые 
+  я подобрал, чтобы продемонстрировать эффект. Не стесняйтесь изменять эти значения 
+  и посмотреть, что же  получится при этом.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>void initBezier(void) {  </p>
+<p class=textpreword>  mybezier.anchors[0][0] = makePoint(-0.75,  
+  -0.75,  -0.50);  // Вершины Безье</p>
+<p class=textpreword>  mybezier.anchors[0][1] = makePoint(-0.25,  
+  -0.75,   0.00);</p>
+<p class=textpreword>  mybezier.anchors[0][2] = makePoint( 0.25,  
+  -0.75,   0.00);</p>
+<p class=textpreword>  mybezier.anchors[0][3] = makePoint( 0.75,  
+  -0.75,  -0.50);</p>
+<p class=textpreword>  mybezier.anchors[1][0] = makePoint(-0.75,  
+  -0.25,  -0.75);</p>
+<p class=textpreword>  mybezier.anchors[1][1] = makePoint(-0.25,  
+  -0.25,   0.50);</p>
+<p class=textpreword>  mybezier.anchors[1][2] = makePoint( 0.25,  
+  -0.25,   0.50);</p>
+<p class=textpreword>  mybezier.anchors[1][3] = makePoint( 0.75,  
+  -0.25,  -0.75);</p>
+<p class=textpreword>  mybezier.anchors[2][0] = makePoint(-0.75,   
+  0.25,   0.00);</p>
+<p class=textpreword>  mybezier.anchors[2][1] = makePoint(-0.25,   
+  0.25,  -0.50);</p>
+<p class=textpreword>  mybezier.anchors[2][2] = makePoint( 0.25,   
+  0.25,  -0.50);</p>
+<p class=textpreword>  mybezier.anchors[2][3] = makePoint( 0.75,   
+  0.25,   0.00);</p>
+<p class=textpreword>  mybezier.anchors[3][0] = makePoint(-0.75,   
+  0.75,  -0.50);</p>
+<p class=textpreword>  mybezier.anchors[3][1] = makePoint(-0.25,   
+  0.75,  -1.00);</p>
+<p class=textpreword>  mybezier.anchors[3][2] = makePoint( 0.25,   
+  0.75,  -1.00);</p>
+<p class=textpreword>  mybezier.anchors[3][3] = makePoint( 0.75,   
+  0.75,  -0.50);</p>
+<p class=textpreword>  mybezier.dlBPatch = NULL;</p>
+<p class=textpreword>}</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textword>Это процедура загрузки одной картинки. Организовав цикл, Вы 
+  можете загрузить несколько картинок.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>// Загрузить картинку и конвертировать ее в текстуру</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>BOOL LoadGLTexture(GLuint *texPntr, char* 
+  name)</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  BOOL success = FALSE;</p>
+<p class=textpreword>  AUX_RGBImageRec *TextureImage = NULL;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  glGenTextures(1, texPntr);          
+  // Генерировать 1 текстуру</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  FILE* test=NULL;</p>
+<p class=textpreword>  TextureImage = NULL;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  test = fopen(name, &quot;r&quot;);            
+  // Существует ли файл?</p>
+<p class=textpreword>  if (test != NULL) {                 // Если 
+  да</p>
+<p class=textpreword>    fclose(test);                     // Закрыть 
+  файл</p>
+<p class=textpreword>    TextureImage = auxDIBImageLoad(name); // 
+  И загрузить текстуру</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  if (TextureImage != NULL) {         // Если 
+  загружена</p>
+<p class=textpreword>    success = TRUE;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>    // Обычная генерация текстура используя 
+  данные из картинки</p>
+<p class=textpreword>    glBindTexture(GL_TEXTURE_2D, *texPntr);</p>
+<p class=textpreword>    glTexImage2D(GL_TEXTURE_2D, 0, 3, TextureImage-&gt;sizeX, 
+  TextureImage-&gt;sizeY,</p>
+<p class=textpreword>     0, GL_RGB, GL_UNSIGNED_BYTE, TextureImage-&gt;data);</p>
+<p class=textpreword>    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);</p>
+<p class=textpreword>    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  if (TextureImage-&gt;data)</p>
+<p class=textpreword>    free(TextureImage-&gt;data);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  return success;</p>
+<p class=textpreword>}</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textword>Инициализация фрагмента непосредственно здесь. Вы делаете это 
+  всякий раз, когда создаете фрагмент. Снова, это хорошее место использовать C++ (Безье класс).</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>int InitGL(GLvoid)              // Настройки OpenGL</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  glEnable(GL_TEXTURE_2D);      
+  // Разрешить наложение текстуры</p>
+<p class=textpreword>  glShadeModel(GL_SMOOTH);      
+  // Разрешить сглаживание</p>
+<p class=textpreword>  glClearColor(0.05f, 0.05f, 0.05f, 0.5f); // 
+  Фон черный</p>
+<p class=textpreword>  glClearDepth(1.0f);           
+  // Настройки буфера глубины</p>
+<p class=textpreword>  glEnable(GL_DEPTH_TEST);      
+  // Разрешаем тест глубины</p>
+<p class=textpreword>  glDepthFunc(GL_LEQUAL);       
+  // Тип теста глубины</p>
+<p class=textpreword>  glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST); 
+  // Улучшенные вычисления перспективы</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  initBezier();                 // 
+  Инициализация контрольной сетки Безье ( НОВОЕ )</p>
+<p class=textpreword>  LoadGLTexture(&amp;(mybezier.texture), 
+  &quot;./Data/NeHe.bmp&quot;); 
+  // Загрузка текстуры ( НОВОЕ )</p>
+<p class=textpreword>  mybezier.dlBPatch 
+  = genBezier(mybezier, divs); 
+  // Создание фрагмента ( НОВОЕ )</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  return TRUE;</p>
+<p class=textpreword>}</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textword>При отрисовке сцены, вначале отображаем список Безье. Затем 
+  (если контур включен) рисуются линии, соединяющие контрольные точки. Вы можете 
+  переключать этот режим при помощи ПРОБЕЛА. </p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>int DrawGLScene(GLvoid)  {            // Здесь рисуем</p>
+<p class=textpreword>  int i, j;</p>
+<p class=textpreword>  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);    
+  // Очистка экрана и буфера глубины</p>
+<p class=textpreword>  glLoadIdentity();            // Сброс текущей 
+  матрицы вида модели</p>
+<p class=textpreword>  glTranslatef(0.0f,0.0f,-4.0f);          
+  // Сдвиг налево на 1.5 единицы и вглубь экрана на 6.0</p>
+<p class=textpreword>  glRotatef(-75.0f,1.0f,0.0f,0.0f);</p>
+<p class=textpreword>  glRotatef(rotz,0.0f,0.0f,1.0f);         
+  // Вращение по оси Z</p>
+<p class=textpreword>    </p>
+<p class=textpreword>  glCallList(mybezier.dlBPatch);// 
+  Вызов списка Безье</p>
+<p class=textpreword>                                // Это необходимо только 
+  в том случае, когда фрагмент изменился</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  if (showCPoints) {            // Если отрисовка сетки включена</p>
+<p class=textpreword>    glDisable(GL_TEXTURE_2D);</p>
+<p class=textpreword>    glColor3f(1.0f,0.0f,0.0f);</p>
+<p class=textpreword>    for(i=0;i&lt;4;i++) {          // Нарисовать 
+  горизонтальную линию</p>
+<p class=textpreword>      glBegin(GL_LINE_STRIP);</p>
+<p class=textpreword>      for(j=0;j&lt;4;j++)</p>
+<p class=textpreword>        glVertex3d(mybezier.anchors[i][j].x, 
+  mybezier.anchors[i][j].y, mybezier.anchors[i][j].z);</p>
+<p class=textpreword>      glEnd();</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>    for(i=0;i&lt;4;i++) {          // Нарисовать 
+  вертикальную линию</p>
+<p class=textpreword>      glBegin(GL_LINE_STRIP);</p>
+<p class=textpreword>      for(j=0;j&lt;4;j++)</p>
+<p class=textpreword>        glVertex3d(mybezier.anchors[j][i].x, 
+  mybezier.anchors[j][i].y, mybezier.anchors[j][i].z);</p>
+<p class=textpreword>      glEnd();</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>    glColor3f(1.0f,1.0f,1.0f);</p>
+<p class=textpreword>    glEnable(GL_TEXTURE_2D);</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  return TRUE;</p>
+<p class=textpreword>}</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textword>В этой функции код модифицирован, чтобы сделать его более совместимым. 
+  Эти изменения не имеют прямого отношения к кривым Безье, но при этом решается 
+  проблема с возвратом разрешения экрана после работы в полноэкранном режиме, 
+  которая имеется с некоторыми видеокартами (включая мою, дерьмовую старую ATI Rage PRO, и некоторыми другими). Я надеюсь, 
+  вы будете использовать эти модификации, так как они позволят вашим крутым программам 
+  работать должным образом. Делая эти модификации, проверьте, что <b>Dmsaved </b>определена и инициализирована, 
+  как это отмечено в функции <b>CreateGLWindow()</b>.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>GLvoid KillGLWindow(GLvoid)    // Убить окно</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  if (fullscreen)              
+  // Мы в полноэкранном режиме?</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    if (!ChangeDisplaySettings(NULL,CDS_TEST)) 
+  {// Если это не работает ( НОВОЕ )</p>
+<p class=textpreword>      // Сделать это все равно (чтобы получить значения из 
+  системного реестра) (НОВОЕ)</p>
+<p class=textpreword>      ChangeDisplaySettings(NULL,CDS_RESET);</p>
+<p class=textpreword>      ChangeDisplaySettings(&amp;DMsaved,CDS_RESET);// 
+  Изменить его на сохраненные настройки (НОВОЕ)</p>
+<p class=textpreword>    } else {</p>
+<p class=textpreword>      ChangeDisplaySettings(NULL,CDS_RESET);    
+  // Если это работает продолжаем (НОВОЕ)</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>      </p>
+<p class=textpreword>    ShowCursor(TRUE);          // Показать курсор 
+  мыши</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  if (hRC)                     
+  // Мы имеем контекст визуализации?</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    if (!wglMakeCurrent(NULL,NULL)) 
+  // Можно освободить контексты DC и RC?</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      MessageBox(NULL,&quot;Release Of DC And 
+  RC Failed.&quot;,&quot;SHUTDOWN ERROR&quot;,</p>
+<p class=textpreword>                 MB_OK | MB_ICONINFORMATION);</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>    if (!wglDeleteContext(hRC))     
+  // Действительно ли мы можем удалить RC?</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      MessageBox(NULL,&quot;Release Rendering 
+  Context Failed.&quot;,&quot;SHUTDOWN ERROR&quot;,</p>
+<p class=textpreword>                 MB_OK | MB_ICONINFORMATION);</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>    hRC=NULL;                  // Установить 
+  RC в NULL</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  if (hDC &amp;&amp; 
+  !ReleaseDC(hWnd,hDC))  
+  // Действительно ли мы можем удалить DC</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    MessageBox(NULL,&quot;Release Device Context 
+  Failed.&quot;,&quot;SHUTDOWN ERROR&quot;,</p>
+<p class=textpreword>               MB_OK | MB_ICONINFORMATION);</p>
+<p class=textpreword>    hDC=NULL;                  // Установить 
+  DC в NULL</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  if (hWnd &amp;&amp; !DestroyWindow(hWnd)) // Действительно ли мы можем удалить окно?</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    MessageBox(NULL,&quot;Could Not Release 
+  hWnd.&quot;,&quot;SHUTDOWN ERROR&quot;,</p>
+<p class=textpreword>               MB_OK | MB_ICONINFORMATION);</p>
+<p class=textpreword>    hWnd=NULL;                 // Set hWnd To 
+  NULL</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Действительно ли мы можем отменить регистрацию класса</p>
+<p class=textpreword>  if (!UnregisterClass(&quot;OpenGL&quot;,hInstance))</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    MessageBox(NULL,&quot;Could Not Unregister 
+  Class.&quot;,&quot;SHUTDOWN ERROR&quot;,</p>
+<p class=textpreword>               MB_OK | MB_ICONINFORMATION);</p>
+<p class=textpreword>    hInstance=NULL;            // Установить 
+  hInstance в NULL</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>}</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textword>В функции <b>CreateGLWindow</b> только добавлен вызов <b>EnumDisplaySettings</b>, 
+  чтобы сохранить параметры настройки дисплея.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>BOOL CreateGLWindow(char* title, int width, 
+  int height, int bits, bool fullscreenflag)</p>
+<p class=textpreword>{</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  . . . Код вырезан, чтобы уменьшить размер урока . . .</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  wc.lpszClassName  = &quot;OpenGL&quot;; // 
+  Имя класса</p>
+<p class=textpreword>  </p>
+<p class=textpreword>  // Сохранить текущие настройки дисплея (НОВОЕ)</p>
+<p class=textpreword>  EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, 
+  &amp;DMsaved);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  if (fullscreen)           
+  // Попробовать перейти в полноэкранный режим?</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>  . . . Код вырезан, чтобы уменьшить размер урока . . .</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  return TRUE;              // Успех</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Здесь добавлен код для вращения фрагмента, уменьшения/улучшения 
+  разрешения, и переключения режима контура фрагмента.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>int WINAPI WinMain( HINSTANCE  hInstance,     // Экземпляр</p>
+<p class=textpreword>                    HINSTANCE  hPrevInstance, 
+  // Предыдущий экземпляр</p>
+<p class=textpreword>                    LPSTR      lpCmdLine,     
+  // Параметры командной строки</p>
+<p class=textpreword>                    int        nCmdShow)      
+  // Состояние отображения окна</p>
+<p class=textpreword>{</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword> . . . Код вырезан, чтобы уменьшить 
+  размер урока . . .</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>        SwapBuffers(hDC);      // // Переключаем 
+  буферы (Двойная буферизация)</p>
+<p class=textpreword>      }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>      if (keys[VK_LEFT])  
+  rotz -= 0.8f;    // Вращение 
+  влево ( НОВОЕ )</p>
+<p class=textpreword>      if (keys[VK_RIGHT]) 
+  rotz += 0.8f;    // Вращение вправо</p>
+<p class=textpreword>      if (keys[VK_UP]) 
+  {        // Увеличить разрешение</p>
+<p class=textpreword>        divs++;</p>
+<p class=textpreword>        mybezier.dlBPatch = genBezier(mybezier, 
+  divs);  // Обновить фрагмент</p>
+<p class=textpreword>        keys[VK_UP] = FALSE;</p>
+<p class=textpreword>      }</p>
+<p class=textpreword>      if (keys[VK_DOWN] &amp;&amp; divs &gt; 
+  1) {    // Уменьшить разрешения</p>
+<p class=textpreword>        divs--;</p>
+<p class=textpreword>        mybezier.dlBPatch = genBezier(mybezier, 
+  divs);  // Обновить фрагмент</p>
+<p class=textpreword>        keys[VK_DOWN] = FALSE;</p>
+<p class=textpreword>      }</p>
+<p class=textpreword>      if (keys[VK_SPACE]) {        // ПРОБЕЛ 
+  переключает showCPoints</p>
+<p class=textpreword>        showCPoints = !showCPoints;</p>
+<p class=textpreword>        keys[VK_SPACE] = FALSE;</p>
+<p class=textpreword>      }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>      if (keys[VK_F1])        // Если 
+  F1 нажата?</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  . . . Код вырезан, чтобы уменьшить размер урока . . .</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>   return (msg.wParam);            
+  // Выходим из программы</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Надеюсь, что этот урок осветил эту тему, и теперь вы полюбили 
+  кривые Безье, так же как и я. Если Вам понравился этот урок, я напишу еще урок 
+  о NURBS кривых. Пожалуйста, свяжитесь со мной по электронной 
+  почте и сообщите, что Вы думаете о моем уроке.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword><u>Об авторе</u>: Дэвиду Никделу 18 лет и он учится в Bartow Senior High School. На данный момент он изучает кривые поверхности в 3D 
+  графике и игру на OpenGL под названием Blazing Sands. Его хобби – это программирование 
+  и футбол. Если все будет удачно, то в следующем году он поступит в Georgia Tech.</p>
+
+<p class="textnoalign" align="right">
+<font color="#0000A0"><b> © David Nikdel</b>
+<u>( </u><u><a
+href="mailto:ogapo@ithink.net"><b>ogapo@ithink.net</b></a></u><u> )</u>
+</font>
+<br>
+<font color="#0000A0"><b> © Jeff Molofee (NeHe)</b></font>
+</p>  
+
+</div>
+<div id="end">
+
+          <p><a href="http://pmg.org.ru/"
+			onmouseover=" return event_over(this,'Программирование магических игр')  "
+			onmouseout=" return event_out(this) "><font class="link"><b>PMG</b></font></a> 
+            <font class="comment">&nbsp;11 сентября 2003&nbsp;(c)&nbsp;</font> 
+<a href="mailto:anis@pmg.org.ru"
+onmouseover=" return event_over(this,'Почта переводчику')  "
+onmouseout=" return event_out(this) ">
+<font class="link"><b>Сергей Анисимов</b></font></a>
+          </p>
+</div>
+</center>
+
+<script language="JavaScript">
+<!--
+form_print();
+//-->
+</script>
+
+</body>
+</html>

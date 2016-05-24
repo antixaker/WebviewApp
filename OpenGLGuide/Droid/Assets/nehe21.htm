@@ -1,0 +1,2348 @@
+<!doctype html public "-//w3c//dtd html 3.2 final//ru">
+<html>
+
+<head>
+<meta http-equiv="Content-Type"
+content="text/html; charset=windows-1251">
+<meta name="description"
+content="Переводы по OpenGL, трехмерная графика, игры, мультимедия
+Translations Russian OpenGL
+">
+<meta name="keyword"
+content="Программирование,игры,3D,трехмерная графика,OpenGL,NeHe">
+<meta name="keyword"
+content="programming,C,C++,game,graphics">
+<title>Урок 21. Линии, сглаживание, синхронизация, ортографическая проекция и звуки.</title>
+<link rel="stylesheet" href="pmg.css" type="text/css">
+</head>
+
+<body bgcolor="#b2d3e1" link="#800080" vlink="#800080">
+<script src='nehe.js' language="javascript">
+<!--
+//-->
+</script>
+
+<center>
+<div id="top">
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+        <td width="20%" align="center" valign="center">
+        <img src="nehelogo.jpg" align="left" hspace="0" width="125" height="50" alt="NeHe Tutorials">
+        </td>
+        <td width="60%" align="center">
+	<a href="index.html"
+	onmouseover=" return event_over(this,'NeHe Ru.')  "
+        onmouseout=" return event_out(this) ">
+        <font class="linksbig">
+        Народный учебник по OpenGL</font></a><br>
+        </td>
+        <td width="20%" align="center" valign="center">
+        <img src="nehe21.jpg" align="right" hspace="0" width="80" height="60" alt="Урок 21. OpenGL">
+        </td>
+    </tr>
+</table>
+</div>
+
+<div id="head">
+<p class="head1">
+Урок 21. Линии, сглаживание, синхронизация, ортографическая проекция и звуки.</p>
+</div>
+<div id="main" bgcolor="#ADADFF">
+<p class="textnoalign" align="left">
+
+<a href="http://nehe.gamedev.net/data/lessons/lesson.asp?lesson=21" target="_blank"
+onmouseover=" return event_over(this,this)  "
+onmouseout=" return event_out(this) ">
+<font class="link"><b>Lines, Antialiasing, Timing, Ortho View And Simple Sounds</b></font></a>
+<br>
+</p><p class=textword>&nbsp;  </p>
+
+<p class=textword>Добро пожаловать на 21-ый урок по OpenGL! Темы, затронутые в этом уроке довольно 
+  не простые. Я знаю, что многие из Вас уже устали от изучения основ:  3D объекты, мультитекстурирование и другие базовые темы. Мне 
+  жаль сообщить тем, кто устал, что я хочу сохранить постепенный темп обучения. 
+  Потому что, однажды сделав слишком большой шаг вперед, можно будет потерять 
+  интерес части читателей. Поэтому я предпочел бы продолжать, двигаясь вперед 
+  не спеша.</p>
+<p class=textword><br>
+  И все же, если я потерял кое-кого из Вас :), то я хочу рассказать Вам немного 
+  об этом уроке. До сих пор во всех моих уроках использовались многоугольники, 
+  четырехугольники и треугольники. Поэтому я решил, что будет интересно создать 
+  урок о линиях. После нескольких часов создания урока о линиях, я решил не продолжать 
+  его. Урок вышел отличным, но он был СКУЧНЫМ! Линии, конечно, это замечательно, 
+  но надо сделать что-то невероятное, чтобы линии стали интересными. Тогда я просмотрел 
+  ваши письма на форуме, и запомнил несколько ваших просьб. Из них было несколько 
+  вопросов, которые подошли больше чем другие. Итак... Я решил написать мультиурок 
+  :).</p>
+<p class=textword><br>
+  В этом уроке Вы научитесь: выводить линии, делать сглаживание, оперировать ортографической 
+  проекцией, осуществлять синхронизацию времени, выводить простейшие звуковые 
+  эффекты, и реализовывать простую игровую логику. Буду надеяться, что в этом 
+  уроке есть все, чтобы сделать каждого счастливым :). Я потратил 2 дня, чтобы 
+  создать программу урока, и почти 2 недели, чтобы написать текст урока (и потребовалось 
+  3 месяца, чтобы перевести это урок). Я надеюсь, что Вы будете наслаждаться моим 
+  трудом!</p>
+<p class=textword><br>
+  По окончанию этого урока у Вас будет простая готовая игра типа 'amidar'. Ваша миссия состоит в том, 
+  чтобы закрасить сетку и не попасться при этом в “лапы” плохими парнями. Игра 
+  имеет уровни, стадии, жизни, звук, и секретный предмет, чтобы помочь Вам переходить 
+  с уровня на уровень, когда ситуация становится критичной. Хотя эта игра прекрасно 
+  работает на Pentium 166 с Voodoo 2, более быстрый процессор рекомендуется, 
+  если Вы хотите иметь более плавную анимацию.</p>
+<p class=textword><br>
+  Я использовал код урока 1 в качестве отправной точки при написании этого урока. 
+  Мы начинаем с того, что включаем необходимые заголовочные файлы. Файл <b>stdio.h</b> 
+  используется для операций с файлами, и мы включаем <b>stdarg.h</b> для того 
+  чтобы мы могли вывести переменные на экран, типа счета и текущей стадии.</p>
+<p class=textword>&nbsp;</p>
+<p class=textpreword>// Этот код сделан Jeff 
+  Molofee в 2000</p>
+<p class=textpreword>// Если вы сочли этот код полезным, то дайте мне знать.</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>#include &lt;windows.h&gt; // заголовочный 
+  файл для Windows</p>
+<p class=textpreword>#include &lt;stdio.h&gt;   // заголовочный файл для стандартного 
+  ввода/вывода</p>
+<p class=textpreword>#include &lt;stdarg.h&gt;  // заголовочный файл для манипуляций 
+  с переменными аргументами</p>
+<p class=textpreword>#include &lt;gl\gl.h&gt;   // заголовочный файл для библиотеки 
+  OpenGL32</p>
+<p class=textpreword>#include &lt;gl\glu.h&gt;  // заголовочный файл для библиотеки 
+  GLu32</p>
+<p class=textpreword>#include &lt;gl\glaux.h&gt;// заголовочный файл для библиотеки 
+  GLaux</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>HDC       hDC=NULL;  // Частный контекст устройства GDI</p>
+<p class=textpreword>HGLRC     hRC=NULL;  // Контекст текущей визуализации</p>
+<p class=textpreword>HWND      hWnd=NULL; // Декриптор нашего окна</p>
+<p class=textpreword>HINSTANCE hInstance; // Копия нашего приложения</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Теперь мы задаем наши булевские переменные. Переменная <b>vline</b> отслеживает все 121 вертикальную линию, которые составляют 
+  нашу игровую сетку. 11 линий вдоль и 11 вверх и вниз. Переменная <b>hline</b> отслеживает все 121 горизонтальную 
+  линию, которые составляют игровую сетку. Мы используем переменную <b>ap</b> 
+  для отслеживания, действительно ли клавиша “A” нажата.</p>
+<p class=textword><br>
+  Значение переменной<b> </b><b>filled</b> равно ЛОЖЬ, 
+  пока сетка не закрашена и равно ИСТИНА, когда она закрашена. Назначение переменной 
+  <b>gameover</b> довольно очевидно. Если 
+  <b>gameover</b> равно ИСТИНА, то игра 
+  закончена, иначе Вы все еще играете. Переменная <b>anti</b> 
+  отслеживает сглаживание (antialiasing). Если <b>anti</b> 
+  равно ИСТИНА, сглаживание объектов ВКЛЮЧЕНО. Иначе оно выключено. Переменные 
+  <b>active</b> и <b>fullscreen</b> отслеживают, была ли программа свернута или нет, 
+  и запущена программа в полноэкранном режиме или оконном режиме.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>bool    vline[11][10];     
+  // Отслеживает вертикальные линии</p>
+<p class=textpreword>bool    hline[10][11];     
+  // Отслеживает горизонтальные линии</p>
+<p class=textpreword>bool    ap;                // Клавиша 'A' 
+  нажата?</p>
+<p class=textpreword>bool    filled;            
+  // Сетка закрашена?</p>
+<p class=textpreword>bool    gameover;          
+  // Игра окончена?</p>
+<p class=textpreword>bool    anti=TRUE;         // Сглаживание?</p>
+<p class=textpreword>bool    
+  keys[256];         // Массив для манипуляций с клавиатурой</p>
+<p class=textpreword>bool    
+  active=TRUE;       // Флаг активности окна, по умолчанию=TRUE</p>
+<p class=textpreword>bool    
+  fullscreen=TRUE;   // Флаг полноэкранного режима, по умолчанию=TRUE</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Теперь мы определяем наши целые переменные. Переменные <b>loop1</b> 
+  и <b>loop2</b> будут использоваться для разных целей, например: для проверки 
+  точек на нашей сетке, для проверки попадания противника в нас и для случайного 
+  размещения объектов на сетке. Вы увидите <b>loop1</b>/<b>loop2</b> в действии 
+  позже. Переменная-счетчик<b> </b><b>delay</b> используется, 
+  чтобы замедлить перемещение плохих парней. Если <b>delay</b> 
+  больше чем некоторое значение, враги двигаются, и <b>delay</b> 
+  сбрасывается в ноль.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Переменная <b>adjust</b> - особенная переменная! В нашей программе есть таймер, 
+  но он используется только для проверки, если ваш компьютер слишком быстр. Если 
+  это так, то <b>delay</b> создана, чтобы замедлить компьютер. 
+  На моей плате GeForce, программа выполняется безумно гладко, и очень быстро. После 
+  проверки этой программы на моем PIII/450 с Voodoo 3500TV, я заметил, что она 
+  выполняется чрезвычайно медленно. Проблема состоит в том, что мой код синхронизации, 
+  только замедляет игру. Но не ускоряет 
+  ее. Поэтому я ввел новую переменную, называемую <b>adjust</b> 
+  (коррекция). Переменная <b>adjust</b> может принимать 
+  любое значение от 0 до 5. Объекты в игре перемещаются с различными скоростями 
+  в зависимости от значения <b>adjust</b>. Маленькие значения 
+  задают более гладкое перемещение, чем выше значение, тем они быстрее двигаются 
+  (граница после значений выше, чем 3). Это был единственно действительно простой 
+  способ сделать игру выполняемой на медленных системах. На одну вещь обратите 
+  внимание, независимо от того, как быстро объекты перемещаются, быстродействие 
+  игры никогда не будет больше чем, я ее назначил. Так присваивание переменной 
+  <b>adjust</b> значения равного 3, безопасно для быстрых и медленных 
+  систем.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Переменной <b>lives</b> присвоено значение 5, поэтому Вы начинаете игру с 
+  5 жизнями. Переменная <b>level</b> - внутренняя переменная. 
+  В игре она используется, для того чтобы отслеживать уровень сложности. Это не 
+  тот уровень, который Вы увидите на экране. Переменной <b>level2</b> присваивается 
+  то же самое значение, как и <b>level</b>, но ее значение 
+  необратимо увеличивается в зависимости от вашего навыка. Если Вы прошли уровень 
+  3, переменная <b>level</b> замрет на значении 3. Переменная 
+  <b>level</b> - внутренняя переменная, характеризующая 
+  сложность игры. Переменная <b>stage</b> отслеживает текущую стадию игры.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>int    loop1;              
+  // Общая переменная 1</p>
+<p class=textpreword>int    loop2;              
+  // Общая переменная 2</p>
+<p class=textpreword>int    delay;              
+  // Задержка для Противника</p>
+<p class=textpreword>int    adjust=3;           
+  // Настройка скорости для медленных видеокарт</p>
+<p class=textpreword>int    lives=5;            
+  // Жизни для игрока</p>
+<p class=textpreword>int    level=1;            
+  // Внутренний уровень игры</p>
+<p class=textpreword>int    level2=level;       
+  // Уровень игры для отображения</p>
+<p class=textpreword>int    stage=1;            // Стадия игры</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Теперь мы создадим структуру для слежения за объектами в нашей 
+  игре. Мы имеем точное положение по X (<b>fx</b>) 
+  и точное положение по Y (<b>fy</b>). Эти переменные будут передвигать 
+  игрока и противников по сетки сразу на несколько пикселей. Они служат для создания 
+  плавного перемещения объекта.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Затем мы имеем <b>x</b> и <b>y</b>. Эти переменные будут отслеживать, 
+  в каком узле сетки находится наш игрок. Есть 11 точек слева направо и 11 точек 
+  сверху вниз. Поэтому переменные <b>x</b> и <b>y</b> могут принимать любое значение 
+  от 0 до 10. Именно поэтому мы нуждаемся в точных значениях. Если бы мы стали 
+  перемещать игрока с одного из 11 узлов по горизонтали, или с одного из 11 узлов 
+  по вертикали на другой соседний узел, то наш игрок быстро бы прыгал по экрану, 
+  а не плавно двигался между ними.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Последняя переменная <b>spin</b> будет использоваться для вращения объектов относительно 
+  оси Z.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>struct    object           
+  // Структура для игрока</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  int  fx, 
+  fy;             // Точная позиция для передвижения</p>
+<p class=textpreword>  int  x, 
+  y;               // Текущая позиция игрока</p>
+<p class=textpreword>  float  spin;             
+  // Направление вращения</p>
+<p class=textpreword>};</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Теперь, когда мы создали структуру, которая может использоваться 
+  для нашего игрока, противников и даже специальных предметов. Мы можем создавать 
+  новые структуры, которые используют свойства структуры, которую мы только, что 
+  определили.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>В первой строке ниже создается структура для нашего игрока. 
+  По существу мы даем нашему игроку структуру со значениями <b>fx</b>, 
+  <b>fy</b>, <b>x</b>, <b>y</b> и <b>spin</b>. 
+  Добавив эту строку, мы сможем обратиться к позиции игрока <b>x </b>при помощи 
+  записи <b>player</b><b>.</b><b>x</b>. Мы можем изменять вращение 
+  игрока, добавляя число к <b>player</b><b>.</b><b>spin</b>.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Вторая строка немного отличается. Поскольку мы можем иметь до 
+  9 противников на экране одновременно, мы должны создать вышеупомянутые переменные 
+  для каждого противника. Мы делаем для этого массив из 9 противников. Позиция 
+  <b>x</b> первого противника будет <b>enemy[0].</b><b>x</b>. Позиция второго противника будет <b>enemy[1].</b><b>x</b>, 
+  и т.д.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Последняя строка создает структуру для нашего специального элемента. 
+  Специальный элемент - песочные часы, которые будут появляться на экране время 
+  от времени. Мы должны следить за значениями <b>x</b> и <b>y</b> песочных часов, 
+  но так как песочные часы не двигаются, мы не должны следить за точными позициями. 
+  Вместо этого мы будем использовать точные переменные (<b>fx</b> 
+  и <b>fy</b>) для других целей.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>struct  object  
+  player;                // Информация о игроке</p>
+<p class=textpreword>struct  object  
+  enemy[9];              // Информация о противнике</p>
+<p class=textpreword>struct  object  
+  hourglass;             // Информация о песочных часах</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Теперь мы создаем структуру таймера. Мы создаем структуру так, 
+  чтобы было проще следить за переменными таймера и так, чтобы было проще сообщить, 
+  что переменная является переменной таймера.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Вначале мы создаем целое число размером 64 бита, которое называется 
+  <b>frequency</b> (частота). В эту переменную будет помещено 
+  значение частоты таймера. Когда я вначале написал эту программу, я забыл включить 
+  эту переменную. Я не понимал то, что частота на одной машине не может соответствовать 
+  частоте на другой. Моя большая ошибка! Код выполнился прекрасно на 3 системах 
+  в моем доме, но когда я проверил его на машине моих друзей, игра работала ОЧЕНЬ 
+  быстро. Частота – говорит о том, как быстро часы обновляются. Хорошая вещь для 
+  слежки :).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Переменная <b>resolution</b> (точность таймера) отслеживает число вызовов 
+  таймера, которые требуются прежде, чем мы получим 1 миллисекунду времени.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>В переменных <b>mm_timer_start</b> и <b>mm_timer_elapsed</b> содержатся значения, 
+  с которого таймер был запущен, и время, которое прошло с запуска таймера. Эти 
+  две переменные используются только, если компьютер не имеет высокоточного таймера. 
+  В этом случае мы используем менее точный мультимедийный таймер, который все 
+  же не так плох, в случае не критичной ко времени игры, такой как наша.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Переменная <b>performance_timer</b> может быть равной или ИСТИНА 
+  или ЛОЖЬ. Если программа находит высокоточный таймер, переменная <b>performance_timer</b> 
+  будет равна ИСТИНА, и синхронизация использует высокоточный таймер (намного 
+  более точный, чем мультимедийный таймер). Если высокоточный таймер не найден, 
+  переменная <b>performance_timer</b> будет равна ЛОЖЬ и мультимедийный таймер 
+  используется для синхронизации.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Последние 2 переменные - целые переменные по 64 бита, которые 
+  содержат время запуска высокоточного таймера и время, которое прошло с момента 
+  запуска высокоточного таймера.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Название этой структуры - &quot; <b>timer</b>&quot;, 
+  как Вы можете увидеть внизу структуры. Если мы хотим знать частоту таймера, 
+  мы можем теперь проверить <b>timer</b><b>.</b><b>frequency</b>. Отлично!</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>struct                    // Создание 
+  структуры для информации о таймере</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  __int64       frequency;                 // 
+  Частота таймера</p>
+<p class=textpreword>  float         resolution;                // 
+  Точность таймера</p>
+<p class=textpreword>  unsigned long mm_timer_start;            // 
+  Стартовое значение мультимедийного таймера</p>
+<p class=textpreword>  unsigned long mm_timer_elapsed;          // 
+  Прошедшее время мультимедийного таймера</p>
+<p class=textpreword>  bool          performance_timer;         // Использовать высокоточный таймер?</p>
+<p class=textpreword>  __int64       performance_timer_start;   // Стартовое значение высокоточного таймера</p>
+<p class=textpreword>  __int64       performance_timer_elapsed; // Прошедшее время высокоточного таймера</p>
+<p class=textpreword>} timer;                  // Структура 
+  по имени таймер</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Следующая строка кода - наша таблица скорости. Объекты в игре 
+  будут двигаться с разной скоростью в зависимости от значения <b>adjust</b> 
+  (коррекции). Если <b>adjust</b> - 0, объекты будут перемещаться на один пиксель одновременно. 
+  Если значение <b>adjust</b> - 5, объекты переместят 
+  на 20 пикселей одновременно. Таким образом, увеличивая значение <b>adjust</b>, 
+  скорость объектов увеличится, делая выполнение игры более быстрой на медленных 
+  компьютерах. Однако при больших значениях <b>adjust</b> игра будет выглядеть более дерганой.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Массив <b>steps[]</b> - только таблица для поиска. Если <b>adjust 
+  </b>равно 3, мы ищем число в позиции 3 массива <b>steps[]</b>. В позиции 0 хранится значение 1, в позиции 1 хранится 
+  значение 2, в позиции 2 хранится значение 4, и в позиции 3 хранится значение 
+  5. Если <b>adjust</b> равно 3, наши объекты перемещались 
+  бы на 5 пикселей одновременно. Понятен смысл?</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>int    steps[6]={ 
+  1, 2, 4, 5, 10, 20 }; // Значения шагов для работы</p>
+<p class=textpreword>                                        // на медленных видеокартах</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Затем мы создаем память для двух текстур. Мы загрузим фон сцены, 
+  и картинку для шрифта. Затем мы определяем переменную <b>base</b>, 
+  для списка отображения шрифта точно так же как, мы делали в других уроках со 
+  шрифтами. Наконец мы объявляем <b>WndProc()</b>.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>GLuint    texture[2];          
+  // Память для текстур</p>
+<p class=textpreword>GLuint    base;                
+  // База для списка отображения шрифта</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>LRESULT  CALLBACK 
+  WndProc(HWND, UINT, 
+  WPARAM, LPARAM); // Объявление 
+  для WndProc</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Теперь интересный материал :). В следующем разделе кода мы инициализируем 
+  наш таймер. Вначале  проверим, доступен ли высокоточный таймер (очень точный 
+  таймер). Если нет высокоточного таймера, будем использовать мультимедийный таймер. 
+  Этот код должен быть переносим, как следует из того, что я говорил.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Вначале сбросим все переменные структуры таймера в ноль. Это 
+  присвоит всем переменным в нашей структуре таймера значение ноль. После этого, 
+  мы проверим наличие высокоточного таймера. Здесь знак '!' означает НЕТ. Если 
+  таймер есть, то частота будет сохранена в <b>timer</b><b>.</b><b>frequency</b>.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Если нет высокоточного таймера, код между скобками будет выполнен. 
+  В первой строке переменной <b>performance_timer</b> присваивается ЛОЖЬ. Это говорит нашей 
+  программе, что нет никакого высокоточного счетчика. Во второй строке мы получаем 
+  стартовое значение для мультимедийного таймера от <b>timeGetTime()</b>. Мы задаем 
+  <b>timer.resolution</b> в 
+  0.001f, и <b>timer.frequency</b> 
+  к 1000. Поскольку еще не прошло время, мы присваиваем 
+  прошедшему времени время запуска.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>void TimerInit(void) // Инициализация нашего таймера (Начали)</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  memset(&amp;timer, 
+  0, sizeof(timer)); // Очистка 
+  нашей структуры</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // Проверим доступность высокоточного таймера</p>
+<p class=textpreword>  // Если доступен, то частота таймера будет задана</p>
+<p class=textpreword>  if (!QueryPerformanceFrequency((LARGE_INTEGER 
+  *) &amp;timer.frequency))</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    // Нет высокоточного таймера</p>
+<p class=textpreword>    timer.performance_timer  
+  = FALSE;       // Установим флаг высокоточного таймера 
+  в ЛОЖЬ</p>
+<p class=textpreword>    timer.mm_timer_start  = timeGetTime();  // Текущее время 
+  из timeGetTime()</p>
+<p class=textpreword>    timer.resolution  = 1.0f/1000.0f;       
+  // Точность равна 0.001f</p>
+<p class=textpreword>    timer.frequency    = 1000;              
+  // Частота равна 1000</p>
+<p class=textpreword>    timer.mm_timer_elapsed  = timer.mm_timer_start; 
+  // Прошедшее время равно текущему</p>
+<p class=textpreword>  }</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Если есть высокоточный таймер, следующий код будет выполнен 
+  вместо этого. В первой строке захватывается значение запуска высокоточного таймера, 
+  и помещается в <b>performance_timer_start</b>. Затем мы присваиваем переменной 
+  <b>performance_timer</b> значение ИСТИНА так, чтобы наша программа 
+  знала, что есть доступный высокоточный таймер. После этого, мы, вычисляем точность 
+  таймера, используя частоту, которую мы получили, когда проверяли наличие высокоточного 
+  таймера в коде выше. Мы делим единицу на эту частоту, чтобы получить точность. 
+  Последнее что мы сделаем, будет присвоение прошедшему времени значения стартового 
+  времени.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Заметьте вместо совместного использования переменных для высокоточного 
+  и мультимедийного таймера и переменных времени, я решил сделать разные переменные. В любо случае это будет работать 
+  прекрасно.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>  else</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    // Высокоточный таймер доступен, используем его вместо 
+  мультимедийного таймера</p>
+<p class=textpreword>    // Взять текущее время и сохранить его в performance_timer_start</p>
+<p class=textpreword>    QueryPerformanceCounter((LARGE_INTEGER *) &amp;timer.performance_timer_start);</p>
+<p class=textpreword>    timer.performance_timer    = TRUE;        
+  // Установить флаг наличия таймера в TRUE</p>
+<p class=textpreword>    // Вычислить точность таймера, используя частоту</p>
+<p class=textpreword>    timer.resolution    = (float) (((double)1.0f)/((double)timer.frequency));</p>
+<p class=textpreword>    // Присвоить прошедшему времени текущее 
+  время</p>
+<p class=textpreword>    timer.performance_timer_elapsed  = timer.performance_timer_start;</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Раздел кода выше инициализирует таймер. Код ниже читает таймер 
+  и возвращает время, которое прошло в миллисекундах.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Вначале определим переменную в 64 бита под именем <b>time</b>. 
+  Мы будем использовать эту переменную, чтобы получить текущее время. Следующая 
+  строка проверяет, доступен ли высокоточный таймер. Если <b>performance_timer</b> 
+  равен ИСТИНА, то код после условия выполнится.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Первая строка кода внутри скобок будет захватывать значение 
+  таймера, и сохранять его в переменной, которую мы создали и назвали <b>time</b>. 
+  Вторая строка берет время, которое мы только что захватили (<b>time</b>) 
+  и вычитает из него время запуска, которое мы получили, когда запустили таймер. 
+  Поэтому наш таймер будет считать, начиная с нуля. Затем мы умножаем результаты 
+  на точность, чтобы выяснить, сколько секунд прошло. В конце мы умножает результат 
+  на 1000, чтобы выяснить, сколько прошло миллисекунд. После того, как вычисление 
+  сделано, результат будет возвращен обратно в тот раздел кода, который вызывал 
+  эту процедуру. Результат будет в формате с плавающей запятой для повышения точности.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Если мы не используем высокоточный таймер, код после инструкции 
+  <b>else</b> будет выполнен. Там в значительной степени 
+  делается тоже самое. Мы захватываем текущее время с помощью <b>timeGetTime()</b> и вычитаем из него наше значение 
+  при запуске. Мы умножаем на точность и затем на 1000, чтобы преобразовать результат 
+  из секунд в миллисекунды.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>float TimerGetTime()           // Взять время 
+  в миллисекундах</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  __int64 time;                // time содержит 
+  64 бита</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  if (timer.performance_timer) // Есть высокоточный 
+  таймер?</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    // Захват текущего значения высокоточного таймера</p>
+<p class=textpreword>    QueryPerformanceCounter((LARGE_INTEGER *) &amp;time);</p>
+<p class=textpreword>    // Вернем текущее время минус начальное время, умноженное 
+  на точность и 1000 (для миллисекунд)</p>
+<p class=textpreword>    return ( (float) ( time - timer.performance_timer_start) * timer.resolution)*1000.0f;</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>  else</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    // Вернем текущее время минус начальное время, умноженное 
+  на точность и 1000 (для миллисекунд)</p>
+<p class=textpreword>    return( (float) ( timeGetTime() - timer.mm_timer_start) * timer.resolution)*1000.0f;</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>В следующей секции кода производится сброс структуры <b>player</b> 
+  с установкой позиции игрока в левом верхнем углу экрана, и задается противникам 
+  случайные начальные точки.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Левый верхний угол экрана – это 0 по оси X и 0 по оси Y. Поэтому, 
+  устанавливая <b>player</b><b>.</b><b>x</b> в 0, мы помещаем игрока на левый край экрана. Устанавливая <b>player</b><b>.</b><b>y</b> в 0, мы помещаем нашего игрока на верхний край экрана.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Точные позиции должны быть равны текущей позиции игрока, иначе 
+  наш игрок начал бы двигаться из случайной позиции, а не с левого верхнего угла 
+  экрана.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>void ResetObjects(void)      // Сброс Игрока и Противников</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  player.x=0;                
+  // Сброс позиции игрока X на левый край экрана</p>
+<p class=textpreword>  player.y=0;                
+  // Сброс позиции игрока Y на верх экрана</p>
+<p class=textpreword>  player.fx=0;        
+         // Установим точную позиции X</p>
+<p class=textpreword>  player.fy=0;               
+  // Установим точную позиции Y</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Далее мы даем противникам случайное начальное размещение. Количество 
+  противников, выведенное на экран, будет равно текущему значению уровня, умноженному 
+  на текущую стадию. Помните, что максимальное значение уровня может равняться 
+  трем, и максимальное число стадий в уровне тоже трем. Так что мы можем иметь 
+  максимум 9 противников.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Чтобы быть уверенными, что мы даем всем видимым противникам 
+  новую позицию, мы организуем цикл по всем видимым противникам (стадия, умноженная 
+  на уровень). Мы устанавливаем для каждого противника позицию <b>x</b> 
+  равную 5 плюс случайное значение от 0 до 5 (максимальное случайное значение 
+  может быть всегда число, которое Вы зададите минус 1). Поэтому враги могут появляться 
+  на сетке, где-то от 5 до 10. Затем мы даем врагу случайное значение по оси Y 
+  от 0 до 10.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Мы не хотим, чтобы враг двигался из старой позиции к новой случайной 
+  позиции, поэтому мы должны быть уверены, что точные значения по <b>x</b> (<b>fx</b>) и <b>y</b> (<b>fy</b>) равны значениям по <b>x</b> 
+  и <b>y</b>, умноженные на ширину и высоту каждой ячейки на экране. Каждая ячейка 
+  имеет ширину 60 и высоту 40.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>  for (loop1=0; loop1&lt;(stage*level); 
+  loop1++) // Цикл по всем противникам</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    enemy[loop1].x=5+rand()%6;            
+      // Выбор случайной позиции X</p>
+<p class=textpreword>    enemy[loop1].y=rand()%11;                 
+  // Выбор случайной позиции Y</p>
+<p class=textpreword>    enemy[loop1].fx=enemy[loop1].x*60;        // Установка точной X </p>
+<p class=textpreword>    enemy[loop1].fy=enemy[loop1].y*40;        // Установка точной Y</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Код <b>AUX_</b><b>RGBImageRec</b> 
+  не изменился, поэтому я опускаю его. В <b>LoadGLTextures()</b> мы загрузим 
+  две наши текстуры. Сначала картинку шрифта (Font.bmp) и затем фоновое изображение (Image.bmp). Мы конвертируем оба изображения в текстуры, которые мы можем использовать 
+  в нашей игре. После того, как мы построили текстуры, мы очищаем память, удаляя 
+  растровую информацию. Здесь нет ничего нового. Если Вы читали другие уроки, 
+  Вы не должны иметь никаких проблем, в понимании кода.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>int LoadGLTextures()                       
+  // Загрузка растра и конвертирование его в текстуры</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  int Status=FALSE;                        // 
+  Индикатор статуса</p>
+<p class=textpreword>  AUX_RGBImageRec *TextureImage[2];        // 
+  Память для текстур</p>
+<p class=textpreword>  memset(TextureImage,0,sizeof(void *)*2); // 
+  Указатель в NULL</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  if   ((TextureImage[0]=LoadBMP(&quot;Data/Font.bmp&quot;)) 
+  &amp;&amp;  // Загрузка фонта</p>
+<p class=textpreword>     (TextureImage[1]=LoadBMP(&quot;Data/Image.bmp&quot;)))      
+  // Загрузка фона</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    Status=TRUE;                           
+  // Установка статуса в TRUE</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>    glGenTextures(2, &amp;texture[0]);         // Создание текстуры</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>    for (loop1=0; loop1&lt;2; loop1++)        // Цикл из 
+  2 текстур</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      glBindTexture(GL_TEXTURE_2D, texture[loop1]);</p>
+<p class=textpreword>      glTexImage2D(GL_TEXTURE_2D, 0, 3, TextureImage[loop1]-&gt;sizeX, 
+  TextureImage[loop1]-&gt;sizeY,</p>
+<p class=textpreword>        0, GL_RGB, GL_UNSIGNED_BYTE, TextureImage[loop1]-&gt;data);</p>
+<p class=textpreword>      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);</p>
+<p class=textpreword>      glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>    for (loop1=0; loop1&lt;2; loop1++)        
+  // Цикл из 2 текстур</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      if (TextureImage[loop1])             
+  // Если текстура существует</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        if (TextureImage[loop1]-&gt;data)     
+  // Если изображение текстуры существует</p>
+<p class=textpreword>        {</p>
+<p class=textpreword>          free(TextureImage[loop1]-&gt;data); 
+  // Освободить память текстуры</p>
+<p class=textpreword>        }</p>
+<p class=textpreword>        free(TextureImage[loop1]);         
+  // Освободить структуру изображения</p>
+<p class=textpreword>      }</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>  return Status;                           // Возврат статуса</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Код ниже создает список отображения шрифта. Я уже делал урок 
+  со шрифтом из текстуры. Весь код, делит изображение Font.bmp на 16 x 16 ячеек (256 символов). Каждая ячейка размером 16x16 станет 
+  символом. Поскольку я задал ось Y направленную вверх, поэтому, чтобы происходил 
+  сдвиг вниз, а не вверх, необходимо вычесть наши значения по оси Y из значения 
+  1.0f. Иначе символы будут инвертированны :). Если Вы не понимаете то, что происходит, 
+  возвратитесь, и читайте урок по шрифтам из текстур.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>GLvoid BuildFont(GLvoid)                     // Создаем список отображения нашего 
+  шрифта</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  base=glGenLists(256);  
+                      // Создаем списки</p>
+<p class=textpreword>  glBindTexture(GL_TEXTURE_2D, 
+  texture[0]);  // Выбираем текстуру шрифта</p>
+<p class=textpreword>  for (loop1=0; 
+  loop1&lt;256; loop1++)          
+  // Цикл по всем 256 спискам</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    float cx=float(loop1%16)/16.0f;          
+  // X координата текущего символа</p>
+<p class=textpreword>    float cy=float(loop1/16)/16.0f;          
+  // Y координата текущего символа</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>    glNewList(base+loop1,GL_COMPILE);              // Начинаем делать список</p>
+<p class=textpreword>      glBegin(GL_QUADS);         
+  // Используем четырехугольник, для каждого символа</p>
+<p class=textpreword>        glTexCoord2f(cx,1.0f-cy-0.0625f);          
+  // Точка в текстуре (Левая нижняя)</p>
+<p class=textpreword>        glVertex2d(0,16);        // Координаты 
+  вершины (Левая нижняя)</p>
+<p class=textpreword>        glTexCoord2f(cx+0.0625f,1.0f-cy-0.0625f);  
+  // Точка на текстуре (Правая нижняя)</p>
+<p class=textpreword>        glVertex2i(16,16);       // Координаты 
+  вершины (Правая нижняя)</p>
+<p class=textpreword>        glTexCoord2f(cx+0.0625f,1.0f-cy);          // Точка текстуры (Верхняя 
+  правая)</p>
+<p class=textpreword>        glVertex2i(16,0);        // Координаты 
+  вершины (Верхняя правая)</p>
+<p class=textpreword>        glTexCoord2f(cx,1.0f-cy);                  // Точка текстуры (Верхняя левая)</p>
+<p class=textpreword>        glVertex2i(0,0);         // Координаты 
+  вершины (Верхняя левая)</p>
+<p class=textpreword>      glEnd();                   // Конец построения четырехугольника 
+  (Символа)</p>
+<p class=textpreword>      glTranslated(15,0,0);      // Двигаемся вправо от символа</p>
+<p class=textpreword>    glEndList();                 
+  // Заканчиваем создавать список отображения</p>
+<p class=textpreword>  }                              // Цикл для создания всех 
+  256 символов</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Это - хорошая идея уничтожить список отображения шрифта, когда 
+  Вы поработали с ним, поэтому я добавил следующий раздел кода. Снова, ничего 
+  нового.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>GLvoid KillFont(GLvoid)               // Удаляем шрифт из памяти</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  glDeleteLists(base,256);            
+  // Удаляем все 256 списков отображения</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Код <b>glPrint()</b> изменился не значительно. Единственное 
+  отличие от урока об текстурных шрифтах то, что я добавил возможность печатать 
+  значение переменных. Единственная причина, по которой я привожу этот раздел 
+  кода это та, что Вы можете при этом увидеть изменения. Вызов функции печати 
+  позиционирует текст в позиции <b>x</b> и <b>y</b>, которые 
+  Вы задаете. Вы можете выбрать один из 2 наборов символов, и значение переменных 
+  будет выведено на экран. Это позволит нам отображать текущий уровень и стадию.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Заметьте, что я разрешаю наложение текстуры, сбрасываю матрицу 
+  вид, и затем уставливаю в необходимую x / y позицию. Также заметьте, что, если 
+  выбран набор символов 0, шрифт укрупнен по ширине в полтора раз, и в два раза 
+  по высоте от первоначального размера. Я сделал это для того чтобы написать заголовок 
+  игры большими буквами. После того, как текст выведен, я отключаю наложение текстуры.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>GLvoid glPrint(GLint x, GLint y, int set, 
+  const char *fmt, ...) // Печать</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  char    text[256];          
+  // Место для строки</p>
+<p class=textpreword>  va_list    
+  ap;              // Ссылка на список аргументов</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  if (fmt 
+  == NULL)            // Если нет текста</p>
+<p class=textpreword>    return;                   // то выходим</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  va_start(ap, 
+  fmt);          // Разбор строки из значений</p>
+<p class=textpreword>      vsprintf(text, fmt, 
+  ap);// и конвертирование символов в фактические числа</p>
+<p class=textpreword>  va_end(ap);                 
+  // Результат в текст</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  if (set&gt;1)                  
+  // Если выбран не верный набор символов?</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    set=1;                    // Если так, то выбрать набор 1 (Курсив)</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>  glEnable(GL_TEXTURE_2D);    
+  // Разрешить наложение текстуры</p>
+<p class=textpreword>  glLoadIdentity();           // 
+  Сбросить матрицу просмотра вида</p>
+<p class=textpreword>  glTranslated(x,y,0);        
+  // Позиция текста (0,0 – Низ Лево)</p>
+<p class=textpreword>  glListBase(base-32+(128*set)); 
+  // Выбор набора символов (0 или 1)</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  if (set==0)                 
+  // Если 0 используем укрупненный фонт</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    glScalef(1.5f,2.0f,1.0f); 
+  // Ширина и Высота укрупненного шрифта</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  glCallLists(strlen(text),GL_UNSIGNED_BYTE, 
+  text); // Вывод текста на экран</p>
+<p class=textpreword>  glDisable(GL_TEXTURE_2D);   
+  // Запрет наложения текстуры</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Код изменения размеров НОВЫЙ :). Вместо использования перспективной 
+  проекции я использую ортографическую проекцию для этого урока. Это означает, 
+  что объекты не уменьшаются, когда они удаляются от наблюдателя. Ось Z не используется 
+  в этом уроке.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Вначале зададим область просмотра. Мы делаем это таким же образом, 
+  которым бы мы делали перспективную проекцию. Мы задаем область просмотра, которая 
+  равна размеру нашего окна.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Затем мы выбираем матрицу проецирования и сбросим ее.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Сразу же после того, как мы сбрасываем матрицу проецирования, 
+  мы устанавливаем ортогональное проецирование. Я объясню эту команду подробнее.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Первый параметр (0.0f) - значение, которое мы хотим иметь на 
+  крайней левой стороне экрана. Вы хотели бы узнать, как использовать реальные 
+  значения пикселей, а не трехмерные координаты. Поэтому вместо использования 
+  отрицательного числа для левого края, я задал значение 0. Второй параметр - 
+  значение для крайней правой стороны экрана. Если наше окно - 640x480, значение 
+  по ширине будет 640. Поэтому крайняя правая сторона экрана равна 640. Поэтому 
+  наш экран по оси X изменяется от 0 до 640.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Третий параметр (высота) обычно был равен отрицательному числу, 
+  задающему нижний край экрана по оси Y. Но так как мы 
+  хотим использовать реальные значения пикселей, мы, не хотим иметь отрицательное 
+  число. Вместо этого мы сделаем низ экрана, равным высоте нашего окна. Если наше 
+  окно - 640x480, высота будет равна 480. Поэтому низ 
+  нашего экрана будет 480. Четвертый параметр обычно был равен положительному 
+  числу, задающему верхний край нашего экрана. Мы хотим, чтобы верхний край экрана 
+  был равным 0 (добрые старые координаты экрана), поэтому мы задаем четвертый 
+  параметр равным 0. При этом мы получим изменение от 0 до 480 по оси Y.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Последние два параметра - для оси Z. Мы не заботимся об оси 
+  Z, поэтому мы зададим диапазон от -1.0f до 1.0f. Нам будет достаточно того, 
+  что мы можем увидеть в 0.0f по оси Z.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>После того, как мы задали ортографическую проекцию, мы выбираем 
+  матрицу просмотра вида (информация об объектах... расположение, и т.д) и сбрасываем 
+  ее.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>GLvoid ReSizeGLScene(GLsizei width, GLsizei height) // Масштабирование и инициализация окна GL</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  if (height==0)                 
+  // Предотвращение деления на ноль</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    height=1;                    // Сделать высоту равной 1</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  glViewport(0,0,width,height);  
+  // Сброс текущей области просмотра</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  glMatrixMode(GL_PROJECTION);   
+  // Выбор матрицы проектирования</p>
+<p class=textpreword>  glLoadIdentity();              
+  // Сброс матрицы проектирования</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  glOrtho(0.0f,width,height,0.0f,-1.0f,1.0f); 
+  // Создание ортог. вида 640x480 (0,0 – верх лево)</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  glMatrixMode(GL_MODELVIEW);    
+  // Выбор матрицы просмотра вида</p>
+<p class=textpreword>  glLoadIdentity();              
+  // Сброс матрицы просмотра вида</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Код инициализации содержит 
+  несколько новых команд. Вначале загружаем наши текстуры. Если они не загрузились, 
+  программа прекратит работу с сообщением об ошибке. После того, как мы создали 
+  текстуры, мы создаем наш шрифт. Я не делаю проверок на ошибки, если Вам надо 
+  вставьте его самостоятельно.<br>
+  <br>
+</p>
+<p class=textword>После того, как шрифт создан, мы задаем настройки. Мы разрешаем 
+  плавное сглаживание, задаем черный цвет очистки экрана и значение 1.0f для очистки 
+  буфера глубины. После этого, следует новая строка кода.<br>
+  <br>
+</p>
+<p class=textword>Функция <b>glHint()</b> сообщает OpenGL о настройках вывода. В этом случае мы сообщаем 
+  OpenGL, что мы хотим, чтобы 
+  сглаживание линии было наилучшим (самым хорошим), насколько это возможно под 
+  OpenGL. Эта команда разрешает 
+  сглаживание (anti-aliasing).<br>
+  <br>
+</p>
+<p class=textword>В конце мы разрешаем смешивание, и выбирает режим смешивания, 
+  который делает сглаживание линий возможными. 
+  Смешивание требуется, если Вы хотите, чтобы линии аккуратно смешались с фоном. 
+  Отключите смешивание, если Вы хотите увидеть, как все будет плохо смотреться без него.<br>
+  <br>
+</p>
+<p class=textword>Важно отметить, что иногда кажется, что сглаживание не работает. 
+  Объекты в этой игре небольшие, поэтому Вы можете и не заметить сглаживание вначале. 
+  Посмотрите по внимательнее. Заметьте, как зазубренные линии на противниках сглаживаются, 
+  когда сглаживание включено. Игрок и песочные часы также должны смотреться лучше.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>int InitGL(GLvoid)            // Все настройки для OpenGL делаются здесь</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  if (!LoadGLTextures())      
+  // Переход на процедуру загрузки текстур</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    return FALSE;             // Если текстура не загружена, вернем ЛОЖЬ</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  BuildFont();                // 
+  Построение шрифта</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  glShadeModel(GL_SMOOTH);    
+  // Разрешить плавное сглаживание</p>
+<p class=textpreword>  glClearColor(0.0f, 0.0f, 0.0f, 0.5f);   // 
+  Черный фон</p>
+<p class=textpreword>  glClearDepth(1.0f);         
+  // Настройка буфера глубины</p>
+<p class=textpreword>  glHint(GL_LINE_SMOOTH_HINT, GL_NICEST); // 
+  Сглаживание линий</p>
+<p class=textpreword>  glEnable(GL_BLEND);         
+  // Разрешить смешивание</p>
+<p class=textpreword>  glBlendFunc(GL_SRC_ALPHA, 
+  GL_ONE_MINUS_SRC_ALPHA); // Тип смешивания</p>
+<p class=textpreword>  return TRUE;                // Инициализация окончена успешна</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Теперь кода рисования. Это именно то место, где творится волшебство 
+  :).<br>
+  <br>
+</p>
+<p class=textword>Мы очищаем экран (черным) вместе с буфером глубины. Затем мы 
+  выбираем текстуру шрифта (<b>texture[0]</b>). Мы хотим вывести фиолетовым цветом слова &quot;GRID 
+  CRAZY&quot; (сумасшедшая сетка), поэтому мы задаем 
+  красный и синий полной интенсивности, а зеленый половиной интенсивности. После 
+  того, как мы выбрали цвет, мы вызываем <b>glPrint()</b>. Мы помещаем слова 
+  &quot;GRID CRAZY&quot; с 207 по оси X (в центре 
+  экрана) и с 24 по оси Y (вверху экрана). Мы используем наш увеличенный шрифт, 
+  при помощи выбора шрифта 0.<br>
+  <br>
+</p>
+<p class=textword>После того, как мы вывели &quot;GRID 
+  CRAZY&quot; на экран, мы изменяем цвет на желтый (полная интенсивность 
+  красного, полная интенсивность зеленого). Мы пишем на экране &quot;Level:&quot; 
+  (уровень) и значение переменной <b>level2</b>. Помните, что <b>level2</b> может 
+  быть больше чем 3. <b>level2</b> хранит значение уровня, которое игрок видит на экране. 
+  Выражение %2i означает, что мы не хотим больше чем двух цифр на экране для представления 
+  уровня. Спецификатор “i” означает, что значение - целое число.<br>
+  <br>
+</p>
+<p class=textword>После того, как мы вывели информацию об уровне на экран, мы 
+  выводим информацию о стадии под ней, используя тот же самый цвет.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>int DrawGLScene(GLvoid)                 //Здесь мы будем рисовать</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Очистка экрана и буфера глубины</p>
+<p class=textpreword>  glBindTexture(GL_TEXTURE_2D, 
+  texture[0]); // Выбор текстуры нашего шрифта</p>
+<p class=textpreword>  glColor3f(1.0f,0.5f,1.0f);            // Установить фиолетовый цвет</p>
+<p class=textpreword>  glPrint(207,24,0,&quot;GRID CRAZY&quot;);       // Написать 
+  GRID CRAZY на экране</p>
+<p class=textpreword>  glColor3f(1.0f,1.0f,0.0f);            // Установить желтый цвет</p>
+<p class=textpreword>  glPrint(20,20,1,&quot;Level:%2i&quot;,level2);  
+  // Вывод состояние текущего уровня</p>
+<p class=textpreword>  glPrint(20,40,1,&quot;Stage:%2i&quot;,stage);   // Вывод 
+  состояние стадии</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Теперь мы проверим, закончена ли игра. Если игра закончена, 
+  переменная <b>gameover</b> будет равна ИСТИНА. Если игра закончена, 
+  мы используем <b>glColor3ub(r, г, b)</b> чтобы выбрать случайный цвет. Отмечу, 
+  что мы использует 3ub вместо 3f. Используя 3ub, мы можем использовать целочисленные 
+  значения от 0 до 255 для задания цветов. Плюс в том, что при этом проще получить 
+  случайное значение от 0 до 255, чем получить случайное значение от 0.0f до 1.0f.<br>
+  <br>
+</p>
+<p class=textword>Как только случайный цвет был выбран, мы пишем слова &quot;GAME OVER&quot; (игра окончена) справа от заголовка игры. Справа 
+  под &quot;GAME OVER&quot; 
+  мы пишем &quot;PRESS SPACE&quot; 
+  (нажмите пробел). Это визуальное сообщение игроку, которое позволит ему узнать, 
+  что жизней больше нет и нажать пробел для перезапуска игры.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>  if (gameover)                      
+  // Игра окончена?</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    glColor3ub(rand()%255,rand()%255,rand()%255); // Выбор случайного цвета</p>
+<p class=textpreword>    glPrint(472,20,1,&quot;GAME OVER&quot;);   
+  // Вывод GAME OVER на экран</p>
+<p class=textpreword>    glPrint(456,40,1,&quot;PRESS SPACE&quot;); 
+  // Вывод PRESS SPACE на экран</p>
+<p class=textpreword>  }</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Если игрока еще имеются жизни, мы выводим анимированные изображения 
+  символа игрока справа от заголовка игры. Чтобы сделать это, мы создаем цикл, 
+  который начинается от 0 до текущего количества жизней игрока минус один. Я вычитаю 
+  один, потому что текущая жизнь это то изображение, которым Вы управляете.<br>
+  <br>
+</p>
+<p class=textword>Внутри цикла, мы сбрасываем область просмотра. 
+  После того, как область просмотра была сброшена, мы передвигаемся на 490 пикселей 
+  вправо плюс значение <b>loop1</b> умноженное 40.0f. Это позволит, выводить каждую 
+  из анимированных жизней игрока сдвинутую друг относительно друга на 40 пикселей. 
+  Первое анимированное изображение будет выведено в 490 + (0*40) (= 490), второе 
+  анимированное изображение будет выведено в 490 + (1*40) (= 530), и т.д.<br>
+  <br>
+</p>
+<p class=textword>После того, как мы сдвинули точку, мы выводим анимированное 
+  изображение и вращаем его против часовой стрелки в зависимости от значения в 
+  <b>player</b><b>.</b><b>spin</b>. Это заставляет анимированные 
+  изображения жизней вращаться в другую сторону относительно изображения активного 
+  игрока.<br>
+  <br>
+</p>
+<p class=textword>Затем выбираем зеленый цвет, и рисуем изображение. Способ вывода 
+  линий очень похож на рисование четырехугольника или многоугольника. Вы начинаете 
+  с <b>glBegin(GL_LINES)</b>, сообщая OpenGL, что мы хотим вывести линию. Линии 
+  имеют 2 вершины. Мы используем <b>glVertex2d</b>, чтобы задать нашу первую точку. 
+  Функции <b>glVertex2d</b> не требуется указывать значение <b>z</b>. Эта функция 
+  хорошо нам подходит, так как мы не заботимся о значении <b>z</b>. Первая точка 
+  нарисована на 5 пикселей слева от текущего значения <b>x</b> и на 5 пикселей выше от текущего значения <b>y</b>. 
+  Это даст нам левую верхнюю точку. Вторая точка нашей первой линии рисуется на 
+  5 пикселей справа от нашего текущего положения по <b>x</b>, 
+  и на 5 пикселей вниз. Это даст нам правую нижнюю точку. При этом будет нарисована 
+  линия от  левой верхней точки до правой нижней точки. Наша вторая линия будет 
+  нарисована от правой верхней точки до левой нижней точки. При этом будет нарисован 
+  зеленый символ <b>&quot;X&quot;</b> на экране.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>После того, как мы вывели зеленый символ <b>“X”</b>, мы делаем 
+  вращение против часовой стрелки (по оси <b>z</b>) еще 
+  больше, но на этот раз с половиной скорости. Затем мы выбираем более темный 
+  оттенок зеленого (0.75f) и рисуем другой символ “<b>X”</b> размером 7 вместо 
+  5. При этом будет выведен большой / темный символ “<b>X</b>” сверху первого зеленного символа “<b>X</b>”. Поскольку 
+  более темный символ “<b>X</b>” вращается медленнее, то возникнет иллюзия наличия 
+  сверху яркого символа “<b>X</b>” вращающихся усиков 
+  (смешок).</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  for (loop1=0; loop1&lt;lives-1; loop1++)          // Цикл 
+  по всем жизням минус текущая жизнь</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    glLoadIdentity();             // Сброс вида</p>
+<p class=textpreword>    glTranslatef(490+(loop1*40.0f),40.0f,0.0f);  
+  // Перенос вправо от нашего заголовка</p>
+<p class=textpreword>    glRotatef(-player.spin,0.0f,0.0f,1.0f);      
+  // Вращение против часовой стрелки</p>
+<p class=textpreword>    glColor3f(0.0f,1.0f,0.0f);    // Цвет игрока 
+  зеленный</p>
+<p class=textpreword>    glBegin(GL_LINES);            // Рисуем 
+  игрока с помощью линий</p>
+<p class=textpreword>      glVertex2d(-5,-5);          // Лево 
+  верх игрока</p>
+<p class=textpreword>      glVertex2d( 5, 5);          // Низ право</p>
+<p class=textpreword>      glVertex2d( 5,-5);          // Верх право</p>
+<p class=textpreword>      glVertex2d(-5, 5);          // Низ лево</p>
+<p class=textpreword>    glEnd();                      // Закончили 
+  рисовать игрока</p>
+<p class=textpreword>    glRotatef(-player.spin*0.5f,0.0f,0.0f,1.0f); 
+  // Вращение против часовой стрелки</p>
+<p class=textpreword>    glColor3f(0.0f,0.75f,0.0f);   // Установка 
+  темно-зеленного</p>
+<p class=textpreword>    glBegin(GL_LINES);            
+  // Рисуем игрока с помощью линий</p>
+<p class=textpreword>      glVertex2d(-7, 0);          // Влево 
+  от центра игрока</p>
+<p class=textpreword>      glVertex2d( 7, 0);          // Вправо 
+  от центра</p>
+<p class=textpreword>      glVertex2d( 0,-7);          // Вверх 
+  от центра</p>
+<p class=textpreword>      glVertex2d( 0, 7);          // Вниз от 
+  центра</p>
+<p class=textpreword>    glEnd();                      // Закончили рисовать игрока</p>
+<p class=textpreword>  }</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Теперь мы выводим сетку. Мы задаем значение переменной <b>filled</b> 
+  равной ИСТИНА. Это сообщит нашей программе, что сетка была полностью выведена 
+  (Вы увидите позже, зачем мы это делаем).<br>
+  <br>
+</p>
+<p class=textword>Затем мы устанавливаем ширину линии равной 2.0f. Это делает 
+  линии более толстыми, делая визуализацию сетки более четкой.<br>
+  <br>
+</p>
+<p class=textword>Затем мы отключаем сглаживание. Причина, по которой мы отключаем 
+  сглаживание, состоит в том, что это великолепная функция, но она съедает центральный 
+  процессор на завтрак. Если Вы не имеете убийственную быструю графическую карту, 
+  то Вы заметите значительное падение производительности, если Вы оставите включенным 
+  сглаживание. Пробуйте это, если Вы хотите :).<br>
+  <br>
+</p>
+<p class=textword>Вид сброшен, и мы начинаем два цикла. Переменная <b>loop1</b> 
+  будет путешествовать слева направо. Переменная <b>loop2</b> 
+  будет путешествовать сверху донизу.<br>
+  <br>
+</p>
+<p class=textword>Мы задаем синий цвет линии, затем мы проверяем, пройдена ли 
+  игроком эта горизонтальная линия, если это так, то мы задаем белый цвет. Значение 
+  <b>hline[loop1][loop2]</b> было бы равно ИСТИННА, 
+  если линия была пройдена, и ЛОЖЬ, если игрок не пробегал через нее.<br>
+  <br>
+</p>
+<p class=textword>После того, как мы задали синий или белый цвета, мы выводим 
+  линию. Первое что надо проверить это то, что мы не ушли далеко вправо. Нам не 
+  надо выводить линии или делать проверки о прохождении линии, когда <b>loop1</b> 
+  больше, чем 9.<br>
+  <br>
+</p>
+<p class=textword>Если переменная <b>loop1</b> имеет правильное значение, мы проверяем, 
+  пройдена ли горизонтальная линия. Если это не так, то переменная <b>filled</b> установлена в ЛОЖЬ, сообщая, что есть, по крайней 
+  мере, одна линия, которая не была пройдена.<br>
+  <br>
+</p>
+<p class=textword>Затем линия рисуется. Мы выводим нашу первую горизонтальную 
+  линию (слева направо), начиная от 20+(0*60) (= 20). Эта линия выводится до 80 
+  + (0*60) (= 80). Заметьте, что линия выведена слева направо. Именно поэтому 
+  мы не хотим вывести 11 (0-10) линий. Потому что последняя линия началась бы 
+  с правого края экрана и кончилась бы на 80 пикселей за экраном.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  filled=TRUE;                       // Задать 
+  True до начала тестирования</p>
+<p class=textpreword>  glLineWidth(2.0f);                 
+  // Задать ширину линий для ячеек 2.0f</p>
+<p class=textpreword>  glDisable(GL_LINE_SMOOTH);         // Запретить сглаживание</p>
+<p class=textpreword>  glLoadIdentity();                  
+  // Сброс текущей матрицы вида и модели</p>
+<p class=textpreword>  for (loop1=0; loop1&lt;11; loop1++)   // Цикл слева направо</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    for (loop2=0; loop2&lt;11; loop2++) // Цикл 
+  сверху вниз</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      glColor3f(0.0f,0.5f,1.0f);     // Задать синий цвет линии</p>
+<p class=textpreword>      if (hline[loop1][loop2])       
+  // Прошли горизонтальную линию?</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        glColor3f(1.0f,1.0f,1.0f);   // Если 
+  да, цвет линии белый</p>
+<p class=textpreword>      }</p>
+<p class=textpreword>      if (loop1&lt;10)                  // Не 
+  рисовать на правом краю</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        if (!hline[loop1][loop2])    
+  // Если горизонтальную линию не прошли</p>
+<p class=textpreword>        {</p>
+<p class=textpreword>          filled=FALSE;              // filled 
+  равно False</p>
+<p class=textpreword>        }</p>
+<p class=textpreword>        glBegin(GL_LINES);           // Начало 
+  рисования горизонтального бордюра ячейки</p>
+<p class=textpreword>          glVertex2d(20+(loop1*60),70+(loop2*40)); 
+  // Левая сторона горизонтальной линии</p>
+<p class=textpreword>          glVertex2d(80+(loop1*60),70+(loop2*40)); 
+  // Правая сторона горизонтальной линии</p>
+<p class=textpreword>        glEnd();                     // Конец рисования горизонтального 
+  бордюра ячейки</p>
+<p class=textpreword>      }</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Код ниже делает то же самое, но при этом проверяется, что линия 
+  не выводится за нижний край экрана также как за правый край. Этот код ответствен 
+  за рисование вертикальных линий.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>      glColor3f(0.0f,0.5f,1.0f);     // Задать синий цвет линии</p>
+<p class=textpreword>      if (vline[loop1][loop2])       
+  // Прошли вертикальную линию?</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        glColor3f(1.0f,1.0f,1.0f);   // Если да, цвет линии белый</p>
+<p class=textpreword>      }</p>
+<p class=textpreword>      if (loop2&lt;10)                  // 
+  Не рисовать на нижнем краю</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        if (!vline[loop1][loop2])    
+  // Если вертикальную линию не прошли</p>
+<p class=textpreword>        {</p>
+<p class=textpreword>          filled=FALSE;              // filled 
+  равно False</p>
+<p class=textpreword>        }</p>
+<p class=textpreword>        glBegin(GL_LINES);           
+  // Начало рисования вертикального бордюра ячейки</p>
+<p class=textpreword>          glVertex2d(20+(loop1*60),70+(loop2*40));  
+  // Верхняя сторона вертикальной линии</p>
+<p class=textpreword>          glVertex2d(20+(loop1*60),110+(loop2*40)); 
+  // Нижняя сторона вертикальной линии</p>
+<p class=textpreword>        glEnd();                     // Конец рисования вертикального 
+  бордюра ячейки</p>
+<p class=textpreword>      }</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Теперь мы проверим, пройдены ли все 4 стороны ячейки. Каждая 
+  ячейка на экране занимает 1/100-ая часть картинки полноэкранного экрана. Поскольку 
+  каждая ячейка часть большой текстуры, мы должны вначале разрешить отображение 
+  текстуры. Мы не хотим, чтобы текстура была подкрашена в красный, зеленый или 
+  синий, поэтому мы устанавливаем ярко белый цвет. После того, как цвет задан, 
+  мы выбираем нашу текстуру сетки (<b>texture[1]</b>).<br>
+  <br>
+</p>
+<p class=textword>Затем мы проверяем наличие ячейки на экране. Вспомните, что 
+  наш цикл рисует 11 линий справа и налево, и 11 линий сверху и вниз. Но мы не 
+  имеем 11 ячеек по одной линии. Мы имеем 10 ячеек. Поэтому мы не должны проверять 
+  11-ую позицию. Для этого надо проверить, что и <b>loop1</b> и <b>loop2</b>, 
+  меньше чем 10. Это даст 10 ячеек от 0 - 9.<br>
+  <br>
+</p>
+<p class=textword>После того, как мы будем уверены, что мы не выходим за диапазон, 
+  мы можем начинать проверять границы. <b>hline[</b><b>loop1][</b><b>loop2]</b> - верх ячейки. <b>hline[</b><b>loop1][</b><b>loop2+1]</b> - низ ячейки. 
+  <b>vline[</b><b>loop1][</b><b>loop2]</b> - левая сторона ячейки, и <b>vline[</b><b>loop1+1][</b><b>loop2]</b> 
+  - правая сторона ячейки. Я надеюсь, что следующий рисунок вам поможет:</p>
+<p class=textword>&nbsp; </p>
+<p align=center style='text-align:center'> <img width=256 height=128 src="nehe21-1.jpg"> </p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Все горизонтальные линии получаются от <b>loop1</b> 
+  до <b>loop1+1</b>. Как Вы можете видеть, первая горизонтальная 
+  линия создается при <b>loop2</b>. Вторая горизонтальная линия создается при 
+  <b>loop2+1</b>. Вертикальные линии получаются от <b>loop2</b> до <b>loop2+1</b>. 
+  Первая вертикальная линия создается при <b>loop1</b>, и вторая вертикальная 
+  линия создается при <b>loop1+1</b>.<br>
+  <br>
+</p>
+<p class=textword>Когда переменная <b>loop1</b> увеличивается, правая сторона 
+  нашей старой ячейки становится левой стороной новой ячейки. Когда переменная 
+  <b>loop2</b> увеличивается, низ старой ячейки становится вершиной новой ячейки.<br>
+  <br>
+</p>
+<p class=textword>Если все 4 бордюра ИСТИННЫ (это означает, что мы прошли через 
+  все) мы можем наложить текстуру на блок. Мы сделаем это тем же самым способом, 
+  с помощью которого мы разделили текстуру шрифта на отдельные символы. Мы делим, 
+  и <b>loop1</b> и <b>loop2</b> на 10, потому что мы хотим наложить текстуру на 
+  10 ячеек слева направо, и на 10 ячеек сверху и вниз. Координаты текстуры меняются 
+  от 0.0f до 1.0f, и 1/10-ый от 1.0f будет 0.1f.<br>
+  <br>
+</p>
+<p class=textword>Поэтому для вычисления координат правого верхнего угла нашего 
+  блока мы делим значения цикла на 10 и добавляем 0.1f к <b>x</b> 
+  координате текстуры. Чтобы получить координаты левого верхнего угла блока, мы 
+  делим наше значение цикла на 10. Чтобы получить координаты левого нижнего угла 
+  блока, мы делим наше значение цикла на 10 и добавляем 0.1f к <b>y</b> координате 
+  текстуры. Наконец, чтобы получить координаты правого нижнего угла текстуры, 
+  мы делим значение цикла на 10 и добавляем 0.1f, и к <b>x</b> и к <b>y</b> 
+  координатам текстуры.<br>
+  <br>
+</p>
+<p class=textword>Небольшой пример: loop1=0 и loop2=0 </p>
+<p class=textword style='margin-left:36.0pt;text-indent:-18.0pt;tab-stops:list 36.0pt'> 
+  ·&nbsp;Правая X координата текстуры = loop1/10+0.1f = 0/10+0.1f 
+  = 0+0.1f = 0.1f </p>
+<p class=textword style='margin-left:36.0pt;text-indent:-18.0pt;tab-stops:list 36.0pt'> 
+  ·&nbsp;Левая X координата текстуры = loop1/10 = 0/10 = 0.0f </p>
+<p class=textword style='margin-left:36.0pt;text-indent:-18.0pt;tab-stops:list 36.0pt'> 
+  ·&nbsp;Верх Y координата текстуры = loop2/10 = 0/10 = 0.0f; </p>
+<p class=textword style='margin-left:36.0pt;text-indent:-18.0pt;tab-stops:list 36.0pt'> 
+  ·&nbsp;Низ Y координата текстуры = loop2/10+0.1f = 0/10+0.1f = 0+0.1f 
+  = 0.1f; <br>
+  <br>
+  </p>
+<p class=textword>loop1=1 и loop2=1 </p>
+<p class=textword style='margin-left:36.0pt;text-indent:-18.0pt;tab-stops:list 36.0pt'> 
+  ·&nbsp;Правая X координата текстуры = loop1/10+0.1f = 1/10+0.1f = 0.1f+0.1f 
+  = 0.2f </p>
+<p class=textword style='margin-left:36.0pt;text-indent:-18.0pt;tab-stops:list 36.0pt'> 
+  ·&nbsp;Левая X координата текстуры = loop1/10 = 1/10 
+  = 0.1f </p>
+<p class=textword style='margin-left:36.0pt;text-indent:-18.0pt;tab-stops:list 36.0pt'> 
+  ·&nbsp;Верх Y координата текстуры = loop2/10 = 1/10 
+  = 0.1f; </p>
+<p class=textword style='margin-left:36.0pt;text-indent:-18.0pt;tab-stops:list 36.0pt'> 
+  ·&nbsp;Низ Y координата текстуры = loop2/10+0.1f = 1/10+0.1f = 0.1f+0.1f 
+  = 0.2f; <br>
+  <br>
+</p>
+<p class=textword>Буду надеяться, что это все имеет смысл. Если бы <b>loop1</b> 
+  и <b>loop2</b> были бы равны 9, мы закончили бы со значениями 0.9f и 1.0f. Поэтому, 
+  как вы можете видеть, наши координаты текстуры наложенной на 10 блоков меняются 
+  от наименьшего значения 0.0f до наибольшего значения 1.0f. Т.е. наложение всей 
+  текстуры на экран. После того, как мы наложили часть текстуры на экран, мы отключаем 
+  наложение текстуры. После того, как мы нарисовали все линии и заполнили все 
+  блоки, мы задаем ширину линий равной 1.0f.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>      glEnable(GL_TEXTURE_2D);      // Разрешение 
+  наложение текстуры</p>
+<p class=textpreword>      glColor3f(1.0f,1.0f,1.0f);    // Ярко 
+  белый свет</p>
+<p class=textpreword>      glBindTexture(GL_TEXTURE_2D, texture[1]); 
+  // Выбор мозаичного изображения</p>
+<p class=textpreword>      if ((loop1&lt;10) &amp;&amp; (loop2&lt;10)) // Если в диапазоне, заполнить пройденные ячейки</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        // Все ли стороны ячейки пройдены?</p>
+<p class=textpreword>        if (hline[loop1][loop2] &amp;&amp; hline[loop1][loop2+1] &amp;&amp;</p>
+<p class=textpreword>            vline[loop1][loop2] &amp;&amp; vline[loop1+1][loop2])</p>
+<p class=textpreword>        {</p>
+<p class=textpreword>          glBegin(GL_QUADS);       // Нарисовать 
+  текстурированный четырехугольник</p>
+<p class=textpreword>            glTexCoord2f(float(loop1/10.0f)+0.1f,1.0f-(float(loop2/10.0f)));</p>
+<p class=textpreword>            glVertex2d(20+(loop1*60)+59,(70+loop2*40+1));  
+  // Право верх</p>
+<p class=textpreword>            glTexCoord2f(float(loop1/10.0f),1.0f-(float(loop2/10.0f)));</p>
+<p class=textpreword>            glVertex2d(20+(loop1*60)+1,(70+loop2*40+1));   
+  // Лево верх</p>
+<p class=textpreword>            glTexCoord2f(float(loop1/10.0f),1.0f-(float(loop2/10.0f)+0.1f));</p>
+<p class=textpreword>            glVertex2d(20+(loop1*60)+1,(70+loop2*40)+39);  
+  // Лево низ</p>
+<p class=textpreword>            glTexCoord2f(float(loop1/10.0f)+0.1f,1.0f-(float(loop2/10.0f)+0.1f));</p>
+<p class=textpreword>            glVertex2d(20+(loop1*60)+59,(70+loop2*40)+39); 
+  // Право низ</p>
+<p class=textpreword>          glEnd();                 // Закончить текстурирование ячейки</p>
+<p class=textpreword>        }</p>
+<p class=textpreword>      }</p>
+<p class=textpreword>      glDisable(GL_TEXTURE_2D);    // Запрет 
+  наложения текстуры</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>  glLineWidth(1.0f);               
+  // Ширина линий 1.0f</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Код ниже проверяет, равно ли значение переменной <b>anti 
+  </b>ИСТИНА. Если это так, то мы разрешаем сглаживание линий.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>  if (anti)                   // Anti TRUE?</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    glEnable(GL_LINE_SMOOTH); 
+  // Если так, то разрешить сглаживание</p>
+<p class=textpreword>  }</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Чтобы сделать игру немного проще я добавил специальный предмет. 
+  Этим предметом будут песочные часы. Когда Вы касаетесь песочных часов, противники 
+  замерзают на определенное количество времени. Следующий раздел кода ответственен 
+  за вывод песочных часов.<br>
+  <br>
+</p>
+<p class=textword>Для песочных часов мы используем <b>x</b> и <b>y</b>, чтобы 
+  позиционировать таймер, но в отличие от нашего игрока и противников, мы не используем 
+  <b>fx</b> и <b>fy</b> для точного позиционирования. Вместо этого мы будем использовать 
+  <b>fx</b>, чтобы следить, действительно 
+  ли часы отображаются. <b>fx</b> 
+  будет равно 0, если часы не видимы, и 1, если они видимы, и 2, если игрок коснулся 
+  часов. <b>fy</b> будет использоваться как счетчик, для 
+  отслеживания как давно видны или не видны часы.<br>
+  <br>
+</p>
+<p class=textword>Поэтому вначале мы проверяем, видны ли часы. Если нет, мы обходим 
+  код вывода часов. Если часы видны, мы сбрасываем матрицу вида модели, и позиционируем 
+  часы. Поскольку наша первая точка сетки находится на 20 пикселей слева, мы добавим 
+  20 к <b>hourglass</b><b>.</b><b>x</b> умножим на 60. Мы умножаем <b>hourglass</b><b>.</b><b>x</b> 
+  на 60, потому что точки на нашей сетке слева направо отстоят друг от друга на 
+  60 пикселей. Затем мы позиционируем песочные часы по оси Y. Мы добавляем 70 
+  к <b>hourglass</b><b>.</b><b>y</b> 
+  умножаем на 40, потому что мы хотим начать рисовать на 70 пикселей вниз от верхнего 
+  края экрана. Каждая точка на нашей сетке сверху внизу отстоит друг от друга 
+  на 40 пикселей.<br>
+  <br>
+</p>
+<p class=textword>После того, как мы завершили позиционирование песочных часов, 
+  мы можем вращать их по оси <b>Z</b>. <b>hourglass</b><b>.</b><b>spin</b> 
+  используется, чтобы следить за вращением, так же как <b>player</b><b>.</b><b>spin</b> следит за вращением игрока. Прежде, чем мы начинаем выводить 
+  песочные часы, мы выбираем случайный цвет.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  if (hourglass.fx==1)              
+  // Если fx=1 нарисовать песочные часы</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    glLoadIdentity();               // Сброс матрицы вида модели</p>
+<p class=textpreword>    glTranslatef(20.0f+(hourglass.x*60),70.0f+(hourglass.y*40),0.0f); // 
+  Поместим часы</p>
+<p class=textpreword>    glRotatef(hourglass.spin,0.0f,0.0f,1.0f);      
+  // Вращаем по часовой стрелке</p>
+<p class=textpreword>    glColor3ub(rand()%255,rand()%255,rand()%255);  
+  // Зададим случайный цвет часов</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Вызов функции <b>glBegin(</b><b>GL_</b><b>LINES)</b> 
+  сообщает OpenGL, что мы хотим нарисовать линии. Вначале мы смещаемся на 5 пикселей 
+  влево и вверх от нашего текущего положения. При этом мы получим левую верхнюю 
+  вершину наших песочных часов. OpenGL начнет рисовать линию от этого положения. 
+  Конец линии будет вправо и вниз на 5 пикселей от нашего первоначального положения. 
+  При этом наша линия, пройдет от левой верхней точки до правой нижней точки. 
+  Сразу же после этого мы выводим вторую линию, проходящую от правой верхней точки 
+  до левой нижней точки. Это даст нам символ '<b>X</b>'. В конце мы соединяем 
+  две нижние точки вместе, и затем две верхние точки, чтобы создать объект типа 
+  песочных часов :).</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>    glBegin(GL_LINES);            
+  // Начало рисования наших песочных часов линиями</p>
+<p class=textpreword>      glVertex2d(-5,-5);          // Лево Верх 
+  песочных часов</p>
+<p class=textpreword>      glVertex2d( 5, 5);          // Право 
+  Низ песочных часов</p>
+<p class=textpreword>      glVertex2d( 5,-5);          // Право 
+  Верх песочных часов</p>
+<p class=textpreword>      glVertex2d(-5, 5);          // Лево 
+  Низ песочных часов</p>
+<p class=textpreword>      glVertex2d(-5, 5);          // Лево 
+  Низ песочных часов</p>
+<p class=textpreword>      glVertex2d( 5, 5);          // Право 
+  Низ песочных часов</p>
+<p class=textpreword>      glVertex2d(-5,-5);          // Лево 
+  Верх песочных часов</p>
+<p class=textpreword>      glVertex2d( 5,-5);          // Право 
+  Верх песочных часов</p>
+<p class=textpreword>    glEnd();                      // Конец рисования песочных часов</p>
+<p class=textpreword>  }</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Теперь мы рисуем нашего игрока. Мы сбрасываем матрицу вида модели, 
+  и позиционируем игрока на экране. Заметьте, что мы позиционируем игрока, используя 
+  <b>fx</b> и <b>fy</b>. Мы хотим, чтобы игрок двигался плавно, поэтому мы используем 
+  точное позиционирование. После позиционирования игрока, мы вращаем игрока относительно 
+  оси <b>Z</b>, используя <b>player</b><b>.</b><b>spin</b>. Мы задаем светло зеленный цвет и начинаем рисовать. Примерно 
+  так же как мы вывели песочные часы, мы выводим символ '<b>X</b>'. Начинаем с 
+  левой верхней точки до правой нижней точки, затем с правой верхней точки до 
+  левой нижней точки.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>  glLoadIdentity();              // Сброс матрицы 
+  вида модели</p>
+<p class=textpreword>  glTranslatef(player.fx+20.0f,player.fy+70.0f,0.0f); 
+  // Перемещение игрока в точную позицию</p>
+<p class=textpreword>  glRotatef(player.spin,0.0f,0.0f,1.0f);              
+  // Вращение по часовой стрелки</p>
+<p class=textpreword>  glColor3f(0.0f,1.0f,0.0f);      // Установить 
+  светло-зеленный цвет</p>
+<p class=textpreword>  glBegin(GL_LINES);              // Начать 
+  рисование нашего игрока из линий</p>
+<p class=textpreword>    glVertex2d(-5,-5);            // Лево 
+  Верх игрока</p>
+<p class=textpreword>    glVertex2d( 5, 5);            // Право 
+  Низ игрока</p>
+<p class=textpreword>    glVertex2d( 5,-5);            // Право 
+  Верх игрока</p>
+<p class=textpreword>    glVertex2d(-5, 5);            // Лево 
+  Низ игрока</p>
+<p class=textpreword>  glEnd();                        // Конец рисования 
+  игрока</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Рисование не слишком разнообразных объектов может разочаровать. 
+  Я не хотел бы, чтобы игрок выглядел скучновато, поэтому я добавил следующий 
+  раздел кода, для того чтобы создать большое и быстро вращающиеся лезвие поверх 
+  игрока, которого мы только что нарисовали выше. Мы вращаем относительно оси 
+  <b>Z</b> лезвие на <b>player</b><b>.</b><b>spin</b> умножив его на 0.5f. Поскольку мы вращаем еще раз, будет казаться, 
+  что эта часть игрока перемещается немного быстрее, чем первая часть игрока.<br>
+  <br>
+</p>
+<p class=textword>После выполнения нового вращения, мы меняем цвет на более темный 
+  оттенок зеленного. Так, чтобы казалось, что игрок, сделан из различных цветов 
+  / частей. Затем мы выводим большой '+' сверху первой части игрока. Он будет 
+  больше, потому что мы используем -7 и +7 вместо -5 и +5. Также заметьте, что 
+  вместо рисования от одного угла до другого, я рисую эту часть игрока слева направо 
+  и сверху вниз.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  glRotatef(player.spin*0.5f,0.0f,0.0f,1.0f); // Вращаем по часовой</p>
+<p class=textpreword>  glColor3f(0.0f,0.75f,0.0f);     // Задаем цвет игрока темно-зеленный</p>
+<p class=textpreword>  glBegin(GL_LINES);              
+  // Начало рисования нашего игрока используя линии</p>
+<p class=textpreword>    glVertex2d(-7, 0);            // Влево 
+  от центра игрока</p>
+<p class=textpreword>    glVertex2d( 7, 0);            // Вправо 
+  от центра игрока</p>
+<p class=textpreword>    glVertex2d( 0,-7);            // Вверх 
+  от центра игрока</p>
+<p class=textpreword>    glVertex2d( 0, 7);            // Вниз 
+  от центра игрока</p>
+<p class=textpreword>  glEnd();                        
+  // Конец рисования игрока</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Теперь нам осталось вывести противников, и мы закончим рисование 
+  :). Вначале мы организуем цикл по числу всех противников, которые есть на текущем 
+  уровне. Мы вычисляем, сколько противников надо рисовать, умножив нашу текущую 
+  игровую стадию на внутренний игровой уровень. Вспомните, что каждый уровень 
+  имеет 3 стадии, и максимальное значение внутреннего уровня равно 3. Поэтому 
+  мы можем иметь максимум 9 противников.<br>
+  <br>
+</p>
+<p class=textword>Внутри цикла мы сбрасываем матрицу просмотра вида, и позиционируем 
+  текущего противника (<b>enemy[</b><b>loop1]</b>). Мы позиционируем 
+  противника, используя его точные значения <b>x</b> и <b>y</b> (<b>fx</b> и <b>fy</b>). После позиционирования текущего противника мы задаем розовый 
+  цвет и начинаем рисование.<br>
+  <br>
+</p>
+<p class=textword>Первая линия пройдет от 0,-7 (7 пикселей верх от начального 
+  положения) к -7,0 (7 пикселей влево от начального положения). Вторая линия пройдет 
+  от -7,0 до 0,7 (7 пикселей вниз от начального положения). Третья линия пройдет 
+  от 0,7 до 7,0 (7 пикселей вправо от нашего начального положения), и последняя 
+  линия пройдет от 7,0 назад к началу первой линии (7 пикселей верх от начального 
+  положения). При этом на экране получится не вращающийся розовый алмаз.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  for (loop1=0; loop1&lt;(stage*level); 
+  loop1++) // Цикл рисования противников</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    glLoadIdentity();             // Сброс матрицы просмотра вида</p>
+<p class=textpreword>    glTranslatef(enemy[loop1].fx+20.0f,enemy[loop1].fy+70.0f,0.0f);</p>
+<p class=textpreword>    glColor3f(1.0f,0.5f,0.5f);    // Сделать тело противника розовым</p>
+<p class=textpreword>    glBegin(GL_LINES);          
+    // Начало рисования противника</p>
+<p class=textpreword>      glVertex2d( 0,-7);          // Верхняя точка тела</p>
+<p class=textpreword>      glVertex2d(-7, 0);          // Левая 
+  точка тела</p>
+<p class=textpreword>      glVertex2d(-7, 0);          // Левая 
+  точка тела</p>
+<p class=textpreword>      glVertex2d( 0, 7);          // Нижняя 
+  точка тела</p>
+<p class=textpreword>      glVertex2d( 
+  0, 7);          // Нижняя точка тела</p>
+<p class=textpreword>      glVertex2d( 7, 0);          // Правая 
+  точка тела</p>
+<p class=textpreword>      glVertex2d( 7, 0);          // Правая 
+  точка тела</p>
+<p class=textpreword>      glVertex2d( 0,-7);          // Верхняя 
+  точка тела</p>
+<p class=textpreword>    glEnd();                      // Конец рисования противника</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Мы не хотим, чтобы враги выглядели невзрачно, поэтому мы добавим 
+  темно красное вращающиеся лезвие ('<b>X</b>') сверху алмаза, который мы только 
+  что нарисовали. Мы вращаем его относительно оси Z на <b>enemy[</b><b>loop1].</b><b>spin</b>, 
+  и затем выводим '<b>X</b>'. Мы начинаем с левого верхнего угла и рисуем линию 
+  к правому нижнему углу. Затем мы рисуем вторую линию с правого нижнего угла 
+  до левого нижнего угла. Эти две линии пересекают друг с другом, и при этом получается 
+  символ '<b>X</b>' (или клинок... смешок).</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>    glRotatef(enemy[loop1].spin,0.0f,0.0f,1.0f); 
+  // Вращение клинка противника</p>
+<p class=textpreword>    glColor3f(1.0f,0.0f,0.0f);    // Сделаем клинок противника красным</p>
+<p class=textpreword>    glBegin(GL_LINES);            
+  // Начало рисования клинка противника</p>
+<p class=textpreword>      glVertex2d(-7,-7);          // Лево 
+  верх противника</p>
+<p class=textpreword>      glVertex2d( 7, 7);          // Право 
+  низ противника</p>
+<p class=textpreword>      glVertex2d(-7, 7);          // Лево 
+  низ противника</p>
+<p class=textpreword>      glVertex2d( 7,-7);          // Право 
+  верх противника</p>
+<p class=textpreword>    glEnd();                      // Конец рисования противника</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>  return TRUE;                    // Все 
+  OK</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Я добавил вызов функции <b>KillFont()</b> в конце <b>KillGLWindow()</b>. При этом мы будем уверены, 
+  что список отображения шрифта удален, когда окно будет уничтожено.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>GLvoid KillGLWindow(GLvoid) // Корректное удаление окна</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  if (fullscreen)           
+  // Мы в полноэкранном режиме?</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    ChangeDisplaySettings(NULL,0);  // Если это так, то переключиться на рабочий стол</p>
+<p class=textpreword>    ShowCursor(TRUE);       // Показать курсор 
+  мыши</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  if (hRC)                  
+  // У нас есть контекст визуализации?</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    if (!wglMakeCurrent(NULL,NULL)) 
+  // Мы можем освободить контексты DC и RC?</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      MessageBox(NULL,&quot;Release Of DC And 
+  RC Failed.&quot;,&quot;SHUTDOWN ERROR&quot;,</p>
+<p class=textpreword>                 MB_OK | MB_ICONINFORMATION);</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>    if (!wglDeleteContext(hRC))     // Мы можем 
+  удалить RC?</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      MessageBox(NULL,&quot;Release Rendering 
+  Context Failed.&quot;,&quot;SHUTDOWN ERROR&quot;,</p>
+<p class=textpreword>                 MB_OK | MB_ICONINFORMATION);</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>    hRC=NULL;               // Задать RC 
+  в NULL</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  if (hDC &amp;&amp; 
+  !ReleaseDC(hWnd,hDC))  
+  // Мы можем освободить DC?</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    MessageBox(NULL,&quot;Release Device Context 
+  Failed.&quot;,&quot;SHUTDOWN ERROR&quot;,</p>
+<p class=textpreword>               MB_OK | MB_ICONINFORMATION);</p>
+<p class=textpreword>    hDC=NULL;               // Задать DC 
+  в NULL</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  if (hWnd &amp;&amp; !DestroyWindow(hWnd)) 
+  // Мы можем уничтожить окно?</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    MessageBox(NULL,&quot;Could Not Release 
+  hWnd.&quot;,&quot;SHUTDOWN ERROR&quot;,</p>
+<p class=textpreword>               MB_OK | MB_ICONINFORMATION);</p>
+<p class=textpreword>    hWnd=NULL;              // Задать 
+  hWnd в NULL</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  if (!UnregisterClass(&quot;OpenGL&quot;,hInstance)) 
+  // Мы можем удалить регистрацию класса?</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    MessageBox(NULL,&quot;Could Not Unregister 
+  Class.&quot;,&quot;SHUTDOWN ERROR&quot;,</p>
+<p class=textpreword>               MB_OK | MB_ICONINFORMATION);</p>
+<p class=textpreword>    hInstance=NULL;         // Задать 
+  hInstance в NULL</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  KillFont();               // Уничтожить 
+  фонт, который мы сделали</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Код <b>CreateGLWindow()</b> и <b>WndProc()</b> 
+  не изменил, поэтому идите вниз пока не встретите следующий раздел кода.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>int WINAPI WinMain(</p>
+<p class=textpreword>          HINSTANCE hInstance,     // Экземпляр</p>
+<p class=textpreword>          HINSTANCE hPrevInstance, // Предыдущий 
+  экземпляр</p>
+<p class=textpreword>          LPSTR     lpCmdLine,     // Параметры 
+  командной строки</p>
+<p class=textpreword>          int       nCmdShow)      // Показать состояние 
+  окна</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  MSG  msg;        // Структура сообщения окна</p>
+<p class=textpreword>  BOOL done=FALSE; // Булевская переменная выхода из цикла</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // Запросим пользователя какой режим отображения он предпочитает</p>
+<p class=textpreword>  if (MessageBox(NULL,&quot;Would You Like 
+  To Run In Fullscreen Mode?&quot;,</p>
+<p class=textpreword>      &quot;Start FullScreen?&quot;,MB_YESNO|MB_ICONQUESTION)==IDNO)</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    fullscreen=FALSE;              // Оконный 
+  режим</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Этот раздел кода не много изменился. Я изменил заголовок окна 
+  на &quot; Урок по линиям NeHe&quot;, и я добавил вызов 
+  функции <b>ResetObjects()</b>. При этом игрок 
+  позиционируется в левой верхней точке сетки, и противникам задаются случайные 
+  начальные положения. Враги будут всегда стартовать, по крайней мере, на 5 ячеек 
+  от Вас. Функция <b>TimerInit()</b> корректно инициализирует 
+  таймер.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>  // Создадим наше окно OpenGL</p>
+<p class=textpreword>  if (!CreateGLWindow(&quot;NeHe's Line 
+  Tutorial&quot;,640,480,16,fullscreen))</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    return 0;              // Выходим если окно не было создано</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  ResetObjects();          // Установка 
+  стартовых позиций Игрока / Противников</p>
+<p class=textpreword>  TimerInit();             // Инициализация таймера</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  while (!done) // Цикл, который продолжается пока done=FALSE</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    if (PeekMessage(&amp;msg,NULL,0,0,PM_REMOVE)) // Есть 
+  ожидаемое сообщение?</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      if (msg.message==WM_QUIT) // Мы получили сообщение 
+  о выходе?</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        done=TRUE; // Если так 
+  done=TRUE</p>
+<p class=textpreword>      }</p>
+<p class=textpreword>      else // Если нет, продолжаем работать с сообщениями 
+  окна</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        TranslateMessage(&amp;msg); // Переводим сообщение</p>
+<p class=textpreword>        DispatchMessage(&amp;msg);  // Отсылаем сообщение</p>
+<p class=textpreword>      }</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>    else // Если сообщений нет</p>
+<p class=textpreword>    {</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Теперь cделаем работу по синхронизации. 
+  Вначале запомните, что перед выводом нашей сцены, мы запоминаем время в переменной 
+  с плавающей запятой, которая названа <b>start</b>. Затем 
+  мы выводим сцену и переключаем буфера.<br>
+  <br>
+</p>
+<p class=textword>Сразу же после того, как мы переключили буфера, мы делаем задержку. 
+  Мы делаем при помощи сравнения текущего значения таймера (<b>TimerGetTime()</b>) с нашим стартовым значением плюс шаг скорости игры 
+  умноженный на 2. Если текущее значение таймера меньше чем значение, которое 
+  мы хотим, мы повторяем цикл, пока текущее значение таймера не будет равно или 
+  большее чем значение, которое мы хотим. Это ДЕЙСТВИТЕЛЬНО замедляет быстрые 
+  системы.<br>
+  <br>
+</p>
+<p class=textword>Поскольку мы используем шаги скорости (с помощью <b>adjust</b>) 
+  программа будет всегда выполняться с той же самой скоростью. Например, если 
+  бы наш шаг скорости был бы 1, мы ждали бы, пока таймер не был равен или больше 
+  чем 2 (1*2). Но если мы увеличим шаг скорости до 2 (что вызовет перемещение 
+  игрока на удвоенное число пикселей одновременно), задержка увеличиться на 4 
+  (2*2). Поэтому даже при том, что мы перемещаем в два раза быстрее, задержка 
+  также удвоится, поэтому игра будет выполняться с той же самой скоростью :).<br>
+  <br>
+</p>
+<p class=textword>Есть один прием, который многие делают – берут текущее время, 
+  и вычитают из него старое время, чтобы выяснить, сколько времени прошло. Затем 
+  они перемещают объекты на некоторое расстояние, основанное на значении времени, 
+  которое прошло. К сожалению, я не могу этого сделать в этой программе, потому 
+  что точное перемещение должно быть таким, чтобы игрок мог попасть на линии сетки. 
+  Если текущая точная позиция <b>x</b> была 59, и компьютер решил переместить 
+  игрока, на два пикселя, игрок никогда не попадет на вертикальную линию в позиции 
+  60 на сетке.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>      float start=TimerGetTime(); // Захват 
+  времени до начала рисования</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>      // Нарисовать сцену. Отследить нажатие на клавишу ESC 
+  и</p>
+<p class=textpreword>      // приход сообщения о выходе из DrawGLScene()</p>
+<p class=textpreword>      if ((active &amp;&amp; !DrawGLScene()) || keys[VK_ESCAPE])  
+  // Активно?  Выход принят?</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        done=TRUE;                // ESC или 
+  DrawGLScene сигнализирует о выходе</p>
+<p class=textpreword>      }</p>
+<p class=textpreword>      else                        // Не время выходить, надо обновить 
+  сцену</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        SwapBuffers(hDC);         // Переключить 
+  буфера (Двойная Буферизация)</p>
+<p class=textpreword>      }</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>      // Отбросим циклы на быстрой системе</p>
+<p class=textpreword>      while(TimerGetTime()&lt;start+float(steps[adjust]*2.0f)) {}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Следующий код мало изменился. Я изменил заголовок окна на &quot;Урок 
+  NeHe по линиям&quot;.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>      if (keys[VK_F1])          
+  // Была нажата кнопка F1?</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        keys[VK_F1]=FALSE;      
+  // Если так - установим значение FALSE</p>
+<p class=textpreword>        KillGLWindow();         // Закроем текущее окно OpenGL  </p>
+<p class=textpreword>        fullscreen=!fullscreen; // Переключим 
+  режим &quot;Полный экран&quot;/&quot;Оконный&quot;</p>
+<p class=textpreword>        // Заново создадим наше окно OpenGL</p>
+<p class=textpreword>        if (!CreateGLWindow(&quot;NeHe's Line Tutorial&quot;,640,480,16,fullscreen))</p>
+<p class=textpreword>        {</p>
+<p class=textpreword>          return 0;             // Выйти, если окно не было создано</p>
+<p class=textpreword>        }</p>
+<p class=textpreword>      }</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>В этой секции кода проверяется, нажата ли клавиша и не удерживается 
+  ли она. Если 'A' нажата, <b>ap</b> 
+  станет ИСТИНА (сообщая нашей программе, что ‘A’ опущена 
+  вниз), и <b>anti</b> переключается из ИСТИНЫ в ЛОЖЬ 
+  или из ЛОЖИ в ИСТИНУ. Помните, что значение <b>anti</b> 
+  проверяется в коде рисования, чтобы узнать включено ли сглаживание или нет.<br>
+  <br>
+</p>
+<p class=textword>Если клавиша 'A' была отпущена (ЛОЖЬ) 
+  тогда значение <b>ap</b> будет ЛОЖЬ сообщая программе, что эта клавиша больше 
+  не удерживается.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>      if (keys['A'] &amp;&amp; !ap) // Если 
+  клавиша 'A' нажата и не удерживается</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        ap=TRUE;            // ap равно 
+  TRUE</p>
+<p class=textpreword>        anti=!anti;         
+  // Переключим сглаживание</p>
+<p class=textpreword>      }</p>
+<p class=textpreword>      if (!keys['A'])       // Если клавиша 
+  'A' отпущена</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        ap=FALSE;           // ap равно FALSE</p>
+<p class=textpreword>      }</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Теперь как перемещать противников. Я стремился сделать этот 
+  раздел кода как можно проще. Здесь очень немного логики. В основном, враги следят 
+  за тем, где Вы находитесь, и они двигаются в этом направлении. Поскольку я проверяю 
+  фактические <b>x</b> и <b>y</b> позиции игроков и не проверяю точные значения, 
+  игрокам может казаться, что враги имеют некоторый интеллект. Враги могут видеть, 
+  что Вы наверху экрана. Но к тому времени, когда точные значения совпадут с верхом 
+  экрана, Вы можете уже быть в другом месте. Это заставляет их иногда двигаться 
+  мимо Вас, прежде чем они поймут, что Вы больше не там, где они думают. Они как 
+  будто глухи, но поскольку они иногда двигаются мимо Вас, Вы может оказаться 
+  в окружении.<br>
+  <br>
+</p>
+<p class=textword>Мы начнем с проверки того, что игра еще не закончена, и что 
+  окно (если в оконном режиме) является все еще активным. При помощи этой проверки 
+  <b>active</b> делаем так, чтобы враги не двигались, 
+  когда окно свернуто. Это даст Вам удобную паузу, когда Вы захотите перерваться 
+  :).<br>
+  <br>
+</p>
+<p class=textword>После того, как мы проверили то, что враги должны быть перемещены, 
+  мы запускаем цикл. В этом цикле мы проходим по всем видимым противникам. Снова 
+  мы вычисляем, сколько противников должно быть на экране, умножая текущую стадию 
+  на текущий внутренний уровень.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>      if (!gameover 
+  &amp;&amp; active) // Если игра не окончена и программа 
+  активна – передвинуть объекты</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        for (loop1=0; loop1&lt;(stage*level); 
+  loop1++)  // Цикл по противникам</p>
+<p class=textpreword>        {</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Теперь мы перемещаем текущего противника (<b>enemy[</b><b>loop1]</b>). Вначале мы проверяем меньше ли <b>x</b> 
+  позиция противника, чем <b>x</b> позиция игрока, и мы контролируем, что точная 
+  позиция <b>y</b> противника выровнена с горизонтальной линией. Мы не можем перемещать 
+  противника влево или вправо, если он не на горизонтальной линии. Если бы мы 
+  сделали, враг прошел бы через середину ячейки, сделав игру очень сложной :).<br>
+  <br>
+</p>
+<p class=textword>Если <b>x</b> позиция противника меньше, чем <b>x</b> позиция 
+  игрока, и точная позиция <b>y</b> противника выровнена с горизонтальной линией, 
+  мы передвигаем противника по <b>x</b> на одну клетку ближе к текущей позиции 
+  игрока.<br>
+  <br>
+</p>
+<p class=textword>Подобным образом мы делаем это, чтобы переместить противника, 
+  влево, вниз и вверх. При перемещении вверх или вниз, мы должны проконтролировать, 
+  что точная позиция <b>x</b> противника выровнена с вертикальной линией. Мы не 
+  хотим, чтобы враг срезал через верх или низ ячейки.<br>
+  <br>
+</p>
+<p class=textword>Примечание: изменение <b>x</b> и <b>y</b> позиций противников 
+  не перемещает противника на экране. Вспомните, что, когда мы рисовали противников, 
+  мы использовали точные позиции, чтобы разместить противников на экране. Изменение 
+  <b>x</b> и <b>y</b> позиций только сообщает нашей программе, где мы ХОТИМ, чтобы 
+  противники двигались.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>          if ((enemy[loop1].x&lt;player.x) &amp;&amp; (enemy[loop1].fy==enemy[loop1].y*40))</p>
+<p class=textpreword>          {</p>
+<p class=textpreword>            enemy[loop1].x++;    
+  // Сдвиг противника вправо</p>
+<p class=textpreword>          }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>          if ((enemy[loop1].x&gt;player.x) &amp;&amp; 
+  (enemy[loop1].fy==enemy[loop1].y*40))</p>
+<p class=textpreword>          {</p>
+<p class=textpreword>            enemy[loop1].x--;    
+  // Сдвиг противника влево</p>
+<p class=textpreword>          }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>          if ((enemy[loop1].y&lt;player.y) &amp;&amp; 
+  (enemy[loop1].fx==enemy[loop1].x*60))</p>
+<p class=textpreword>          {</p>
+<p class=textpreword>            enemy[loop1].y++;    // Сдвиг противника вниз</p>
+<p class=textpreword>          }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>          if ((enemy[loop1].y&gt;player.y) &amp;&amp; 
+  (enemy[loop1].fx==enemy[loop1].x*60))</p>
+<p class=textpreword>          {</p>
+<p class=textpreword>            enemy[loop1].y--;    
+  // Сдвиг противника вверх</p>
+<p class=textpreword>          }</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>В этом коде фактически реализовано перемещение. Мы проверяем, 
+  больше ли значение переменной <b>delay</b>, чем 3 минус текущий внутренний уровень. Т.е., если 
+  наш текущий уровень равен 1 программа, сделает цикл 2 раза (3-1) прежде, чем 
+  враги фактически сдвинутся. На уровне 3 (самый высокий уровень) враги будут 
+  перемещаться с той же самой скоростью как игрок (без задержек). Мы также контролируем, 
+  что <b>hourglass.</b><b>fx</b> не равен 2. Вспомните, если <b>hourglass.</b><b>fx</b> равно 2, то это означает, что игрок коснулся песочных часов. Враги 
+  при этом не должны перемещаться.<br>
+  <br>
+</p>
+<p class=textword>Если <b>delay</b> больше, чем с <b>3-</b><b>level</b>, и игрок не коснулся песочных часов, мы перемещаем 
+  противников, изменения точные позиции противников (<b>fx</b> и <b>fy</b>). 
+  Вначале мы присваиваем <b>delay</b> снова 0 так, чтобы 
+  мы могли запустить счетчик <b>delay</b> снова. Затем 
+  мы запускаем цикл, который проходит по всем видимым противникам (<b>stage 
+  * </b><b>level</b>).</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>          // Если наша задержка истекла, и игрок не коснулся 
+  песочных часов</p>
+<p class=textpreword>          if (delay&gt;(3-level) &amp;&amp; 
+  (hourglass.fx!=2))</p>
+<p class=textpreword>          {</p>
+<p class=textpreword>            delay=0;          // Сброс задержки</p>
+<p class=textpreword>            for (loop2=0; loop2&lt;(stage*level); 
+  loop2++)  // Цикл по всем противникам</p>
+<p class=textpreword>            {</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Для перемещения противников, мы проверяем, нужно ли текущего 
+  противника (<b>enemy[loop2]</b>) двигать в заданном 
+  направлении, чтобы установить противника в <b>x</b> и <b>y</b> позицию, которую 
+  мы хотим. В первой строке ниже мы проверяем, является ли точная позиция противника 
+  по оси <b>X</b> меньше, чем нужная позиции <b>x</b> умноженная на 60. Вспомните, 
+  что размер каждой клетки равен 60 пикселям по горизонтали. Если точная позиция 
+  <b>x</b> меньше, чем <b>x</b> позиция противника умноженная на 60, мы сдвигаем 
+  противника направо на <b>steps[</b><b>adjust]</b> 
+  (скорость нашей игры зависит от значения <b>adjust</b>). Мы также вращаем противника по часовой стрелке, 
+  чтобы казалось, что он катится направо. Для этого мы увеличиваем <b>enemy[</b><b>loop2].</b><b>spin</b> 
+  на <b>steps[</b><b>adjust]</b> (текущая скорость 
+  игры, которая зависит от <b>adjust</b>).<br>
+  <br>
+</p>
+<p class=textword>Затем мы проверяем, является ли значение <b>fx</b> 
+  противника больше, чем позиция <b>x</b> противника умноженная на 60 и если это 
+  так, мы перемещаем противника влево и вращаем противника влево.<br>
+  <br>
+</p>
+<p class=textword>То же самое мы делаем при перемещении противника вверх и вниз. 
+  Если позиция <b>y</b> противника меньше, чем позиция <b>fy</b> противника умноженная на 40 (40 пикселей 
+  размер ячейки по вертикали) мы увеличиваем <b>fy</b>, и вращаем противника, чтобы казалось, что он катится вниз. Наконец, 
+  если позиция <b>y</b> больше, чем позиция <b>fy</b> умноженная на 40, мы уменьшаем значение 
+  <b>fy</b>, чтобы переместить противника 
+  вверх. Снова, вращаем противника, чтобы казалось, что он катится вверх.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>              // Точная позиция по оси X меньше чем назначенная позиция?</p>
+<p class=textpreword>              if (enemy[loop2].fx&lt;enemy[loop2].x*60)</p>
+<p class=textpreword>              {</p>
+<p class=textpreword>                enemy[loop2].fx+=steps[adjust];    
+  // Увеличим точную позицию по оси X</p>
+<p class=textpreword>                enemy[loop2].spin+=steps[adjust];  
+  // Вращаем по часовой</p>
+<p class=textpreword>              }</p>
+<p class=textpreword>              // Точная позиция по оси X 
+  больше чем назначенная позиция?</p>
+<p class=textpreword>              if (enemy[loop2].fx&gt;enemy[loop2].x*60)</p>
+<p class=textpreword>              {</p>
+<p class=textpreword>                enemy[loop2].fx-=steps[adjust];    
+  // Уменьшим точную позицию по оси X</p>
+<p class=textpreword>                enemy[loop2].spin-=steps[adjust];  // Вращаем 
+  против часовой</p>
+<p class=textpreword>              }</p>
+<p class=textpreword>              // Точная позиция по оси Y 
+  меньше чем назначенная позиция?</p>
+<p class=textpreword>              if (enemy[loop2].fy&lt;enemy[loop2].y*40)</p>
+<p class=textpreword>              {</p>
+<p class=textpreword>                enemy[loop2].fy+=steps[adjust];    
+  // Увеличим точную позицию по оси Y</p>
+<p class=textpreword>                enemy[loop2].spin+=steps[adjust];  // Вращаем 
+  по часовой</p>
+<p class=textpreword>              }</p>
+<p class=textpreword>              // Точная позиция по оси Y 
+  больше чем назначенная позиция?</p>
+<p class=textpreword>              if (enemy[loop2].fy&gt;enemy[loop2].y*40)</p>
+<p class=textpreword>              {</p>
+<p class=textpreword>                enemy[loop2].fy-=steps[adjust];    
+  // Уменьшим точную позицию по оси Y</p>
+<p class=textpreword>                enemy[loop2].spin-=steps[adjust];  // Вращаем 
+  против часовой</p>
+<p class=textpreword>              }</p>
+<p class=textpreword>            }</p>
+<p class=textpreword>          }</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>После перемещения противников мы проверяем, попал ли кто-нибудь 
+  из них в игрока. Для точности мы сравниваем точные позиции противников с точной 
+  позицией игрока. Если позиция противника <b>fx</b> равна точной позиция <b>fx</b> игрока, и позиция <b>fy </b>противника равна <b>fy</b><b> 
+  </b>игрока, то игрок МЕРТВ :).<br>
+  <br>
+</p>
+<p class=textword>Если игрок мертв, то мы уменьшаем его количество жизней. Затем 
+  мы проверяем, что у игрока еще есть жизни. Это можно сделать сравнением <b>lives</b> 
+  с 0. Если <b>lives</b> равно нулю, то мы присваиваем <b>gameover</b> ИСТИНА.<br>
+  <br>
+</p>
+<p class=textword>Затем мы сбрасываем наши объекты, вызывая <b>ResetObjects()</b>, и проигрываем звук смерти.<br>
+  <br>
+</p>
+<p class=textword>Вывод звука новый материал в этом уроке. Я решил использовать 
+  наиболее простую процедуру вывода звука ... <b>PlaySound()</b>. 
+  <b>PlaySound()</b> имеет три параметра. В первом параметре мы передаем 
+  ей название файла, который мы хотим проиграть. В нашем случае мы хотим, чтобы 
+  проиграл звук из файла Die.WAV 
+  в каталоге Data. Второй параметр можно проигнорировать. Мы установим его в NULL. 
+  Третий параметр – флаг для проигрывания звука. Два наиболее часто используемых 
+  типа флага: <b>SND_SYNC</b>, который приостанавливает выполнение программы пока 
+  звук не проиграет, и <b>SND_ASYNC</b>, который запускает проигрывание звука, 
+  но не останавливает программу. Мы хотим иметь небольшую задержку после того, 
+  как игрок умер, поэтому мы используем <b>SND_SYNC</b>. Довольно просто!<br>
+  <br>
+</p>
+<p class=textword>Я забыл рассказать об одной вещи в начале программы: для того 
+  чтобы <b>PlaySound()</b> и таймер работали, Вы должны подключить файл winmm.lib в проект (в Visual C++ это делается в PROJECT / SETTINGS / LINK). 
+  winmm.lib – мультимедийная библиотека Windows. 
+  Если Вы не включите эту библиотеку, Вы получите сообщения об ошибках, когда 
+  Вы пробуете откомпилировать программу.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>          // Кто-нибудь из противников сверху игрока?</p>
+<p class=textpreword>          if ((enemy[loop1].fx==player.fx) &amp;&amp; (enemy[loop1].fy==player.fy))</p>
+<p class=textpreword>          {</p>
+<p class=textpreword>            lives--;            // Уменьшим 
+  жизни</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>            if (lives==0)       // Нет больше жизней?</p>
+<p class=textpreword>            {</p>
+<p class=textpreword>              gameover=TRUE;    // gameover 
+  равно TRUE</p>
+<p class=textpreword>            }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>            ResetObjects();      // Сброс позиций игрока / противников</p>
+<p class=textpreword>            PlaySound(&quot;Data/Die.wav&quot;, NULL, SND_SYNC);  
+  // Играем звук смерти</p>
+<p class=textpreword>          }</p>
+<p class=textpreword>        }</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Теперь мы можем переместить игрока. В первой строке кода ниже 
+  мы проверяем, нажата ли стрелка вправо, и <b>player</b><b>.</b><b>x</b> меньше, чем 10 (не хотим выйти из сетки), и <b>player.</b><b>fx</b> 
+  равно <b>player</b><b>.</b><b>x</b> 
+  умноженное на 60, и <b>player.</b><b>fy</b> равно <b>player</b><b>.</b><b>y</b> умноженное на 40, т.е. находится в месте пересечения X 
+  и Y линий сетки.<br>
+  <br>
+</p>
+<p class=textword>Если мы не проверим, что игрок был в месте пересечения, и разрешим 
+  игроку перемещать как угодно, то игрок 
+  срежет правый угол ячейки, точно так же как противники сделали бы, если бы мы 
+  не проверяли, что они выровнены с вертикальной или горизонтальной линией. Эта 
+  проверка также делается, для того чтобы проверить, что игрок закончил, передвигаться 
+  прежде, чем мы переместим его в новое местоположение.<br>
+  <br>
+</p>
+<p class=textword>Если игрок в месте пересечения сетки (где встречаются вертикальные 
+  и горизонтальные линии) и он не за правым краем, мы помечаем, что текущая горизонтальная 
+  линия пройдена. Затем мы увеличиваем значение <b>player</b><b>.</b><b>x</b> на единицу, что вызывает перемещение 
+  игрока на одну клетку вправо.<br>
+  <br>
+</p>
+<p class=textword>Далее мы делаем также при перемещении влево, вниз и вверх. Когда 
+  перемещаем влево, мы проверяем, что игрок не вышел за левый край сетки. Когда 
+  перемещаем вниз, мы проверяем, что игрок не покинул сетку снизу, и при перемещении 
+  вверх мы проверяем, что игрок не вылетел за верх сетки.<br>
+  <br>
+</p>
+<p class=textword>При перемещении влево и вправо мы помечаем горизонтальную линию 
+  (<b>hline[][]</b>) ИСТИНА, что означает, что она 
+  пройдена. При перемещении вверх и вниз мы помечаем вертикальную линию (<b>vline[][]</b>) ИСТИНА, что означает, что она 
+  пройдена.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>        if (keys[VK_RIGHT] &amp;&amp; (player.x&lt;10) &amp;&amp; (player.fx==player.x*60) 
+  &amp;&amp; (player.fy==player.y*40))</p>
+<p class=textpreword>        {</p>
+<p class=textpreword>          // Пометить текущую горизонтальную границу как 
+  пройденную</p>
+<p class=textpreword>          hline[player.x][player.y]=TRUE;</p>
+<p class=textpreword>          player.x++;        // Переместить 
+  игрока вправо</p>
+<p class=textpreword>        }</p>
+<p class=textpreword>        if (keys[VK_LEFT] &amp;&amp; (player.x&gt;0) 
+  &amp;&amp; (player.fx==player.x*60) &amp;&amp; (player.fy==player.y*40))</p>
+<p class=textpreword>        {</p>
+<p class=textpreword>          player.x--;        // Переместить игрока 
+  влево</p>
+<p class=textpreword>          // Пометить текущую горизонтальную границу как 
+  пройденную</p>
+<p class=textpreword>          hline[player.x][player.y]=TRUE;</p>
+<p class=textpreword>        }</p>
+<p class=textpreword>        if (keys[VK_DOWN] &amp;&amp; (player.y&lt;10) 
+  &amp;&amp; (player.fx==player.x*60) &amp;&amp; (player.fy==player.y*40))</p>
+<p class=textpreword>        {</p>
+<p class=textpreword>          // Пометить текущую вертикальную границу как пройденную</p>
+<p class=textpreword>          vline[player.x][player.y]=TRUE;</p>
+<p class=textpreword>          player.y++;        // Переместить игрока 
+  вниз</p>
+<p class=textpreword>        }</p>
+<p class=textpreword>        if (keys[VK_UP] &amp;&amp; (player.y&gt;0) 
+  &amp;&amp; (player.fx==player.x*60) &amp;&amp; (player.fy==player.y*40))</p>
+<p class=textpreword>        {</p>
+<p class=textpreword>          // Пометить текущую вертикальную границу как пройденную</p>
+<p class=textpreword>          player.y--;        // Переместить игрока 
+  вверх</p>
+<p class=textpreword>          vline[player.x][player.y]=TRUE;</p>
+<p class=textpreword>        }</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Мы увеличиваем / уменьшаем точные <b>fx</b> 
+  и <b>fy</b> переменные игрока, так же как мы увеличиваем / уменьшаем 
+  точные <b>fx</b> и <b>fy </b>переменные противника.<br>
+  <br>
+</p>
+<p class=textword>Если значение <b>fx</b> игрока, меньше чем значение 
+  <b>x</b> игрока умноженное на 60, мы увеличиваем <b>fx</b><b> 
+  </b>игрока, на шаг скорости нашей игры в зависимости от значения <b>adjust</b>.<br>
+  <br>
+</p>
+<p class=textword>Если значение <b>fx</b> игрока больше, чем <b>x</b> 
+  игрока умноженное на 60, мы уменьшаем <b>fx</b> игрока, на шаг скорости нашей игры в 
+  зависимости от значения <b>adjust</b>.<br>
+  <br>
+</p>
+<p class=textword>Если значение <b>fy</b> игрока, меньше чем <b>y</b> 
+  игрока умноженное на 40, мы увеличиваем <b>fy</b> игрока, на шаг скорости нашей 
+  игры в зависимости от значения <b>adjust</b>.<br>
+  <br>
+</p>
+<p class=textword>Если значение <b>fy</b> игрока, больше чем <b>y</b> 
+  игрока умноженное на 40, мы уменьшаем <b>fy</b> игрока, на шаг скорости нашей 
+  игры в зависимости от значения <b>adjust</b>.<br>
+  <br>
+</p>
+<p class=textpreword>        if (player.fx&lt;player.x*60)  
+  // Точная позиция по оси X меньше чем назначенная позиция?</p>
+<p class=textpreword>        {</p>
+<p class=textpreword>          player.fx+=steps[adjust]; 
+  // Увеличим точную позицию X</p>
+<p class=textpreword>        }</p>
+<p class=textpreword>        if (player.fx&gt;player.x*60)  
+  // Точная позиция по оси X больше чем назначенная позиция?</p>
+<p class=textpreword>        {</p>
+<p class=textpreword>          player.fx-=steps[adjust]; 
+  // Уменьшим точную позицию X</p>
+<p class=textpreword>        }</p>
+<p class=textpreword>        if (player.fy&lt;player.y*40)  
+  // Точная позиция по оси Y меньше чем назначенная позиция?</p>
+<p class=textpreword>        {</p>
+<p class=textpreword>          player.fy+=steps[adjust]; 
+  // Увеличим точную позицию Y</p>
+<p class=textpreword>        }</p>
+<p class=textpreword>        if (player.fy&gt;player.y*40)  
+  // Точная позиция по оси Y больше чем назначенная позиция?</p>
+<p class=textpreword>        {</p>
+<p class=textpreword>          player.fy-=steps[adjust]; 
+  // Уменьшим точную позицию X</p>
+<p class=textpreword>        }</p>
+<p class=textpreword>      }</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Если игра завершена, то будет запущен следующий небольшой раздел 
+  кода. Мы проверяем, нажатие клавиши пробел. Если это так, то мы присваиваем 
+  переменной <b>gameover</b> ЛОЖЬ (повторный запуск игры). Мы 
+  задаем значение переменной <b>filled</b> ИСТИНА. Это 
+  означает, что стадия окончена, вызывая сброс переменных игрока, вместе с противниками.<br>
+  <br>
+</p>
+<p class=textword>Мы задаем стартовый уровень равным 1, наряду с реальным отображенным 
+  уровнем (<b>level2</b>). Мы устанавливаем значение переменной <b>stage</b> равной 0. Мы делаем это, потому что после того, как 
+  компьютер видит, что сетка была заполнена, он будет думать, что Вы закончили 
+  стадию, и увеличит <b>stage</b> на 1. Поскольку мы устанавливаем 
+  <b>stage</b> в 0, то затем <b>stage</b> 
+  увеличивается, и станет равной 1 (точно, что мы хотим). Наконец мы устанавливаем 
+  <b>lives</b> обратно в 5.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>      else                // Иначе</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        if (keys[' '])    // Если пробел нажат</p>
+<p class=textpreword>        {</p>
+<p class=textpreword>          gameover=FALSE; // gameover равно FALSE</p>
+<p class=textpreword>          filled=TRUE;    // filled равно 
+  TRUE</p>
+<p class=textpreword>          level=1;        // Стартовый уровень 
+  установим обратно в один</p>
+<p class=textpreword>          level2=1;       // Отображаемый уровень 
+  также установим в один</p>
+<p class=textpreword>          stage=0;        // Стадию игры установим 
+  в ноль</p>
+<p class=textpreword>          lives=5;        // Количество жизней равно пяти</p>
+<p class=textpreword>        }</p>
+<p class=textpreword>      }</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Код ниже проверяет, равен ли флаг <b>filled</b> 
+  ИСТИНА (означает, что сетка была заполнена). Переменная <b>filled</b> 
+  может быть установлена в ИСТИНУ одним из двух путей. Или сетка заполнена полностью 
+  и <b>filled</b> равно ИСТИНА, когда игра закончена, 
+  а пробел был нажат, чтобы перезапустить ее (код выше).<br>
+  <br>
+</p>
+<p class=textword>Если <b>filled</b> равно ИСТИНА, вначале 
+  мы проигрываем крутую мелодию завершения уровня. Я уже объяснял, как работает <b>PlaySound()</b>. На сей раз, мы будем 
+  проигрывать файл Complete.WAV 
+  из каталога DATA. Снова, мы используем <b>SND_SYNC</b> для реализации задержки 
+  перед запуском следующей стадии.<br>
+  <br>
+</p>
+<p class=textword>После того, как звук был проигран, мы увеличиваем <b>stage</b> 
+  на один, и проверяем, что <b>stage</b> не больше чем 
+  3. Если <b>stage</b> больше чем 3, мы устанавливаем 
+  <b>stage</b> в 1, и увеличиваем внутренний уровень и 
+  видимый уровень на один.<br>
+  <br>
+</p>
+<p class=textword>Если внутренний уровень больше чем 3, мы устанавливаем внутренний 
+  уровень (<b>level</b>) 
+  равным 3, и увеличиваем <b>lives</b> на 1. Если Вы достаточно быстры, и закончили уровень 
+  с 3, Вы заслуживаете бесплатную жизнь :). После увеличения жизней мы проверяем, 
+  что игрок не имеет больше чем 5 жизней. Если жизней больше чем 5, мы сбрасываем 
+  число жизней до 5.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>      if (filled)         // Если сетка заполнена?</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        PlaySound(&quot;Data/Complete.wav&quot;, 
+  NULL, SND_SYNC);  // Играем звук завершения уровня</p>
+<p class=textpreword>        stage++;          // Увеличиваем Stage</p>
+<p class=textpreword>        if (stage&gt;3)      // Если Stage 
+  больше чем 3?</p>
+<p class=textpreword>        {</p>
+<p class=textpreword>          stage=1;        // Тогда 
+  Stage равно 1</p>
+<p class=textpreword>          level++;        // Увеличим уровень</p>
+<p class=textpreword>          level2++;       // Увеличим отображаемый 
+  уровень</p>
+<p class=textpreword>          if (level&gt;3)    // Если уровень больше 
+  чем 3?</p>
+<p class=textpreword>          {</p>
+<p class=textpreword>            level=3;      // Тогда 
+  Level равно 3</p>
+<p class=textpreword>            lives++;      // Добавим игроку 
+  лишнюю жизнь</p>
+<p class=textpreword>            if (lives&gt;5)  // Если число жизней 
+  больше чем 5?</p>
+<p class=textpreword>            {</p>
+<p class=textpreword>              lives=5;    // Тогда установим Lives 
+  равной 5</p>
+<p class=textpreword>            }</p>
+<p class=textpreword>          } </p>
+<p class=textpreword>        }</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Затем мы сбрасываем все объекты (такие как игрок и враги). При 
+  этом игрока помещаем снова в левый верхний угол сетки, а противникам присваиваются 
+  случайные позиции на сетке.<br>
+  <br>
+</p>
+<p class=textword>Мы создаем два цикла (<b>loop1</b> и <b>loop2</b>) для обхода 
+  сетки. В них мы присваиваем значения всем вертикальным и горизонтальным линиям 
+  в ЛОЖЬ. Если бы мы этого не делали, то, когда была бы запущенна следующая стадия, 
+  то игра бы думала, что сетка все еще заполнена.<br>
+  <br>
+</p>
+<p class=textword>Заметьте, что код, который мы используем, чтобы очистить сетку, 
+  похож на код, который мы используем, чтобы вывести сетку. Мы должны проверить, 
+  что линии не будут рисоваться за правым и нижним краем. Именно поэтому мы проверяем, 
+  что <b>loop1</b> меньше чем 10 прежде, чем мы сбрасываем горизонтальные линии, 
+  и мы проверяем, что <b>loop2</b> меньше чем 10 прежде, чем мы сбрасываем вертикальные 
+  линии.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>        ResetObjects();                    // Сброс позиции Игрока / 
+  Противника</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>        for (loop1=0; loop1&lt;11; loop1++)   // Цикл по 
+  X координатам сетки</p>
+<p class=textpreword>        {</p>
+<p class=textpreword>          for (loop2=0; loop2&lt;11; loop2++) 
+  // Цикл по Y координатам сетки</p>
+<p class=textpreword>          {</p>
+<p class=textpreword>            if (loop1&lt;10)                  // 
+  Если X координата меньше чем 10</p>
+<p class=textpreword>            {</p>
+<p class=textpreword>              hline[loop1][loop2]=FALSE; 
+    // Задаем текущее горизонтальное значение в FALSE</p>
+<p class=textpreword>            }</p>
+<p class=textpreword>            if (loop2&lt;10)                  // 
+  Если Y координата меньше чем 10</p>
+<p class=textpreword>            {</p>
+<p class=textpreword>              vline[loop1][loop2]=FALSE;   
+  // Задаем текущее вертикальное значение в FALSE</p>
+<p class=textpreword>            }</p>
+<p class=textpreword>          }</p>
+<p class=textpreword>        }</p>
+<p class=textpreword>      }</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Теперь мы проверяем, попал ли игрок в песочные часы. Если точная 
+  позиция <b>fx </b>игрока равна 
+  позиции <b>x</b> песочных часов умноженная на 60, и 
+  точная позиция <b>fy</b> игрока равна позиции <b>y</b> 
+  песочных часов умноженная на 40, и <b>hourglass.</b><b>fx</b> 
+  равно 1 (т.е. песочные часы есть на экране), то тогда код ниже будет выполнен.<br>
+  <br>
+</p>
+<p class=textword>Первая строка кода - <b>PlaySound(&quot;</b><b>Data/</b><b>freeze.</b><b>wav&quot;,</b><b>NULL, 
+  </b><b>SND_</b><b>ASYNC | </b><b>SND_</b><b>LOOP)</b>. 
+  В этой строке проигрывается файл freeze.WAV из каталога DATA. Обратите внимание на то, что мы на этот раз используем 
+  <b>SND_ASYNC</b>. Мы хотим, чтобы звук замораживания играл без остановки игры. 
+  Флаг <b>SND_LOOP</b> позволяет циклично повторять звук, пока мы не сообщим, 
+  что пора прекратить играть, или пока не будет запущен другой звук.<br>
+  <br>
+</p>
+<p class=textword>После того, как мы запустили проигрывание звука, мы задаем <b>hourglass.</b><b>fx</b> 
+  в 2. Когда <b>hourglass.</b><b>fx</b> равно 2, песочные часы исчезнут, враги замрут, и звук будет непрерывно 
+  играть.<br>
+  <br>
+</p>
+<p class=textword>Мы также устанавливаем <b>hourglass.</b><b>fy</b> в 0. Переменная <b>hourglass.</b><b>fy</b> - счетчик. Когда она достигнет некоторого значения, значение переменной 
+  <b>hourglass.</b><b>fx</b> изменится.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>      // Если игрок попал в песочные часы и 
+  они на экране</p>
+<p class=textpreword>      if ((player.fx==hourglass.x*60) &amp;&amp; 
+  (player.fy==hourglass.y*40) &amp;&amp; (hourglass.fx==1))</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        // Играть звук замораживания</p>
+<p class=textpreword>        PlaySound(&quot;Data/freeze.wav&quot;, 
+  NULL, SND_ASYNC | SND_LOOP);</p>
+<p class=textpreword>        hourglass.fx=2;          // Задать 
+  hourglass fx значение 2</p>
+<p class=textpreword>        hourglass.fy=0;          // Задать hourglass 
+  fy значение 0</p>
+<p class=textpreword>      }</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>В этой небольшой части кода увеличивает значение вращения игрока 
+  наполовину скорости выполнения игры. Если <b>player</b><b>.</b><b>spin</b> больше чем 360.0f, мы вычитаем 360.0f из <b>player</b><b>.</b><b>spin</b>. 
+  Это предохраняет значение <b>player</b><b>.</b><b>spin</b> от переполнения.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>      player.spin+=0.5f*steps[adjust]; // Вращение 
+  игрока по часовой</p>
+<p class=textpreword>      if (player.spin&gt;360.0f)          
+  // Значение spin больше чем 360?</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        player.spin-=360;              // Тогда 
+  вычтем 360</p>
+<p class=textpreword>      }</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Код ниже уменьшает значение вращения песочных часов на 1/4 скорости 
+  выполнения игры. Если <b>hourglass</b><b>.</b><b>spin</b> меньше чем 0.0f, мы добавляем 360.0f. Мы не хотим, чтобы <b>hourglass</b><b>.</b><b>spin</b> принимало отрицательные значения.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>      hourglass.spin-=0.25f*steps[adjust]; // Вращение часов против 
+  часовой</p>
+<p class=textpreword>      if (hourglass.spin&lt;0.0f)             
+  // spin меньше чем 0?</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        hourglass.spin+=360.0f;            // 
+  Тогда добавим 360</p>
+<p class=textpreword>      }</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>В первой строке ниже увеличивается счетчик песочных часов, как 
+  я говорил об этом. Переменная <b>hourglass.</b><b>fy</b> увеличивается на скорость игры (она равна значению шага в зависимости 
+  от значения корректировки).<br>
+  <br>
+</p>
+<p class=textword>Во второй линии проверяется, равно ли <b>hourglass.</b><b>fx</b> значению 0 (не видимы) и счетчик песочных 
+  часов (<b>hourglass.</b><b>fy</b>) больше чем 6000 деленное на текущий внутренний уровень (<b>level</b>).<br>
+  <br>
+</p>
+<p class=textword>Если значение <b>fx</b> равно 0, и счетчик больше 
+  чем 6000 деленное на внутренний уровень, то мы проигрываем файл hourglass.WAV из каталога DATA. Мы не хотим, чтобы игра остановилась, 
+  поэтому мы используем <b>SND_ASYNC</b>. Мы не будем повторять звук на этот раз, 
+  поэтому после того как звук проиграл, он не будет играть снова.<br>
+  <br>
+</p>
+<p class=textword>После того, как мы проиграли звук, мы задаем песочным часам 
+  случайное положение по оси X. Мы добавляем единицу к случайному значению, для 
+  того чтобы песочные часы не появились на стартовой позиции игрока в верхнем 
+  углу сетки. Мы также задаем песочным часам случайное положение по оси Y. Мы 
+  устанавливаем <b>hourglass.</b><b>fx</b> в 1, это заставит песочные часы появиться на экране в этом новом 
+  местоположении. Мы также сбрасываем <b>hourglass.</b><b>fy</b> 
+  в ноль, поэтому можно запустить счетчик снова.<br>
+  <br>
+</p>
+<p class=textword>Это приведет к тому, что песочные часы появятся на экране после 
+  заданного времени.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>      hourglass.fy+=steps[adjust];    // Увеличим 
+  hourglass fy</p>
+<p class=textpreword>      // Если hourglass fx равно 0 и fy больше чем 6000 деленное на текущий уровень?</p>
+<p class=textpreword>      if ((hourglass.fx==0) &amp;&amp; (hourglass.fy&gt;6000/level))</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        // Тогда играем звук песочных часов</p>
+<p class=textpreword>        PlaySound(&quot;Data/hourglass.wav&quot;, 
+  NULL, SND_ASYNC);</p>
+<p class=textpreword>        hourglass.x=rand()%10+1;      // Случайная 
+  позиция часов по X</p>
+<p class=textpreword>        hourglass.y=rand()%11;        
+  // Случайная позиция часов по Y</p>
+<p class=textpreword>        hourglass.fx=1;               // Задать 
+  hourglass fx 
+  значение 1 (стадия часов)</p>
+<p class=textpreword>        hourglass.fy=0;               // Задать 
+  hourglass fy 
+  значение 0 (счетчик)</p>
+<p class=textpreword>      }</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Если <b>hourglass.</b><b>fx</b> равно нолю, и <b>hourglass.</b><b>fy</b> больше чем 6000 деленное на текущий внутренний 
+  уровнь (<b>level</b>), мы сбрасываем <b>hourglass.</b><b>fx</b> 
+  назад в 0, что приводит к тому, что песочные часы исчезают. Мы также устанавливаем 
+  <b>hourglass.</b><b>fy</b> в 0, потому что можно начать счет снова.<br>
+  <br>
+</p>
+<p class=textword>Это приводит к тому, что песочные часы исчезнут, если Вы не 
+  получаете их после некоторого времени.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>      // Если hourglass fx равно 1 и fy больше чем 6000 деленное на текущий уровень?</p>
+<p class=textpreword>      if ((hourglass.fx==1) &amp;&amp; (hourglass.fy&gt;6000/level))</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        hourglass.fx=0;          // Тогда зададим 
+  fx равным 0 (Обратим часы в ноль)</p>
+<p class=textpreword>        hourglass.fy=0;          // Задать fy 
+  равным 0 (Сброс счетчика)</p>
+<p class=textpreword>      }</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Теперь мы проверяем, окончилось ли время 'замораживания противников' 
+  после того, как игрок коснулся песочных часов.<br>
+  <br>
+</p>
+<p class=textword>Если <b>hourglass.</b><b>fx</b> равняется 2, и <b>hourglass.</b><b>fy</b> больше чем 500 плюс 500 умноженное на 
+  текущий внутренний уровень, мы прерываем звук заморозки, который беспрерывно 
+  проигрывается. Мы прерываем звук командой <b>PlaySound(</b><b>NULL, </b><b>NULL, 
+  0)</b>. Мы устанавливаем <b>hourglass.</b><b>fx</b> снова в 0, и <b>hourglass.</b><b>fy</b> 
+  в 0. После присваивания <b>fx</b> и <b>fy</b> к 0 происходит запуск цикла работы песочных часов снова. Значение 
+  <b>fy</b> будет равняться 6000 деленное 
+  на текущий внутренний уровень прежде, чем песочные часы появятся снова.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>      // Переменная песочных часов fx 
+  равно 2 и переменная fy</p>
+<p class=textpreword>      // больше чем 500 плюс 500 умноженное на текущий уровень?</p>
+<p class=textpreword>      if ((hourglass.fx==2) &amp;&amp; (hourglass.fy&gt;500+(500*level)))</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        PlaySound(NULL, NULL, 0);// Тогда прерываем 
+  звук заморозки</p>
+<p class=textpreword>        hourglass.fx=0;          // Все в ноль</p>
+<p class=textpreword>        hourglass.fy=0;</p>
+<p class=textpreword>      }</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Последнее что надо сделать - увеличить переменную задержки. 
+  Если Вы помните, задержка используется, чтобы обновить передвижение и анимацию 
+  игрока. Если наша программа финишировала, нам надо уничтожить окно и произвести 
+  возврат на рабочий стол.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>      delay++;         // Увеличение счетчика задержки противника</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Shutdown</p>
+<p class=textpreword>  KillGLWindow();      // Уничтожить окно</p>
+<p class=textpreword>  return (msg.wParam); // Выход из программы</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Я потратил много времени при написании этого урока. Вначале 
+  это был урок по линиям, а в дальнейшем он перерос в небольшую интересную игру. 
+  Буду надеяться, если Вы сможете использовать то, что Вы узнали в этом уроке 
+  в ваших проектах с OpenGL. Я знаю, что Вы часто просили 
+  рассказать об играх на основе мозаики (tile). Отлично Вы не сможете сделать что-то более мозаичное, 
+  чем это :). Я также получил много писем, в которых меня спрашивали, как сделать 
+  точное по пиксельное рисование. Я думаю, что охватил и это :). Наиболее важно, 
+  что этот урок не только преподает Вам новые сведения о OpenGL, 
+  но также рассказывает Вам, как использовать простые звуки, чтобы добавить немного 
+  возбуждения в ваши визуальные произведения искусства! Я надеюсь, что Вам понравился 
+  этот урок. Если Вы чувствуете, что я неправильно прокомментировал кое-что или 
+  что код мог быть лучше в некоторых разделах, пожалуйста, сообщите мне об этом. 
+  Я хочу сделать самые хорошие уроки по OpenGL, 
+  я могу и я заинтересованным в общении с вами.<br>
+  <br>
+</p>
+<p class=textword>Пожалуйста, обратите внимание, это был чрезвычайно большой проект. 
+  Я пробовал комментировать все настолько ясно, насколько это возможно, но облекать 
+  мысли в слова, не столь просто, как это кажется. Знать о том, почему это все 
+  работает, и пробовать это объяснить – это совершенно разные вещи :). Если Вы 
+  прочитали урок, и можете объяснить все лучше, или если Вы знаете, способы помочь 
+  мне, пожалуйста, пошлите мне свои предложения. Я хочу, чтобы этот урок был прост. 
+  Также обратите внимание, что этот урок не для новичка. Если Вы не читали предыдущие 
+  уроки, пожалуйста, не задавайте мне вопросов. Большое спасибо.<br>
+  <br>
+</p>
+
+<p class="textnoalign" align="right">
+<font color="#0000A0"><b> © Jeff Molofee (NeHe)</a></b></font>
+</p>  
+
+</div>
+<div id="end">
+
+          <p><a href="http://pmg.org.ru/"
+			onmouseover=" return event_over(this,'Программирование магических игр')  "
+			onmouseout=" return event_out(this) "><font class="link"><b>PMG</b></font></a> 
+            <font class="comment">&nbsp;7 февраля 2003&nbsp;(c)&nbsp;</font> 
+        <a href="mailto:anis@pmg.org.ru"
+	onmouseover=" return event_over(this,'Почта переводчику')  " 
+	onmouseout=" return event_out(this) "> <font class="link"><b>Сергей Анисимов</b></font></a> 
+          </p>
+</div>
+</center>
+
+<script language="JavaScript">
+<!--
+form_print();
+//-->
+</script>
+
+</body>
+</html>

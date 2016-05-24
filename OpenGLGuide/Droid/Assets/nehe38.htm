@@ -1,0 +1,720 @@
+<!doctype html public "-//w3c//dtd html 3.2 final//ru">
+<html>
+
+<head>
+<meta http-equiv="Content-Type"
+content="text/html; charset=windows-1251">
+<meta name="description"
+content="Переводы по OpenGL, трехмерная графика, игры, мультимедия
+Translations Russian OpenGL
+">
+<meta name="keyword"
+content="Программирование,игры,3D,трехмерная графика,OpenGL,NeHe">
+<meta name="keyword"
+content="programming,C,C++,game,graphics">
+<title>Урок 40. Моделирование движений веревки</title>
+<link rel="stylesheet" href="pmg.css" type="text/css">
+</head>
+
+<body bgcolor="#b2d3e1" link="#800080" vlink="#800080">
+<script src='nehe.js' language="javascript">
+<!--
+//-->
+</script>
+
+<center>
+<div id="top">
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+        <td width="20%" align="center" valign="center">
+        <img src="nehelogo.jpg" align="left" hspace="0" width="125" height="50" alt="NeHe Tutorials">
+        </td>
+        <td width="60%" align="center">
+	<a href="index.html"
+	onmouseover=" return event_over(this,'NeHe Ru.')  "
+        onmouseout=" return event_out(this) ">
+        <font class="linksbig">
+        Народный учебник по OpenGL</font></a><br>
+        </td>
+        <td width="20%" align="center" valign="center">
+        <img src="nehe40.jpg" align="right" hspace="0" width="80" height="60" alt="Урок 40. OpenGL">
+        </td>
+    </tr>
+</table>
+</div>
+
+<div id="head">
+<p class="head1">
+Урок 40. Моделирование движений веревки</p>
+</div>
+<div id="main" bgcolor="#ADADFF">
+<p class="textnoalign" align="left">
+
+<a href="http://nehe.gamedev.net/data/lessons/lesson.asp?lesson=40" target="_blank"
+onmouseover=" return event_over(this,this)  "
+onmouseout=" return event_out(this) ">
+<font class="link"><b>Rope Physics</b></font></a>
+<br>
+</p><p class=textword>&nbsp;  </p>
+<p class=head3word>Эмуляция Веревки<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>В этом уроке мы с Вами рассмотрим, как эмулировать гибкие движения 
+  веревки. Это моделирование основано на простой библиотеке физического моделирования, 
+  которая рассмотрена в уроке 39. Это урок будет Вам полезен в том случае, если 
+  Вы знаете, как моделировать воздействие силы на массы, как позиция и скорость 
+  массы вычисляются с помощью итераций во время моделирования, и как трехмерные 
+  векторные операции используются в физике. Если Вы сомневаетесь в том, что хорошо 
+  знаете эти темы, то читайте про них в уроке 39 или другую подходящую документацию, 
+  и разработайте несколько прикладных программ.<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Цель физического моделирования состоит в том, чтобы сформировать 
+  данные о воздействиях на массы, основанные на физики, которые будут действовать 
+  так же как в естественной среде. Движение, полученное при моделировании, не 
+  может быть точно таким же, как в природе. Модель, которая описывает движение, 
+  должна формировать необходимые физические данные. Модель, которую мы создаем 
+  должна быть точно сформулирована, мы должны задать, как точно и детально мы 
+  описываем движение, которое мы стремимся смоделировать, чтобы формировать необходимые 
+  физические данные. Мы хотим описать движение атомов, электронов или фотонов, 
+  или мы стремимся аппроксимировать движение кластера частиц? Каков масштаб того, 
+  что мы хотим видеть? Какова арена действия пространства и времени?</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Тот масштаб пространства и времени, которые мы хотим наблюдать, 
+  связан с:<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>1. Математикой движения</p>
+<p class=textword>2. Производительностью компьютера, который мы используем для 
+  моделирования <br></p>
+<p class=textword>&nbsp;  </p><p class=head3word>1. Математика Движения:<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Здесь, математика движения называется &quot;классической механикой&quot;, 
+  в которой массы рассматриваются как частицы и ускорение им придается силами, 
+  действующими во времени. В масштабе, который мы можем наблюдать невооруженным 
+  глазом, классическая механика, допустима для использования. Поэтому, мы можем 
+  использовать классическую механику для моделирования объектов и механизмов из 
+  нашей обычной жизни. В уроке 39, сила тяготения и сила упругости пружины применялась 
+  к массам в 1 кг при помощи классической механики. В этом уроке, мы будем использовать 
+  классическую механику для моделирования гибких движений веревки.<br></p>
+<p class=textword>&nbsp;  </p><p class=head3word>2. Производительность компьютера, который мы используем для 
+  моделирования:<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Производительность компьютера для моделирования, определяет, 
+  степенью детализации, которую мы можем наблюдать. Например, при моделировании 
+  пешехода на медленном компьютере, мы бы подумали бы об удалении моделирования 
+  движений пальцев. Пальцы ступни, конечно, играют важную роль. Хотя и без моделирования ступней мы могли бы 
+  получить идущего человека. Возможно, качество движения было бы низким, но затраты 
+  на вычисления будут ниже. В случае пешехода, производительность компьютера вынуждает 
+  нас выбирать, что в первую очередь моделировать ступни или ноги, или пальцы 
+  на руке или на ноге.<br></p>
+<p class=textword>&nbsp;  </p><p class=head3word>Разработка физических данных для веревки:<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Имея в наличии классическую механику (как математику движения) 
+  и компьютер с процессором не менее 500 МГц, мы будет проектировать физические 
+  данные для моделирования веревки. Во-первых, мы должны определить, как детально 
+  мы хотим наблюдать процесс движения веревки. При кодировании, мы будем использовать 
+  Physics1.h из урока 39. В Physics1.h, мы имеем класс массы (class Mass), который представляет массу как точечную частицу. Мы можем 
+  использовать этот класс массы. Если мы связываем массы, подобные точкам, друг 
+  с другом как при моделировании пружины, мы сможем сформировать физическую модель, 
+  чтобы эмулировать веревку. Исходя из этой модели, которую мы рассматриваем, 
+  мы определяем насколько точной будет эмуляция движений веревки. Мы сможем понять, 
+  что мы готовы воспроизвести покачивание или помахивание веревкой, но мы не сможем 
+  воссоздать скручивание веревки. (Чтобы понять, что такое скручивание веревки, 
+  возьмите веревку в руки и зажмите в ладони, и потирайте ладони друг об друга, 
+  тогда веревка будет скручиваться.) Мы не можем наблюдать скручивание, потому 
+  что мы используем в данной модели точки. Точки не могут вращаться вокруг оси, 
+  чтобы эмулировать скручивание веревки (примечание переводчика: но если вы будет 
+  каждый фрагмент веревки представлять не линией, а цилиндром, то вы вполне сможет 
+  эмулировать и скручивание веревки). Давайте будем использовать эту модель и 
+  примем что, движение веревки ограничено покачиванием и помахиванием. Давайте, 
+  также определим, что мы хотим наблюдать движение помахивания веревкой, с максимальной 
+  детализацией 10 см. Это означает, что 
+  у веревки будут нарушения непрерывности до 10 см. Я выбрал эти ограничения, 
+  потому что я хочу использовать в веревке приблизительно 50 или 100 частиц (из-за 
+  производительности), и я хочу, чтобы эта веревка была приблизительно от 3 до 
+  4 метров длиной. Что означает, что есть приблизительно от 3 до 8 см между частицами 
+  веревки, что не превышает уровень нарушения непрерывности, который мы выбрали 
+  (10 см).<br></p>
+<p class=textword>&nbsp;  </p><p class=head3word>Определение уравнения движения: <br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Уравнение движения с точки зрения математики представляет из 
+  себя дифференциальное уравнение второго порядка и концептуально означает силы, 
+  действующие в физическом окружении. Давайте использовать концептуальное значение, 
+  потому что это звучит лучше. Определение уравнения движения означает определение 
+  сил. В модели веревки, силы будут действовать на частицы, которые составляют 
+  веревку. Первая сила будет упругое растяжение/натяжение пружины между этими 
+  частицами. Ниже, каждая частица помечена как &quot;о&quot;, и пружина показана 
+  как &quot;----&quot;:</p>
+<pre><b>&nbsp;</b></pre>
+<pre><b>O----O----O----O</b></pre>
+<pre><b>1    2    3    4</b></pre>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Частица 1 связана с 2,  2 с 3, и 3 с 4. Мы имеем 4 частицы в 
+  этой веревке и 3 пружины. Пружина - источник силы между двумя частицами. Помните, 
+  что сила упругости сформулирована так:<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Сила = -k * x<br>
+  k: константа жесткости пружины <br>
+  x: расстояние массы от точки до места присоединения 
+  <br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Формула для вычисления упругости пружины, которую мы будем использовать, 
+  будет похожа на эту, но немного другая. Если бы мы использовали указанную формулу, 
+  то при этом веревка бы сжималась! Поскольку, если <b>x</b> не ноль (<b>x</b> 
+  - расстояние между двумя связанными массами в нашей модели веревки), возникает 
+  сила. Поэтому все частицы веревки были бы стянуты друг другу, пока <b>x</b> 
+  не стало бы равным нолю. Это не то, что мы хотим. Вообразите, что веревка лежит 
+  на столе. Мы хотим, чтобы наша веревка осталась неизменной подобно веревке на 
+  столе. Так или иначе, мы должны сохранить в этом случае неизменной длину веревки. 
+  Чтобы сделать это, сила между двумя любыми частицами должна быть ноль, тогда 
+  <b>x</b> имеет положительное значение. Давайте перепишем формулу так:<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Сила =-k * (x - d)<br>
+  k: константа жесткости пружины<br>
+  x: расстояние массы от точки до места присоединения<br>
+  d: положительная константа, задающее расстояние, при котором пружина будет устойчивой 
+  <br></p>
+<p class=textword>&nbsp;  </p><p class=textword>С этой формулой ясно, что, если расстояние между двумя массами 
+  равняется <b>d</b>, никакая сила не будет действовать. 
+  Пусть мы имеем 100 частиц. Если мы выбираем <b>d</b> 
+  как 5 см (0.05 метра), мы имеем устойчивую веревку в 5 метров, когда она лежит 
+  на столе. Когда <b>x</b> - больше чем <b>d</b>, пружина вытягивается, а когда меньше сжимается.<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Теперь, формула производит нужное движение, но требуется больше. 
+  Требуется некоторое трение. Если нет трения, физическая система сохраняет энергию. 
+  Если мы не используем коэффициент трения, веревка никогда не кончит качаться. 
+  Но вначале давайте взглянем на код.<br></p>
+<p class=textword>&nbsp;  </p><p class=head3word>Класс пружины<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Класс пружины связывает две массы и прикладывает силу к каждой 
+  из этих масс.</p>
+<p class=head2word>&nbsp;  </p>
+<p class=textpreword>class Spring // Объект для представления 
+  пружины с внутренней силой трения двух связанных масс</p>
+<p class=textpreword>             // Пружина нормальной длины (длина, при которой 
+  пружина не приводится</p>
+<p class=textpreword>             // в действие любыми силами)</p>
+<p class=textpreword>{</p>
+<p class=textpreword>public:</p>
+<p class=textpreword>  Mass* mass1;                
+  // Первая масса – один конец пружины</p>
+<p class=textpreword>  Mass* mass2;                
+  // Вторая масса – другой конец пружины</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  float springConstant;       // Константа жесткости пружины</p>
+<p class=textpreword>  float springLength;         // Длина, при которой пружина не приводится 
+  в действие любыми силами</p>
+<p class=textpreword>  float frictionConstant;     // Константа 
+  трения пружины</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  Spring(Mass* mass1, Mass* mass2,</p>
+<p class=textpreword>    // Конструктор</p>
+<p class=textpreword>    float springConstant, float springLength, 
+  float frictionConstant)</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    this-&gt;springConstant = springConstant;</p>
+<p class=textpreword>    this-&gt;springLength = springLength;</p>
+<p class=textpreword>    this-&gt;frictionConstant = frictionConstant;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>    this-&gt;mass1 = mass1;</p>
+<p class=textpreword>    this-&gt;mass2 = mass2;</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  void solve()                // Метод решение: действие сил</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    Vector3D springVector = mass1-&gt;pos 
+  - mass2-&gt;pos; // Вектор между 2 массами</p>
+<p class=textpreword>    </p>
+<p class=textpreword>    float r = springVector.length(); // 
+  Расстояние между 2 массами</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>    Vector3D 
+  force;                  // Сила инициализируется нулевым значением</p>
+<p class=textpreword>    </p>
+<p class=textpreword>    if (r != 0) // Чтобы не было деления 
+  на ноль</p>
+<p class=textpreword>      // Силы пружины добавляются в силу </p>
+<p class=textpreword>      force += -(springVector / r) * (r - springLength) * springConstant;</p>
+<p class=textpreword>    ...</p>
+<p class=head2word>&nbsp; </p>
+<p class=textword>В конструкторе задаются переменные <b>mass1</b>, 
+  <b>mass2</b>, и константы. Наиболее интересен метод 
+  <b>solve()</b>. В этом методе происходит применение 
+  сил. Чтобы применить силу, мы должны написать формулу пружины, которую мы получили:<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>force = -k * (x - d) <br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Трехмерный вектор, задающий расстояние между массами:<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Vector3D springVector = mass1-&gt;pos - mass2-&gt;pos;&nbsp;&nbsp;&nbsp;(Вектор 
+  между 2 массами) <br></p>
+<p class=textword>&nbsp;  </p><p class=textword>найден. Затем нулевая сила создана: <br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Vector3D force; <br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Затем сила пружины добавлена к ней: <br></p>
+<p class=textword>&nbsp;  </p><p class=textword>force += (springVector / r) * (r - springLength) 
+  * (-springConstant); <br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Чтобы реализовать формулу выше, мы, во-первых, получаем вектор 
+  единичной длины между массами: <br></p>
+<p class=textword>&nbsp;  </p><p class=textword>(springVector / r) 
+  <br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Затем с используем этот вектор совместно с (x 
+  - d) частью формулы:<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>(springVector / r) * (r - springLength) <br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Далее мы умножаем вектор на:<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>(-springConstant) <br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Который соответствует <b>-</b><b>k</b> 
+  в первоначальной формуле (минус означает натяжение, а не отталкивание). Мы завершили 
+  вычисление части силы связанной с натяжением. Давайте, вычислим трение. Это 
+  трение в пружине. Пружина имеет тенденцию терять энергию при действии сил действующих 
+  в ней. Если Вы применяете силу к массе в направлении противоположном тому, куда 
+  движутся массы, то вы заставите массы двигаться медленнее (т.е. как будто будет 
+  действовать сила трения). Поэтому, можно вычислить силу трения из скорости движения 
+  массы:<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Сила трения = -k * скорость<br>
+  k: константа, задающая величину трения <br>
+  Скорость: скорость массы, на которую действует сила трения<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Формула трения могла бы быть написана и по-другому, но и эта 
+  формула будет прекрасно работать в нашей модели веревки. В этой формуле рассматривается 
+  только одна масса. В пружине мы имеем две массы. Мы можем вычислить разницу 
+  между скоростями двух масс и получить относительную скорость. Это и будет внутреннее 
+  трение в пружине.</p>
+<p class=head2word>&nbsp;  </p>
+<p class=textpreword>    (void solve() continued)</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>    force += -(mass1-&gt;vel - mass2-&gt;vel) 
+  * frictionConstant; // Сила трения</p>
+<p class=textpreword>    mass1-&gt;applyForce(force);  // Добавим 
+  силу к mass1</p>
+<p class=textpreword>    mass2-&gt;applyForce(-force); // Добавим 
+  силу к mass2</p>
+<p class=textpreword>  }                  // Конец метода solve</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textword>force += -(mass1-&gt;vel - mass2-&gt;vel) * 
+  frictionConstant; <br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Выше, сила трения, полученная из разницы скоростей масс, добавлена 
+  к силе пружины. Сила применяется к <b>mass1</b>:<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>mass1-&gt;applyForce(force); <br></p>
+<p class=textword>&nbsp;  </p><p class=textword>И противоположная сила применяется к <b>mass2</b>:<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>mass2-&gt;applyForce(-force); <br></p>
+<p class=textword>&nbsp;  </p><p class=textword>В физике, все взаимодействия происходят между двумя частицами. 
+  Сила всегда действует на две массы в противоположных направлениях. В моделировании, 
+  если одна масса незначительна по сравнению с другой силой, действующей на большую 
+  массу можно пренебречь, поскольку ускорение большой массы будет маленькое. Например, 
+  сила гравитации Земли притягивает маленькую массу к себе, но и эта масса тянет 
+  Землю к себе, но мы пренебрегаем этой силой, так как она ничтожно мала (примечание 
+  переводчика: даже, если сила не мала, но действует постоянно и быстро не меняется, 
+  то ее просто учесть как константу).<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Мы написали уравнение движения, которое описывает, как действует 
+  сила упругости в веревке. Чтобы завершить наше моделирование, мы должны воспроизвести 
+  среду, в которой находится веревка, и рассмотреть внешние, по отношению к ней, 
+  силы, действующие на нее. Давайте вначале введем гравитацию в эту искусственную 
+  среду. Когда есть тяготение, массы испытывают силу гравитации. Во-вторых, я 
+  также хотел бы иметь и трение о воздух, которое можно просто определить как:<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Сила трения = -k * скорость<br>
+  k: константа, задающая величину трения <br>
+  Скорость: скорость массы, на которую действует сила трения<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>В-третьих, пусть у нас будет некая плоская поверхность (что-то 
+  типа стола), по которой мы сможем таскать конец подвешенной веревки. Поэтому, 
+  наше уравнение движения надо расширить. Надо добавить тяготение, трение о воздух 
+  и силы, действующие со стороны полоской поверхности. Гравитационную силу добавить 
+  просто:<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Сила = (ускорение гравитации) * масса<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Тяготение и трение о воздух будут действовать на каждую частицу 
+  на веревке. Но, что можно сказать относительно сил, действующих со стороны поверхности? 
+  Сила от поверхности будет также действовать на каждую массу. Мы должны сформулировать 
+  модель такого взаимодействия. Моя модель довольно проста: поверхность выталкивает 
+  массу наверх и проявляет силу трения. Сила должна действовать на массу только 
+  тогда, когда эта масса касается поверхности.<br></p>
+<p class=textword>&nbsp;  </p><p class=head3word>Задание начальных значений для моделирования<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Наша среда готова к моделированию. Единицами измерения расстояния 
+  будут метры, секунды (для времени), и кг (для веса).<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Для того чтобы задать начальные значения, мы должны определить 
+  ориентацию веревки перед началом моделирования и определить некоторые константы. 
+  Пусть гравитация действует в отрицательном направлении <b>y 
+  </b>с 9.81 м/c/c. Пусть 
+  один конец веревки подвешен в 4 метрах над поверхностью. Пусть веревка лежит 
+  горизонтально до запуска симуляции. Чтобы это выполнить, мы должны разнести 
+  частицы на 5 см друг от друга (4 метра / 80 =0.05 метров = 5 см). Также зададим, 
+  что это нормальная длина пружины (длина при которой сила упругости равна нулю) 
+  - 5 см так, чтобы эта веревка была без напряжения в начале моделирования. Определим 
+  общую массу веревки равную 4 кг (тяжелая веревка, цепь). Тогда каждая масса 
+  будет весить 0.05 кг (50 граммов). До того как двигаться дальше, посмотрим, 
+  что у нас есть:<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>1. Гравитационное ускорение: 9.81 м/с/с в отрицательном направлении 
+  <b>y</b><br>
+  2. Число масс: 80<br>
+  3. Нормальное расстояние между двумя соседними массами: 5 см (0.05 метров)<br>
+  4. Вес массы: 50 граммов (0.05 кг)<br>
+  5. Ориентация веревки: горизонтальная, без напряжения<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Затем, мы можем найти константу пружины. Когда мы вешаем веревку 
+  за верхний конец, она конечно вытянется. Пружина наверху веревки больше всего 
+  вытянется. Я не хочу, чтобы пружина вытянулась больше, чем на 1 см (0.01 м). 
+  Вес, который эта пружина несет – это почти вся веревка (частица на верхнем конце 
+  исключительна). Сила равна:<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>f = (масса веревки) * (гравитационное ускорение) = (4 кг) * 
+  (9.81) ~ = 40 Н<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Сила упругости пружины должна сбалансировать 40 N: <br></p>
+<p class=textword>&nbsp;  </p><p class=textword>сила пружины = -k * x 
+  = -k * 0.01 м<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Сумма этих сил должна быть равной нулю: <br></p>
+<p class=textword>&nbsp;  </p><p class=textword>40 Н + (-k * 0.01 м) = 0 <br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Отсюда мы вычисляем <b>k</b>: <br></p>
+<p class=textword>&nbsp;  </p><p class=textword>k = 4000 Н / м <br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Для простоты примем, что <b>k</b> равно 10000 Н/м, что дает 
+  более жесткую веревку, которая приблизительно вытянется на 4 мм.<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Чтобы найти константу трения в пружине, мы должны проделать 
+  более сложные вычисления. Поэтому, будем использовать значение, которое я подобрал 
+  экспериментальным путем:<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>springFrictionConstant = 0.2 Н/(м/с) <br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Константа трения пружины равна 0.2 Н/(м/с) и прекрасно подходит 
+  для нашей веревки, чтобы она выглядела реалистично (это мое мнение после того, 
+  как я провел моделирование).<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Прежде, чем перейти к трению о воздух и силам, воздействующим 
+  от поверхности, давайте взглянем на класс RopeSimulation. Этот производный 
+  класс класса Simulation из Physics1.h, который мы рассмотрели 
+  в уроке 39. Класс Simulation имеет четыре метода для 
+  выполнения моделирования. Вот они:</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>1. virtual void init() ---&gt;  Сброс 
+  сил.<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>2. virtual void solve() ---&gt;  Намеченные силы применяются.<br>
+    </p>
+<p class=textword>3. virtual void simulate(float dt) ---&gt;  Позиция и скорость итерационно меняются.<br>
+    </p>
+<p class=textword>4. virtual void operate(float dt) ---&gt;  Методы 1., 2., и 3. вместе вызываются.<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>В классе RopeSimulation, мы переопределим 
+  метод <b>solve()</b> и <b>simulate</b><b>(</b><b>float</b><b> 
+  </b><b>dt</b><b>)</b>, поскольку мы имеем специальную 
+  реализацию этих методов для веревки. Мы применим метод <b>solve</b><b>()</b>, и закрепим верхний конец веревки в методе 
+  <b>simulate</b><b>(</b><b>float</b><b> 
+  </b><b>dt</b><b>)</b>.<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Класс RopeSimulation производный от 
+  класса Simulation (из Physics1.h). В нем моделируется 
+  веревка с точечными частицами, связанными пружинами. Пружина имеет внутреннее 
+  трение и нормальную длину. Один конец веревки привязан к точке пространства 
+  названном &quot;Vector3D ropeConnectionPos&quot;. Эта точку можно сдвинуть методом 
+  &quot;void setRopeConnectionVel (Vector3D ropeConnectionVel)&quot;. RopeSimulation 
+  создает трение о воздух и плоскую поверхность (или землю) с нормалью направленной 
+  в положительном направлении <b>y</b>. RopeSimulation 
+  вычисляет силу, приложенную к этой поверхности. В коде, поверхность – называется 
+  &quot;земля&quot;.<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Класс RopeSimulation начинается так:</p>
+<p class=head2word>&nbsp;  </p>
+<p class=textpreword>class RopeSimulation : public Simulation 
+  // Объект моделирования веревка,</p>
+<p class=textpreword>                                         
+  // который взаимодействует с плоской поверхностью</p>
+<p class=textpreword>                                         // и воздухом</p>
+<p class=textpreword>{</p>
+<p class=textpreword>public:</p>
+<p class=textpreword>  Spring** springs; // Пружины связывают 
+  numOfMasses масс</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  Vector3D 
+  gravitation; // Ускорение гравитации (Гравитация будет применена 
+  ко всем массам)</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  Vector3D 
+  ropeConnectionPos; // Точка в пространстве, которая используется 
+  для задания позиции</p>
+<p class=textpreword>                              // первой массы в пространстве 
+  (с индексом 0) </p>
+<p class=textpreword>  </p>
+<p class=textpreword>  Vector3D ropeConnectionVel; // Скорость 
+  перемещения ropeConnectionPos</p>
+<p class=textpreword>                              // 
+  с помощью нее мы можем раскачивать веревку</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  float groundRepulsionConstant; // Константа для представления того,</p>
+<p class=textpreword>                                 // насколько сильно земля 
+  будет отталкивать массы</p>
+<p class=textpreword>  </p>
+<p class=textpreword>  float groundFrictionConstant; // Константа трения, которое возникает 
+  от земли, используется</p>
+<p class=textpreword>                                // для скольжения веревки 
+  по земле</p>
+<p class=textpreword>  </p>
+<p class=textpreword>  float groundAbsorptionConstant; // Константа поглощения трения об 
+  землю, используется</p>
+<p class=textpreword>                                  // для вертикальных столкновений 
+  веревки с землей</p>
+<p class=textpreword>  </p>
+<p class=textpreword>  float groundHeight; // Y координата земли (земля это плоская поверхность расположенная</p>
+<p class=textpreword>                      // лицевой гранью с положительном направлении 
+  оси Y</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  float airFrictionConstant; // Константа трения о воздух</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textword>Класс имеет конструктор с 11 параметрами:</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  RopeSimulation(                  
+  // Длинный предлинный конструктор</p>
+<p class=textpreword>    int numOfMasses,               // 1. Число масс</p>
+<p class=textpreword>    float m,                       // 2. Вес каждой массы</p>
+<p class=textpreword>    float springConstant,          // 3. Насколько пружина тугая</p>
+<p class=textpreword>    float springLength,            // 4. Длина спокойной пружины</p>
+<p class=textpreword>    float springFrictionConstant,  // 5. Трение изнутри</p>
+<p class=textpreword>    Vector3D gravitation,          // 6. 
+  Гравитация</p>
+<p class=textpreword>    float airFrictionConstant,     // 7. 
+  Трение воздуха</p>
+<p class=textpreword>    float groundRepulsionConstant, // 8. 
+  Отталкивание от земли</p>
+<p class=textpreword>    float groundFrictionConstant,  // 9. 
+  Трение о землю</p>
+<p class=textpreword>    float groundAbsorptionConstant,// 10. 
+  Поглощение земли</p>
+<p class=textpreword>    float groundHeight             // 11. 
+  Высота земли(Y позиция)</p>
+<p class=textpreword>    ) : Simulation(numOfMasses, m) 
+  // Суперкласс создает массы с весом m каждая</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    this-&gt;gravitation = gravitation;</p>
+<p class=textpreword>    </p>
+<p class=textpreword>    this-&gt;airFrictionConstant = airFrictionConstant;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>    this-&gt;groundFrictionConstant = groundFrictionConstant;</p>
+<p class=textpreword>    this-&gt;groundRepulsionConstant = groundRepulsionConstant;</p>
+<p class=textpreword>    this-&gt;groundAbsorptionConstant = 
+  groundAbsorptionConstant;</p>
+<p class=textpreword>    this-&gt;groundHeight = groundHeight;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>    for (int a = 0; a &lt; numOfMasses; 
+  ++a) // Начальные позиции масс</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      masses[a]-&gt;pos.x = a * springLength; 
+  // X-позиция masses[a] с расстоянием 
+  </p>
+<p class=textpreword>                                           
+  // springLength от его соседа</p>
+<p class=textpreword>      masses[a]-&gt;pos.y 
+  = 0; // Y-позиция равна 0</p>
+<p class=textpreword>      masses[a]-&gt;pos.z 
+  = 0; // Z-позиция равна 0</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>    springs = new Spring*[numOfMasses - 1]; // Создание 
+  [numOfMasses - 1] точек для пружины</p>
+<p class=textpreword>                    // ([numOfMasses - 1] пружин необходимы для numOfMasses)</p>
+<p class=textpreword>    </p>
+<p class=textpreword>    for (a = 0; a &lt; numOfMasses - 1; ++a) // Создание пружин</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      // Пружина между массой &quot;a&quot; 
+  и массой &quot;a + 1&quot;.</p>
+<p class=textpreword>      springs[a] = new Spring(masses[a], masses[a + 1],</p>
+<p class=textpreword>                              springConstant, 
+  springLength, springFrictionConstant);</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>  }</p>
+<p class=head2word>&nbsp; </p>
+<p class=textword>Всего создается [numOfMasses - 1] пружин (вспомните рисунок: O----O----O----O). 
+  Массы первоначально горизонтальном положении. Затем применение сил реализовано 
+  в методе <b>solve</b>, уравнения движения будут решены 
+  в процессе моделирования. Метод solve выгляди так:</p>
+<p class=head2word>&nbsp;  </p>
+<p class=textpreword>  void solve() // solve() переопределен, поскольку 
+  мы применяем силы</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    for (int a = 0; a &lt; numOfMasses - 
+  1; ++a) // Применение сил для всех пружин</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      springs[a]-&gt;solve(); </p>
+<p class=textpreword>    }</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>    for (a = 0; a 
+  &lt; numOfMasses; ++a) // Цикл 
+  применения сил ко всем массам</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      masses[a]-&gt;applyForce(gravitation 
+  * masses[a]-&gt;m); // Сила гравитации</p>
+<p class=textpreword>      // Трение о воздух</p>
+<p class=textpreword>      masses[a]-&gt;applyForce(-masses[a]-&gt;vel 
+  * airFrictionConstant);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>      if (masses[a]-&gt;pos.y &lt; groundHeight) 
+  // Силы от земли, если массы коснулись земли</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        Vector3D v; // Временный вектор</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>        v = masses[a]-&gt;vel; 
+  // Взять скорость</p>
+<p class=textpreword>        v.y = 0;            // Пренебречь компонент 
+  скорости в Y-направлении</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>        // Скорость в Y-направлении 
+  пренебрежем, поскольку мы будем применять силу трения</p>
+<p class=textpreword>        // для создания эффекта скольжения. Скольжение параллельно 
+  земле. Скорость в Y-направлении</p>
+<p class=textpreword>        // будет использоваться для эффекта поглощения</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>        // Сила трения о землю </p>
+<p class=textpreword>        masses[a]-&gt;applyForce(-v * groundFrictionConstant);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>        v = masses[a]-&gt;vel; 
+  // Взять скорость</p>
+<p class=textpreword>        v.x = 0;            // Пренебречь x 
+  и z компонентами скорости</p>
+<p class=textpreword>        v.z = 0;            // Мы будем использовать 
+  v в эффекте поглощения</p>
+<p class=textpreword>        </p>
+<p class=textpreword>        // Выше, мы получили скорость, которая вектор которой 
+  направлен вертикально</p>
+<p class=textpreword>        // земле и это будет использовано в эффекте поглощения</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>        if (v.y &lt; 
+  0) // Пусть энергия поглощения только, затем масса сталкивается с землей</p>
+<p class=textpreword>        {</p>
+<p class=textpreword>          // Эффект поглощения 
+  </p>
+<p class=textpreword>          masses[a]-&gt;applyForce(-v * 
+  groundAbsorptionConstant);</p>
+<p class=textpreword>        </p>
+<p class=textpreword>        // Земля будет отталкивать 
+  массы подобно пружине.</p>
+<p class=textpreword>        // &quot;Vector3D(0, groundRepulsionConstant, 
+  0)&quot; – создаем вектор в направлении</p>
+<p class=textpreword>        // плоскости нормали с модулем groundRepulsionConstant.</p>
+<p class=textpreword>        // (groundHeight - masses[a]-&gt;pos.y) – мы отталкиваем массу,</p>
+<p class=textpreword>        // как только она сталкивается 
+  с землей</p>
+<p class=textpreword>        Vector3D force = Vector3D(0, groundRepulsionConstant, 0) * </p>
+<p class=textpreword>          (groundHeight - masses[a]-&gt;pos.y);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>        masses[a]-&gt;applyForce(force); 
+  // Сила отталкивания земли</p>
+<p class=textpreword>      }</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>  }</p>
+<p class=head2word>&nbsp; </p>
+<p class=textword>Вначале, в коде выше, вычисляются все силы упругости пружин 
+  (порядок не имеет значения). Затем вычисляются силы общие для всех масс в цикле 
+  for(;;). Это силы гравитации, трения о воздух и силы 
+  от земли. Вычисление сил от земли выглядит немного запутанным, но это фактически 
+  столь же просто, как и вычисление других сил. Эффект скольжения веревки по земле 
+  обеспечивается силой трения, при вычислении которой пренебрегли скоростью в 
+  <b>y</b> направлении. Направление <b>y</b> – это направление вверх от лицевой стороны земли. Эффект 
+  скольжения не должен быть в направлении на лицевую сторону земли. Именно поэтому 
+  <b>y</b> опущено. Иначе дело обстоит с эффектом поглощения. Сила поглощения 
+  применяется только в направлении лицевой стороны земли. Исключение для эффекта 
+  поглощения состоит в том, что не надо применять силы, когда масса движется вдоль 
+  земли. Иначе веревка бы прилипала к земле, в то время как мы тянем ее вверх. 
+  Мы реализуем этот исключительный случай если v.y &lt; 0. Наконец есть сила отталкивания 
+  от земли. Земля отталкивает массы точно так же как пружина, выталкивая массу 
+  наверх.<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>В классе RopeSimulation моделирование начинается с первой частицы веревки. Цель 
+  состоит в том, чтобы создать способ раскачивания веревки с верхнего конца. Для 
+  моделирования используются значения ropeConnectionVel и ropeConnectionPos.</p>
+<p class=head2word>&nbsp;  </p>
+<p class=textpreword>  void simulate(float dt) // переопределено поскольку мы хотим моделировать веревку</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    Simulation::simulate(dt); // Моделирование 
+  масс</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>    ropeConnectionPos += ropeConnectionVel 
+  * dt; // Итерация изменения позиции</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>    if (ropeConnectionPos.y &lt; groundHeight) 
+  // Веревка не будет двигаться под землей</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      ropeConnectionPos.y = groundHeight;</p>
+<p class=textpreword>      ropeConnectionVel.y = 0;</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>    masses[0]-&gt;pos = ropeConnectionPos; 
+  // Сдвиг верхней массы</p>
+<p class=textpreword>    masses[0]-&gt;vel 
+  = ropeConnectionVel; // Изменение скорости верхней массы</p>
+<p class=textpreword>  }</p>
+<p class=head2word>&nbsp;  </p>
+<p class=textword>С помощью этого метода устанавливается ropeConnectionVel:</p>
+<p class=head2word>&nbsp;  </p>
+<p class=textpreword>  void setRopeConnectionVel(Vector3D ropeConnectionVel)</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    this-&gt;ropeConnectionVel = ropeConnectionVel;</p>
+<p class=textpreword>  }</p>
+<p class=head2word>&nbsp;  </p>
+<p class=textword>Эта функция используется 
+  при моделировании. Используя клавиши мы задаем ropeConnectionVel, и мы можем перемещать веревку 
+  так, как если бы мы держали ее за один конец.<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Есть некоторые константы, значение которых очень трудно вычислить 
+  прежде, чем мы запустим моделирование. Вот подходящие значения этих константы 
+  (взято из Physics2Application.cpp):</p>
+<p class=head2word>&nbsp;  </p>
+<p class=textpreword>RopeSimulation* ropeSimulation =</p>
+<p class=textpreword>  new RopeSimulation(</p>
+<p class=textpreword>    80,                     // 80 
+  частиц (масс)</p>
+<p class=textpreword>    0.05f,                  // Каждая частица имеет вес в 50 грамм</p>
+<p class=textpreword>    10000.0f,               // springConstant в веревке</p>
+<p class=textpreword>    0.05f,                  
+  // Нормальная длина пружины в веревке</p>
+<p class=textpreword>    0.2f,                   // Константа внутреннего трения пружины</p>
+<p class=textpreword>    Vector3D(0, -9.81f, 
+  0), // Ускорение гравитации</p>
+<p class=textpreword>    0.02f,                  // Константа трения о воздух</p>
+<p class=textpreword>    100.0f,                 // Константа отталкивания земли</p>
+<p class=textpreword>    0.2f,                   // Константа трения скольжения о землю</p>
+<p class=textpreword>    2.0f,                   // Константа поглощения земли</p>
+<p class=textpreword>    -1.5f);                 // Высота земли</p>
+<p class=head2word>&nbsp;  </p>
+<p class=textword>Изменяя эти значения, Вы сможете попробовать различные варианты 
+  движения веревки. Отметьте, что &quot;высота земли&quot; равна -1.5 метром. 
+  Веревка вначале находится в <b>y</b> = 0. При этом мы видим веревку, которая 
+  раскачивается над землей, а затем сталкивается с ней. Вспомните, что в уроке 
+  39 задавалось максимальное значение <b>dt</b>. В этом 
+  случае я нашел, что этот максимум <b>dt</b> должен быть 
+  равен 0.002 секунды. Если Ваши изменения в параметрах уменьшат максимум <b>dt</b>, то моделирование может быть неустойчивым, и моделирование 
+  не будет работать. В этом случае Вам надо найти новый максимум <b>dt</b>. Увеличение силы и/или уменьшение масс вызывают также 
+  появление неустойчивости, потому что ускорение при этом возрастает (вспомните 
+  &quot;ускорение = сила/масса&quot;).<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Так же как и в уроке 39, моделирование используется в файле 
+  приложения (Physics2Application.cpp):</p>
+<p class=head2word>&nbsp;  </p>
+<p class=textpreword>float dt = milliseconds 
+  / 1000.0f; // Конвертирование миллисекунд в секунды</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>float maxPossible_dt = 0.002f; // Максимум 
+  dt, сек</p>
+<p class=textpreword>                               // 
+  Это необходимо, чтобы не было потери точности dt</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>// Вычислим число итераций для обновления</p>
+<p class=textpreword>int numOfIterations = (int)(dt / maxPossible_dt) 
+  + 1;</p>
+<p class=textpreword>if (numOfIterations 
+  != 0) // Чтобы не было деления на ноль</p>
+<p class=textpreword>  dt = dt 
+  / numOfIterations; // dt 
+  обновлено в зависимости от numOfIterations</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>for (int a = 0; a &lt; numOfIterations; 
+  ++a) // &quot;numOfIterations&quot; итераций моделирования</p>
+<p class=textpreword>  ropeSimulation-&gt;operate(dt);</p>
+<p class=head2word>&nbsp;  </p>
+<p class=textword>После запуска приложения, используете клавиши курсора, и клавиши 
+  HOME и END, чтобы сдвинуть веревку. Попробуйте с ней поиграть. Наблюдайте помахивание 
+  и раскачивание.<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Процедура моделирования загружается процессор. Поэтому, рекомендуется 
+  оптимизировать ваш транслятор. При компиляции в Visual 
+  C++, когда выбран режим окончательной сборки (Release), 
+  моделирование веревки выполняет в 10 раз быстрее, чем при компиляции в отладочном 
+  режиме (Debug). В отладочном режиме нужен минимум 500 
+  МГц процессор. В режиме окончательной сборки требование гораздо меньше.<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>В этом уроке представлено полное моделирование. Есть и настройки, 
+  и теория, и проект, и реализация. Более продвинутое моделирование основывается 
+  на рассмотренном материале. Наиболее часто используются концепции, которые рассмотрены 
+  в этом примере с веревкой. Это также подходит и для физического моделирования 
+  в программировании игр. Пробуйте использовать физику в ваших программах и создать 
+  ваши собственные демонстрации и игры.<br></p>
+<p class=textword>&nbsp;  </p><p class=textword>Комментарии или вопросы, пожалуйста, посылайте по адресу:<br></p>
+
+<p class="textnoalign" align="right">
+<font color="#0000A0"><a href="mailto:erkintunca@icqmail.com"><b> © Erkin Tunca </b></a><br>
+<b>Jeff Molofee (NeHe)</a></b></font>
+</p>  
+
+</div>
+<div id="end">
+
+          <p><a href="http://pmg.org.ru/"
+			onmouseover=" return event_over(this,'Программирование магических игр')  "
+			onmouseout=" return event_out(this) "><font class="link"><b>PMG</b></font></a> 
+            <font class="comment">&nbsp;15 марта 2004&nbsp;(c)&nbsp;</font> 
+        <a href="mailto:anis@pmg.org.ru"
+	onmouseover=" return event_over(this,'Почта переводчику')  " 
+	onmouseout=" return event_out(this) "> <font class="link"><b>Сергей Анисимов</b></font></a> 
+          </p>
+</div>
+</center>
+
+<script language="JavaScript">
+<!--
+form_print();
+//-->
+</script>
+
+</body>
+</html>

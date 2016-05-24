@@ -12,14 +12,16 @@ namespace OpenGLGuide.ViewModels
     {
         readonly IBaseUrlService _baseUrlService = DependencyService.Get<IBaseUrlService>();
 
-        public WebViewModel()
+        public override void Init(object initData)
         {
+            base.Init(initData);
+
             Url = new UrlWebViewSource();
             var rootPath = _baseUrlService.Get();
-            Url.Url = Path.Combine(rootPath, "nehe02.htm");
+            Url.Url = Path.Combine(rootPath, initData.ToString());
         }
 
-        public UrlWebViewSource Url { get; }
+        public UrlWebViewSource Url { get; set; }
     }
 }
 
