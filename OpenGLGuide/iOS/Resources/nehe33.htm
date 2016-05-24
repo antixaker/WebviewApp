@@ -1,0 +1,703 @@
+<!doctype html public "-//w3c//dtd html 3.2 final//ru">
+<html>
+
+<head>
+<meta http-equiv="Content-Type"
+content="text/html; charset=windows-1251">
+<meta name="description"
+content="Переводы по OpenGL, трехмерная графика, игры, мультимедия
+Translations Russian OpenGL
+">
+<meta name="keyword"
+content="Программирование,игры,3D,трехмерная графика,OpenGL,NeHe">
+<meta name="keyword"
+content="programming,C,C++,game,graphics">
+<title>Урок 34. Построение красивых ландшафтов с помощью карты высот.</title>
+<link rel="stylesheet" href="pmg.css" type="text/css">
+</head>
+
+<body bgcolor="#b2d3e1" link="#800080" vlink="#800080">
+<script src='nehe.js' language="javascript">
+<!--
+//-->
+</script>
+
+<center>
+<div id="top">
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+        <td width="20%" align="center" valign="center">
+        <img src="nehelogo.jpg" align="left" hspace="0" width="125" height="50" alt="NeHe Tutorials">
+        </td>
+        <td width="60%" align="center">
+	<a href="index.html"
+	onmouseover=" return event_over(this,'NeHe Ru.')  "
+        onmouseout=" return event_out(this) ">
+        <font class="linksbig">
+        Народный учебник по OpenGL</font></a><br>
+        </td>
+        <td width="20%" align="center" valign="center">
+        <img src="nehe34.jpg" align="right" hspace="0" width="80" height="60" alt="Урок 34. OpenGL">
+        </td>
+    </tr>
+</table>
+</div>
+
+<div id="head">
+<p class="head1">
+Урок 34. Построение красивых ландшафтов с помощью карты высот.</p>
+</div>
+<div id="main" bgcolor="#ADADFF">
+<p class="textnoalign" align="left">
+
+<a href="http://nehe.gamedev.net/data/lessons/lesson.asp?lesson=34" target="_blank"
+onmouseover=" return event_over(this,this)  "
+onmouseout=" return event_out(this) ">
+<font class="link"><b> Beautiful Landscapes By Means Of Height Mapping</b></font></a>
+<br>
+</p><p class=textword>&nbsp;  </p>
+<p class=textword>Добро пожаловать в очередной потрясающий урок. Код этого урока 
+  был написан Беном Хамфри (Ben Humphrey) и он основан на коде первого урока. 
+  К этому моменту вы должны быть уже гуру в OpenGL (усмешка) и перенос кода из 
+  этого урока в ваш базовый код должно быть проще простого!<br>
+  <br>
+</p>
+<p class=textword>Этот урок научит вас, как сделать круто выглядящий ландшафт 
+  из карты высот. Для тех из вас, кто не представляет что такое карта высот, я 
+  попытаюсь объяснить. Карта высот это просто… смещение от поверхности. Для тех, 
+  кто до сих пор ломает голову вопросом «о чем, черт побери, этот парень толкует!?!»… 
+  отмечу, что по-английски, карта высот представляет низкие и высокие точки для 
+  нашего ландшафта. Исключительно от вас зависит, какие значения элементов карты 
+  высот будут представлять низкие точки, а какие высокие. Важно заметить, что 
+  карты высот не обязательно могут быть картинками… Вы можете создать карту высот 
+  из любого типа данных. Например, вы можете использовать аудио-поток для визуального 
+  представления карты высот. Если еще ничего не прояснилось… продолжайте читать… 
+  все будет проясняться по мере изучения урока :)</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>#include &lt;windows.h&gt;  // Заголовочный файл для Windows</p>
+<p class=textpreword>#include &lt;stdio.h&gt;    // Заголовочный файл для стандартного ввода-вывода 
+  (НОВОЕ)</p>
+<p class=textpreword>#include &lt;gl\gl.h&gt;    // Заголовочный файл для 
+  OpenGL32 библиотеки</p>
+<p class=textpreword>#include &lt;gl\glu.h&gt;   // Заголовочный файл для 
+  GLu32 библиотеки</p>
+<p class=textpreword>#include &lt;gl\glaux.h&gt; // Заголовочный файл для 
+  GLaux библиотеки</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>#pragma comment(lib, &quot;opengl32.lib&quot;)     // Ссылка 
+  на OpenGL32.lib</p>
+<p class=textpreword>#pragma comment(lib, &quot;glu32.lib&quot;)        // Ссылка 
+  на Glu32.lib</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textword>Мы начнем с объявления нескольких важных переменных. MAP_SIZE 
+  – это размер нашей карты. В этом уроке размер будет 1024х1024. STEP_SIZE – это 
+  размер каждого квадрата, используемого для построения ландшафта. Уменьшая значение 
+  этой переменной, мы увеличиваем гладкость ландшафта. Важно заметить, что чем 
+  меньше STEP_SIZE, тем больше времени потребуется для выполнения программы, особенно 
+  когда используются большие карты высот. HEIGHT_RATIO используется для масштабирования 
+  ландшафта по оси y. Если это значение невелико, горы будут более пологими, иначе 
+  – более отвесными.<br>
+  <br>
+</p>
+<p class=textword>В дальнейшем в исходном коде вы заметите переменную bRender. 
+  Если bRender истинно (по умолчанию), то рисуем заполненные полигоны, иначе – 
+  проволочные.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>#define    MAP_SIZE  1024     // Размер карты вершин (НОВОЕ)</p>
+<p class=textpreword>#define    STEP_SIZE  16      // Ширина и высота каждого 
+  квадрата (НОВОЕ)</p>
+<p class=textpreword>// Коэффициент масштабирования по оси Y в соответствии с 
+  осями X и Z (НОВОЕ)</p>
+<p class=textpreword>#define    HEIGHT_RATIO  1.5f</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>HDC    hDC=NULL;        // Приватный контекст устройства 
+  GDI</p>
+<p class=textpreword>HGLRC    hRC=NULL;      // Постоянный контекст рендеринга</p>
+<p class=textpreword>HWND    hWnd=NULL;      // Указатель на наше окно</p>
+<p class=textpreword>HINSTANCE  hInstance;   // Указывает на дескриптор текущего 
+  приложения</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>bool    keys[256];        // Массив для процедуры обработки 
+  клавиатуры</p>
+<p class=textpreword>bool    active=TRUE;      // Флаг активности окна, по умолчанию=TRUE</p>
+<p class=textpreword>bool    fullscreen=TRUE;  // Флаг полноэкранного режима, 
+  по умолчанию=TRUE</p>
+<p class=textpreword>bool    bRender = TRUE;   // Флаг режима отображения полигонов,</p>
+<p class=textpreword>                          // по умолчанию=TRUE (НОВОЕ)</p>
+<p class=textword>&nbsp; 
+   </p>
+<p class=textword>Здесь мы создаем массив (g_HeightMap[ ]) байтов для хранения 
+  нашей карты вершин. Мы будем считывать массив из .RAW файла, который содержит 
+  значения от 0 до 255. 255 будет значением, соответствующим самой высокой точке, 
+  а 0 – самой низкой. Мы также создаем переменную scaleValue для масштабирования 
+  сцены. Это дает возможность пользователю увеличивать и уменьшать сцену.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>BYTE g_HeightMap[MAP_SIZE*MAP_SIZE];    // Содержит карту 
+  вершин (НОВОЕ)</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>float scaleValue = 0.15f;               // Величина масштабирования 
+  поверхности (НОВОЕ)</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>LRESULT  CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM); // 
+  Объявление для WndProc</p>
+<p class=textword>&nbsp; 
+   </p>
+<p class=textword>Код в процедуре ReSizeGLScene() остался таким же, как и в первом 
+  уроке, за исключением дальней плоскости отсечения. Она изменилась со 100.0f 
+  до 500.0f</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>GLvoid ReSizeGLScene(GLsizei width, GLsizei height) // Масштабирование 
+  и инициализация окна OpenGL</p>
+<p class=textpreword>{</p>
+<p class=textpreword>... вырезано ...</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp; 
+   </p>
+<p class=textword>Следующие строчки кода загружают данные из .RAW файла. Все достаточно 
+  просто! Мы открываем файл в режиме бинарного чтения.(Read/Binary) Затем делаем 
+  проверку на существование и открытие файла. Если не удалось открыть файл, то 
+  возникнет сообщение об ошибке.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>// Чтение и сохранение .RAW файла в pHeightMap</p>
+<p class=textpreword>void LoadRawFile(LPSTR strName, int nSize, BYTE *pHeightMap)</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  FILE *pFile = NULL;</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // открытие файла в режиме бинарного чтения</p>
+<p class=textpreword>  pFile = fopen( strName, &quot;rb&quot; );</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // Файл найден?</p>
+<p class=textpreword>  if ( pFile == NULL )  </p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    // Выводим сообщение об ошибке и выходим из процедуры</p>
+<p class=textpreword>    MessageBox(NULL, &quot;Can't Find The Height Map!&quot;, 
+  &quot;Error&quot;, MB_OK);</p>
+<p class=textpreword>    return;</p>
+<p class=textpreword>  }</p>
+<p class=textword>&nbsp; 
+   </p>
+<p class=textword>Если мы дошли до этого места, значит, никаких проблем с открытием 
+  файла не возникло. Теперь можно считывать данные. Делаем это с помощью функции 
+  fread(). pHeightMap это место для хранения данных (указатель на массив g_Heightmap). 
+  Цифра 1 говорит о том, что мы будем считывать по байту за раз, nSize – это сколько 
+  байт нужно считать (размер карты в байтах – ширина карты * высоту карты). Наконец, 
+  pFile – это указатель на структуру файла.<br>
+  <br>
+</p>
+<p class=textword>После чтения данных мы проверяем, возникли ли какие-либо ошибки. 
+  Сохраняем результат в result и потом проверяем его. Если произошла ошибка – 
+  выводим предупреждение.<br>
+  <br>
+</p>
+<p class=textword>И последнее что мы сделаем, это закроем файл с помощью fclose(pFile).</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  // Загружаем .RAW файл в массив pHeightMap</p>
+<p class=textpreword>  // Каждый раз читаем по одному байту, размер = ширина * 
+  высота</p>
+<p class=textpreword>  fread( pHeightMap, 1, nSize, pFile );</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // Проверяем на наличие ошибки</p>
+<p class=textpreword>  int result = ferror( pFile );</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // Если произошла ошибка</p>
+<p class=textpreword>  if (result)</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    MessageBox(NULL, &quot;Failed To Get Data!&quot;, &quot;Error&quot;, 
+  MB_OK);</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // Закрываем файл</p>
+<p class=textpreword>  fclose(pFile);</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp; 
+   </p>
+<p class=textword>Код инициализации довольно простой. Мы устанавливаем цвет, которым 
+  будет очищен экран, в черный, создаем буфер глубины, включаем сглаживание полигонов 
+  и т.д. После всего этого загружаем наш .RAW файл. Для этого передаем в качестве 
+  параметров имя файла (&quot;Data/Terrain.raw&quot;), размер .RAW файла (MAP_SIZE 
+  * MAP_SIZE) и, наконец, массив HeightMap (g_HeightMap) в функцию LoadRawFile(). 
+  Файл будет загружен, и наши данные сохранятся в массиве g_HeightMap.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>int InitGL(GLvoid)           // Инициализация OpenGL</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  glShadeModel(GL_SMOOTH);   // Включить сглаживание</p>
+<p class=textpreword>  glClearColor(0.0f, 0.0f, 0.0f, 0.5f);  // Очистка экрана 
+  черным цветом</p>
+<p class=textpreword>  glClearDepth(1.0f);        // Установка буфера глубины</p>
+<p class=textpreword>  glEnable(GL_DEPTH_TEST);   // Включить буфер глубины</p>
+<p class=textpreword>  glDepthFunc(GL_LEQUAL);    // Тип теста глубины</p>
+<p class=textpreword>  glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);  // 
+  Улучшенные вычисления перспективы</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // Читаем данные из файла и сохраняем их в массиве g_HeightMap 
+  array.</p>
+<p class=textpreword>  // Также передаем размер файла (1024).</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  LoadRawFile(&quot;Data/Terrain.raw&quot;, MAP_SIZE * MAP_SIZE, 
+  g_HeightMap);  // ( НОВОЕ )</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  return TRUE;               // Инициализация прошла успешно</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp; 
+   </p>
+<p class=textword>Когда имеем дело с массивами, мы должны быть уверены, что не 
+  выходим за их пределы. Чтобы быть уверенным, что это не произойдет, будем использовать 
+  оператор %, который, в нашем случае, будет запрещать превышение переменными 
+  x и y величины MAX_SIZE – 1.<br>
+  <br>
+</p>
+<p class=textword>Убеждаемся, что pHeightMap указывает на верные данные, иначе 
+  возвращаем 0.<br>
+  <br>
+</p>
+<p class=textword>Если все прошло успешно, мы возвратим величину, хранящуюся в 
+  переменных x и y в нашей карте вершин. К этому моменту вы должны знать, что 
+  мы умножаем y на ширину карты MAP_SIZE, чтобы перемещаться по данным, хранящимся 
+  в карте вершин.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>int Height(BYTE *pHeightMap, int X, int Y)      // Возвращает 
+  высоту из карты вершин (?)</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  int x = X % MAP_SIZE;          // Проверка переменной х</p>
+<p class=textpreword>  int y = Y % MAP_SIZE;          // Проверка переменной y</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  if(!pHeightMap) return 0;      // Убедимся, что данные 
+  корректны</p>
+<p class=textword>&nbsp; 
+   </p>
+<p class=textword>Так как имеем двумерный массив, то можем использовать уравнение: 
+  номер = (x + (y * ширинаМассива) ), т.е. получаем pHeightMap[x][y], в противном 
+  случае: (y + (x * ширинаМассива) ).<br>
+  <br>
+</p>
+<p class=textword>Теперь, когда имеем верный номер, возвратим значение высоты 
+  этого номера (x, y в нашем массиве)</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  return pHeightMap[x + (y * MAP_SIZE)];      // Возвращаем 
+  значение высоты</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp; 
+   </p>
+<p class=textword>Здесь будем выбирать цвет вершины, основываясь на значении номера 
+  высоты. Чтобы сделать потемнее, начнем с -0.15f. Будем получать коэффициент 
+  цвета от 0.0f до 1.0f путем деление на 256.0f. Если нет никаких входных данных, 
+  функция не возвратит никакого значения. Если все прошло успешно, будем устанавливать 
+  оттенок синего цвета, используя glColor3f(0.0f, fColor, 0.0f). Попробуйте поизменять 
+  fColor в красный и зеленый, чтобы изменить цвет ландшафта.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>// Эта функция устанавливает значение цвета для конкретного 
+  номера, зависящего от номера высоты</p>
+<p class=textpreword>void SetVertexColor(BYTE *pHeightMap, int x, int y)</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  if(!pHeightMap) return;          // Данные корректны?</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  float fColor = -0.15f + (Height(pHeightMap, x, y ) / 256.0f);</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // Присвоить оттенок синего цвета для конкретной точки</p>
+<p class=textpreword>  glColor3f(0.0f, 0.0f, fColor );</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp; 
+   </p>
+<p class=textword>Далее мы вырисовываем наш ландшафт. Переменные X и Y будут использоваться 
+  для перемещения по массиву карты высоты. Переменные x, y и z будут использоваться 
+  для визуализации квадратов, составляющих ландшафт<br>
+  <br>
+</p>
+<p class=textpreword>Как 
+  обычно, проверяем, содержит ли pHeightMap нужные нам данные. Если нет – ничего не 
+  делаем.</p>
+<p class=textpreword>&nbsp; 
+   </p>
+<p class=textpreword>void RenderHeightMap(BYTE pHeightMap[]) // Визуализация карты 
+  высоты с помощью квадратов</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  int X = 0, Y = 0;    // Создаем пару переменных для перемещения 
+  по массиву</p>
+<p class=textpreword>  int x, y, z;         // И еще три для удобства чтения</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  if(!pHeightMap) return;     // Данные корректны?</p>
+<p class=textword>&nbsp;  
+  </p>
+<p class=textword>Здесь мы сможем изменять 
+  режим отображения ( проволочный или сплошной). Если bRender = True, 
+  то рендерим полигоны, иначе – линии.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  if(bRender)            // Что хотим визуализировать?</p>
+<p class=textpreword>    glBegin( GL_QUADS ); // Полигоны</p>
+<p class=textpreword>  else </p>
+<p class=textpreword>    glBegin( GL_LINES ); // Линии</p>
+<p class=textword>&nbsp; 
+   </p>
+<p class=textword>Далее рисуем поверхность 
+  из карты вершин. Для этого пройдемся по массиву высот и, доставая значения вершин, 
+  будем рисовать наши точки. Если бы мы могли видеть, как это происходит, то вначале 
+  нарисовались бы столбцы (Y), 
+  а затем строки. Заметьте, что мы используем STEP_SIZE. Чем больше STEP_SIZE, 
+  тем менее гладко выглядит поверхность, и наоборот. Если принять STEP_SIZE 
+  = 1, то вершина будет создаваться для каждого пикселя из карты высот. Я выбрал 
+  STEP_SIZE 
+  = 16, как достаточно скромный размер. Намного меньшее значение было бы безрассудством, 
+  да и потребовалось бы гораздо больше процессорного времени. Естественно вы можете 
+  увеличить значение, когда включите источник света. Освещение спрячет шероховатость 
+  формы. Вместо освещения мы ассоциируем цвет с каждой точкой карты вершин, дабы 
+  облегчить урок. Чем выше полигон – тем ярче цвет.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>for ( X = 0; X &lt; MAP_SIZE; X += STEP_SIZE 
+  )</p>
+<p class=textpreword>    for ( Y = 0; Y &lt; MAP_SIZE; Y += STEP_SIZE 
+  )</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      // Получаем (X, Y, Z) координаты нижней левой вершины</p>
+<p class=textpreword>      x = X;              </p>
+<p class=textpreword>      y = Height(pHeightMap, X, Y );  </p>
+<p class=textpreword>      z = Y;              </p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>      // Устанавливаем цвет конкретной точки</p>
+<p class=textpreword>      SetVertexColor(pHeightMap, x, z);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>      glVertex3i(x, 
+  y, z);      // Визуализация ее</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>      // Получаем (X, Y, Z) координаты верхней левой вершины</p>
+<p class=textpreword>      x = X;                    </p>
+<p class=textpreword>      y = Height(pHeightMap, X, Y + STEP_SIZE 
+  );  </p>
+<p class=textpreword>      z = Y + STEP_SIZE ;              </p>
+<p class=textpreword>      </p>
+<p class=textpreword>      // Устанавливаем цвет конкретной точки</p>
+<p class=textpreword>      SetVertexColor(pHeightMap, x, z);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>      glVertex3i(x, y, z);      // Визуализация ее</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>      // Получаем (X, Y, Z) координаты верхней правой вершины</p>
+<p class=textpreword>      x = X + STEP_SIZE; </p>
+<p class=textpreword>      y = Height(pHeightMap, X + STEP_SIZE, 
+  Y + STEP_SIZE ); </p>
+<p class=textpreword>      z = Y + STEP_SIZE ;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>      // Устанавливаем цвет конкретной точки</p>
+<p class=textpreword>      SetVertexColor(pHeightMap, x, z);</p>
+<p class=textpreword>      </p>
+<p class=textpreword>      glVertex3i(x, 
+  y, z);      // Визуализация ее</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>      // Получаем (X, Y, Z) координаты нижней правой вершины</p>
+<p class=textpreword>      x = X + STEP_SIZE; </p>
+<p class=textpreword>      y = Height(pHeightMap, X + STEP_SIZE, 
+  Y ); </p>
+<p class=textpreword>      z = Y;</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>      // Устанавливаем цвет конкретной точки</p>
+<p class=textpreword>      SetVertexColor(pHeightMap, x, z);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>      glVertex3i(x, 
+  y, z);      // Визуализация ее</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>  glEnd();</p>
+<pre>&nbsp;</pre>
+<p class=textword>Как только все закончили, 
+  восстанавливаем цвет до ярко-белого с альфа-значением 1.0f. Если на экране будут присутствовать другие объекты, мы не хотим видеть их 
+  СИНИМИ :)</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  glColor4f(1.0f, 1.0f, 1.0f, 1.0f);      // Сбрасываем цвет</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp; 
+   </p>
+<p class=textword>Для тех, кто еще не использовал gluLookAt() поясню, что эта 
+  функция позиционирует камеру, вид и головной вектор. Мы отодвигаем камеру, чтобы 
+  получить хороший вид на ландшафт. Чтобы избежать больших значений, мы будем 
+  делить вершины ландшафта на константу масштабирования, как мы делаем это ниже.<br>
+  <br>
+</p>
+<p class=textword>Входные параметры функции gluLookAt() следующие: первые три 
+  значения указывают на положение камеры, т.е. 212, 60, 94 – это смещение по осям 
+  х, y и z соответственно от начала координат. Следующие 3 значения указывают 
+  точку визирования (направление камеры). В этом уроке во время просмотра демонстрационного 
+  примера вы заметите, что камера направлена немного влево. Также мы направляем 
+  камеру навстречу ландшафту. 186 меньше 212, что позволяет нам смотреть влево, 
+  55 ниже, чем 60, что позволяет нам находиться выше ландшафта и смотреть на него 
+  с легким наклоном. 171 указывает как далеко от объектов находится камера. Последние 
+  три значения указывают OpenGL направление головного вектора. Наши горы растут 
+  вверх по оси y, поэтому мы ставим значение y в 1, а остальные в 0.<br>
+  <br>
+</p>
+<p class=textword>На первый взгляд gluLookAt кажется очень запутанной. После грубого 
+  объяснения этой функции вы возможно запутались. Мой лучший совет – поиграть 
+  со значениями. Изменить позицию камеры. Если вы измените y-позицию камеры, скажем 
+  в 120, вы увидите больше вершин ландшафта.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Я не уверен, поможет ли это, но я попытаюсь объяснить на пальцах 
+  :). Допустим, ваш рост равен шести футам и немного выше. Также предположим, 
+  что ваши глаза находятся на высоте шести футов (глаза представляют камеру - 
+  6 футов это 6 делений по оси y). Если вы встанете напротив двух футовой стены 
+  (2 деления по оси y), вы будете смотреть ВНИЗ на стену и будете способны видеть 
+  ее верх. Если бы стена была высотой 8 футов, вы бы смотрели ВВЕРХ на стену и 
+  НЕ видели бы ее верх. Направление взгляда изменяется, когда вы смотрите вверх 
+  или вниз (если вы находитесь выше или ниже объекта, на который смотрите). Надеюсь, 
+  я немного прояснил ситуацию.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>int DrawGLScene(GLvoid)      // Здесь содержится код рисования</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  // 
+  Очистка экрана и буфера глубины</p>
+<p class=textpreword>  glLoadIdentity();          // Сброс просмотра</p>
+<p class=textpreword>  </p>
+<p class=textpreword>  //       Положение   Вид    Вектор вертикали</p>
+<p class=textpreword>  gluLookAt(212, 60, 194,  186, 55, 171,  0, 1, 0);  // Определяет 
+  вид и положение камеры</p>
+<p class=textword>&nbsp; 
+   </p>
+<p class=textword>Следующая строчка кода позволит 
+  масштабировать поверхность. Мы можем изменять scaleValue нажатием клавиш ВВЕРХ и ВНИЗ. Заметьте, что мы умножаем Y scaleValue на HEIGHT_RATIO. Это сделано для того, чтобы можно было бы изменять высоту 
+  ландшафта.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  glScalef(scaleValue, scaleValue * HEIGHT_RATIO, 
+  scaleValue);</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Если мы передадим g_HeightMap в качестве входного параметра в функцию RenderHeightMap(), эта функция визуализирует поверхность в квадратах. Если 
+  вы планируете использовать эту функцию в дальнейшем, было бы неплохо добавить 
+  в нее переменные (X, Y), 
+  чтобы позиционировать ландшафт именно там, где это нужно.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  RenderHeightMap(g_HeightMap);        // Визализация карты 
+  высот</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  return TRUE;            // Идем дальше</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp; 
+   </p>
+<p class=textword>Код функции The KillGLWindow() такой же, как в первом уроке.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>GLvoid KillGLWindow(GLvoid)          // Уничтожение окна</p>
+<p class=textpreword>{</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Код функции CreateGLWindow() также не изменился с первого урока.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>BOOL CreateGLWindow(char* title, int width, int height, int 
+  bits, bool fullscreenflag)</p>
+<p class=textpreword>{</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp; 
+   </p>
+<p class=textword>Единственное изменение в 
+  WndProc() – это добавление обработчика события M_LBUTTONDOWN. Он проверяет, нажата ли левая кнопка мыши. Если да, то 
+  меняется режим отображения поверхности с проволочной на полигональную и наоборот.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>LRESULT CALLBACK WndProc(</p>
+<p class=textpreword>        HWND  hWnd,      // Указатель на окно</p>
+<p class=textpreword>        UINT  uMsg,      // Сообщение для этого окна</p>
+<p class=textpreword>        WPARAM  wParam,  // Параметры сообщения</p>
+<p class=textpreword>        LPARAM  lParam)  // Параметры сообщения</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  switch (uMsg)          // Проверим сообщения окна</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    case WM_ACTIVATE:    // Наблюдаем за сообщением об активизации 
+  окна</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      if (!HIWORD(wParam)) // Проверим состояние минимизации</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        active=TRUE;     // Программа активна</p>
+<p class=textpreword>      }</p>
+<p class=textpreword>      else</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        active=FALSE;    // Программа больше не активна</p>
+<p class=textpreword>      }</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>      return 0;          // Вернуться к циклу сообщений</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>    case WM_SYSCOMMAND:  // Перехватаем системную команду</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      switch (wParam)    // Проверка выбора системы</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        case SC_SCREENSAVE:   // Пытается включиться скринсэйвер?</p>
+<p class=textpreword>        case SC_MONITORPOWER: // Монитор пытается переключиться 
+  в режим сохранения энергии?</p>
+<p class=textpreword>        return 0;        // Не давать этому случиться</p>
+<p class=textpreword>      }</p>
+<p class=textpreword>      break;             // Выход</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>    case WM_CLOSE:       // Мы получили сообщение о закрытии 
+  программы?</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      PostQuitMessage(0);// Послать сообщение о выходе</p>
+<p class=textpreword>      return 0;          // Возврат обратно</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>    case WM_LBUTTONDOWN: // Нажата левая клавиша мыши?</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      bRender = !bRender;// Изменить тип визуализации</p>
+<p class=textpreword>      return 0;          // Вернуться</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>    case WM_KEYDOWN:     // Клавиша была нажата?</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      keys[wParam] = TRUE; // Если так – пометим это TRUE</p>
+<p class=textpreword>      return 0;          // Вернуться</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>    case WM_KEYUP:       // Клавиша была отпущена?</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      keys[wParam] = FALSE; // Если так – пометим это FALSE</p>
+<p class=textpreword>      return 0;          // Вернуться</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>    case WM_SIZE:        // Изменились окна OpenGL</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      ReSizeGLScene(LOWORD(lParam),HIWORD(lParam));  // LoWord=ширина, 
+  HiWord=высота</p>
+<p class=textpreword>      return 0;          // Вернуться</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>  // Пересылаем все прочие сообщения в DefWindowProc</p>
+<p class=textpreword>  return DefWindowProc(hWnd,uMsg,wParam,lParam);</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp; 
+   </p>
+<p class=textword>Никаких принципиальных изменений 
+  в нижеследующем коде. Единственное, что претерпело изменение это заголовок окна. 
+  До проверки нажатий клавиш все осталось без изменений.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>int WINAPI WinMain(</p>
+<p class=textpreword>      HINSTANCE  hInstance,    // Экземпляр</p>
+<p class=textpreword>      HINSTANCE  hPrevInstance,// Предыдущий 
+  экземпляр</p>
+<p class=textpreword>      LPSTR    lpCmdLine,      // Параметры 
+  командной строки</p>
+<p class=textpreword>      int    nCmdShow)         // Показать 
+  состояние окна</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  MSG    msg;          
+  // Структура сообщения окна</p>
+<p class=textpreword>  BOOL  done=FALSE;    // Булевская переменная выхода из цикла</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // Запросим пользователя, какой режим отображения он предпочитает</p>
+<p class=textpreword>  if (MessageBox(NULL,&quot;Would You Like 
+  To Run In Fullscreen Mode?&quot;,</p>
+<p class=textpreword>     &quot;Start FullScreen?&quot;,MB_YESNO|MB_ICONQUESTION)==IDNO)</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    fullscreen=FALSE;          // Оконный режим</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Создадим наше окно OpenGL</p>
+<p class=textpreword>  if (!CreateGLWindow(&quot;NeHe &amp; Ben Humphrey's 
+  Height Map Tutorial&quot;,</p>
+<p class=textpreword>       640, 480, 16, fullscreen))</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    return 0;                  // Выходим если окно не было создано</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  while(!done)                 
+  // Цикл, который продолжается пока done=FALSE</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    if (PeekMessage(&amp;msg,NULL,0,0,PM_REMOVE))  // Есть ожидаемое сообщение?</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      if (msg.message==WM_QUIT)// Мы получили сообщение о выходе?</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        done=TRUE;             // Если так done=TRUE</p>
+<p class=textpreword>      }</p>
+<p class=textpreword>      else                     // Если нет, продолжаем работать с 
+  сообщениями окна</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        TranslateMessage(&amp;msg);// Переводим сообщение</p>
+<p class=textpreword>        DispatchMessage(&amp;msg); // Отсылаем сообщение</p>
+<p class=textpreword>      }</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>    else                       // Если сообщений нет</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      // Рисуем сцену. Ожидаем нажатия кнопки ESC 
+  и сообщения о выходе от DrawGLScene()</p>
+<p class=textpreword>      // Активно?  Было получено сообщение о 
+  выходе?</p>
+<p class=textpreword>      if ((active &amp;&amp; !DrawGLScene()) || keys[VK_ESCAPE])</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        done=TRUE;             // ESC 
+  или DrawGLScene просигналили &quot;выход&quot;</p>
+<p class=textpreword>      }</p>
+<p class=textpreword>      else if (active)         // Не время выходить, 
+  обновляем экран</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        SwapBuffers(hDC);      // Переключаем 
+  буферы (Двойная буферизация)</p>
+<p class=textpreword>      }</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>      if (keys[VK_F1])         
+  // Была нажата кнопка F1?</p>
+<p class=textpreword>      {</p>
+<p class=textpreword>        keys[VK_F1]=FALSE;     
+  // Если так - установим значение FALSE</p>
+<p class=textpreword>        KillGLWindow();        // Закроем текущее окно OpenGL  </p>
+<p class=textpreword>        fullscreen=!fullscreen;// Переключим 
+  режим &quot;Полный экран&quot;/&quot;Оконный&quot;</p>
+<p class=textpreword>        // Заново создадим наше окно OpenGL</p>
+<p class=textpreword>        if (!CreateGLWindow(&quot;NeHe &amp; Ben Humphrey's Height Map Tutorial&quot;,</p>
+<p class=textpreword>             640, 480, 16, fullscreen))</p>
+<p class=textpreword>        {</p>
+<p class=textpreword>          return 0;            // Выйти, если окно не было создано</p>
+<p class=textpreword>        }</p>
+<p class=textpreword>      }</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textword>Следующий код позволяет 
+  вам увеличивать и уменьшать scaleValue. Нажав клавишу «вверх» scaleValue, и ландшафт вместе с ней, увеличатся. Нажав клавишу «вниз» - уменьшится.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>    if (keys[VK_UP])           // Нажата клавиша ВВЕРХ?</p>
+<p class=textpreword>        scaleValue += 0.001f;  // Увеличить переменную масштабирования</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>      if (keys[VK_DOWN])       // Нажата клавиша ВНИЗ?</p>
+<p class=textpreword>        scaleValue -= 0.001f;  // Уменьшить переменную масштабирования</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // Shutdown</p>
+<p class=textpreword>  KillGLWindow();              // Закроем окно</p>
+<p class=textpreword>  return (msg.wParam);         // Выйдем из программы</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp; 
+   </p>
+<p class=textword>Это все, что нужно для создания красивых ландшафтов. Я надеюсь 
+  вы оценили работу Бена! Как обычно, если вы найдете ошибки в уроке, пожалуйста, 
+  напишите мне, и я попытаюсь исправить проблему / пересмотреть урок.<br>
+  <br>
+</p>
+<p class=textword>Как только вы поймете как программа работает, попробуйте поэкспериментировать 
+  с ней. Например вы можете попробовать добавить маленький мячик, катающийся по 
+  поверхности. Вы уже знаете высоту каждого кусочка поверхности, поэтому добавление 
+  мячика не должно составить проблем. Также можете попробовать следующее: создайте 
+  карту высот самостоятельно, сделайте скроллинг ландшафта, добавьте цвета для 
+  представления снежных вершин / воды / и т.д., добавьте текстуры, используйте 
+  эффект плазмы для постоянно изменяющегося ландшафта. Возможности безграничны 
+  :)<br>
+  <br>
+</p>
+<p class=textword>Надеюсь вы остались довольны 
+  уроком. Посетите сайт Бена: http://www.GameTutorials.com.</p>
+
+<p class="textnoalign" align="right">
+<font color="#0000A0"><b> © Ben Humphrey (DigiBen)</a></b></font><br>
+<font color="#0000A0"><b> © Jeff Molofee (NeHe)</a></b></font>
+</p>  
+
+</div>
+<div id="end">
+
+          <p><a href="http://pmg.org.ru/"
+			onmouseover=" return event_over(this,'Программирование магических игр')  "
+			onmouseout=" return event_out(this) "><font class="link"><b>PMG</b></font></a> 
+            <font class="comment">&nbsp;21 марта 2003&nbsp;(c)&nbsp;</font> 
+        <a href="mailto:island@ngs.ru"
+	onmouseover=" return event_over(this,'Почта переводчику')  " 
+	onmouseout=" return event_out(this) "> <font class="link"><b>Евгений Каратаев</b></font></a> 
+          </p>
+</div>
+</center>
+
+<script language="JavaScript">
+<!--
+form_print();
+//-->
+</script>
+
+</body>
+</html>

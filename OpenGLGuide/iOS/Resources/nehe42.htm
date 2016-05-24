@@ -1,0 +1,317 @@
+<!doctype html public "-//w3c//dtd html 3.2 final//ru">
+<html>
+
+<head>
+<meta http-equiv="Content-Type"
+content="text/html; charset=windows-1251">
+<meta name="description"
+content="Переводы по OpenGL, трехмерная графика, игры, мультимедия
+Translations Russian OpenGL
+">
+<meta name="keyword"
+content="Программирование,игры,3D,трехмерная графика,OpenGL,NeHe">
+<meta name="keyword"
+content="programming,C,C++,game,graphics">
+<title>Урок 48. Вращение объектов с помощью класса ArcBall</title>
+<link rel="stylesheet" href="pmg.css" type="text/css">
+</head>
+
+<body bgcolor="#b2d3e1" link="#800080" vlink="#800080">
+<script src='nehe.js' language="javascript">
+<!--
+//-->
+</script>
+
+<center>
+<div id="top">
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+        <td width="20%" align="center" valign="center">
+        <img src="nehelogo.jpg" align="left" hspace="0" width="125" height="50" alt="NeHe Tutorials">
+        </td>
+        <td width="60%" align="center">
+	<a href="index.html"
+	onmouseover=" return event_over(this,'NeHe Ru.')  "
+        onmouseout=" return event_out(this) ">
+        <font class="linksbig">
+        Народный учебник по OpenGL</font></a><br>
+        </td>
+        <td width="20%" align="center" valign="center">
+        <img src="nehe48.jpg" align="right" hspace="0" width="80" height="60" alt="Урок 48. OpenGL">
+        </td>
+    </tr>
+</table>
+</div>
+
+<div id="head">
+<p class="head1">
+Урок 48. Вращение объектов с помощью класса ArcBall</p>
+</div>
+<div id="main" bgcolor="#ADADFF">
+<p class="textnoalign" align="left">
+
+<a href="http://nehe.gamedev.net/data/lessons/lesson.asp?lesson=48" target="_blank"
+onmouseover=" return event_over(this,this)  "
+onmouseout=" return event_out(this) ">
+<font class="link"><b>ArcBall Rotation</b></font></a>
+<br>
+</p><p class=textword>&nbsp;  </p>
+<p class=textword>Как Вы думаете, здорово было бы вращать объект, пользуясь только 
+  мышью? Используя функциональность класса ArcBall можно 
+  довольно просто добиться этого. Здесь я расскажу Вам о моей реализации этого 
+  класса, и как его добавить в Ваши проекты.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Моя реализация класса ArcBall базируется 
+  на коде Бреттона Вада, который позаимствовал код Кена Шоемака в одной из 
+  книг &quot;Графические драгоценности&quot; (Graphic Gems). 
+  Однако я исправил ошибки в коде, и оптимизировал его.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Класс ArcBall предназначен для того, чтобы преобразовать координаты курсора 
+  мыши в сферические координаты ArcBall, так как, если бы это было непосредственно 
+  перед Вами.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Чтобы выполнить это, вначале масштабируем, 
+  координаты мыши из диапазона [0…ширина], [0...высота] в диапазон [-1...1], [1...-1] 
+  (запомните, что мы меняем знак координаты Y, чтобы получить корректный результат в OpenGL). Фактически, это делается так:</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>MousePt.X  =  ((MousePt.X / ((Width  – 1) / 2)) – 1);</p>
+<p class=textpreword>MousePt.Y  = -((MousePt.Y / ((Height – 1) / 2)) – 1);</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Масштабирование мы делаем для простоты дальнейших математических 
+  операций, еще один плюс в том, что компилятор может при этом сделать самостоятельно 
+  небольшую оптимизацию кода.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Затем мы определяем длину вектора, и определяем внутри он или 
+  снаружи сферы. Если вектор в переделах сферы, то мы возвращаем вектор в сфере, 
+  иначе мы нормализуем точку и возвращаем наиболее близкую точку на внешней границе 
+  сферы.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Как только мы имеем начальный и конечный вектора, мы можем вычислить 
+  вектор перпендикулярный им и углом между ними, который задает вращение. А это 
+  вращение можно описать кватернионом. После этого у нас достаточно информации, 
+  чтобы вычислить матрицу вращения.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Конструктор класса ArcBall:</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>ArcBall_t::ArcBall_t(GLfloat NewWidth, GLfloat 
+  NewHeight)</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textword>Где NewWidth и NewHeight – ширина и высота окна.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Когда пользователь 
+  щелкает мышью, начальный вектор рассчитывается исходя из точки, где он произошел:</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>void    ArcBall_t::click(const Point2fT* NewPt)</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Когда пользователь двигает мышью с нажатой клавишей, то конечный 
+  вектор модифицируется с помощью метода:</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>void    ArcBall_t::drag(const Point2fT* NewPt, Quat4fT* NewRot)</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>И если кватернион задан, то он обновляется.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Если меняется размер окна, мы просто передаём классу ArcBall 
+  следующую информацию:</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>void    ArcBall_t::setBounds(GLfloat NewWidth, GLfloat NewHeight)</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>При использовании этого класса в нашем проекте, нам будет необходимо 
+  изменить некоторые переменные:</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>// Завершающая трансформация</p>
+<p class=textpreword>Matrix4fT  Transform = {  1.0f,  0.0f,  0.0f,  0.0f,</p>
+<p class=textpreword>             0.0f,  1.0f,  0.0f,  0.0f,</p>
+<p class=textpreword>             0.0f,  0.0f,  1.0f,  0.0f,</p>
+<p class=textpreword>             0.0f,  0.0f,  0.0f,  1.0f };</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>Matrix3fT  LastRot   = {  1.0f,  0.0f,  0.0f,          // 
+  Последнее вращение</p>
+<p class=textpreword>                          0.0f,  1.0f,  
+  0.0f,</p>
+<p class=textpreword>                          0.0f,  0.0f,  
+  1.0f };</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>Matrix3fT  ThisRot   = {  1.0f,  0.0f,  0.0f,          // 
+  Это вращение</p>
+<p class=textpreword>                          0.0f,  1.0f,  
+  0.0f,</p>
+<p class=textpreword>                          0.0f,  0.0f,  
+  1.0f };</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>ArcBallT  ArcBall(640.0f, 480.0f); // экземпляр 
+  класса ArcBall</p>
+<p class=textpreword>Point2fT  MousePt;                 // Текущие 
+  координаты мыши</p>
+<p class=textpreword>bool    isClicked  = false;        // Кликнули 
+  по мыши?</p>
+<p class=textpreword>bool    isRClicked = false;        // Кликнули 
+  по правой клавиши мыши?</p>
+<p class=textpreword>bool    isDragging = false;        // Потащили 
+  мышь?</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Переменная Transform - это матрица с помощью, которой вращаются 
+  все объекты. Переменная LastRot - матрица, в которой сохраняется вращение объекта, 
+  когда пользователь отпускает кнопку мышки. Переменная ThisRot - матрица, в которой 
+  накапливается вращение объекта во время перетаскивания мышью. Эти переменные 
+  вначале инициализируются единичной матрицей.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Когда мы кликаем, мы начинаем крутить объекты с начальной позиции. 
+  Когда мы перетаскиваем, мы вычисляем угол поворота от начальной точки до точки, 
+  в которой находится указатель. Необходимо заметить, что класс ArcBall не вращается. 
+  Чтобы получить одинаковое значение в этих переменных (кумулятивное вращение) 
+  мы должны сами об этом позаботиться.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Для этого и нужны LastRot и ThisRot. LastRot можно представить 
+  как переменную, показывающую то, что происходило до этого момента. Тогда ThisRot 
+  - переменная показывающая то, что происходит с объектами сейчас. Каждый раз, 
+  когда мы начинаем перетаскивать мышь, ThisRot изменяется вместе с координатами 
+  курсора. Одновременно с этим изменяется Transform. Как только перетаскивание 
+  заканчивается, значение ThisRot передаётся в переменную LastRot. </p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Если мы не будем накапливать значения сами, то модель будет 
+  возвращаться к положению до перетаскивания. Например: если мы вращаем модель 
+  по оси X на 90 градусов, а затем на 45, мы должны будем увидеть поворот на 135 
+  град, вместо последних 45.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Остальным переменным (кроме isDragged) необходимо вовремя передавать 
+  правильные значения. Классу ArcBall необходимо сбрасывать значения каждый раз, 
+  когда меняется размер окна. MousePt обновляется тогда, когда мышь движется, 
+  или когда нажата кнопка. Переменные isClicked/isRClicked отвечают за нажатие 
+  левой/правой кнопки мыши, соответственно. Переменная isClicked используется 
+  для распознавания нажатия/перетаскивания. Переменную isRClicked  мы будем использовать 
+  для возврата в начальное положение всех объектов.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Всё выше описанное выглядит примерно так :</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>void ReshapeGL (int width, int height)</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  . . .</p>
+<p class=textpreword>  ArcBall.setBounds((GLfloat)width, (GLfloat)height); // 
+  Обновить границы для ArcBall</p>
+<p class=textpreword>}</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>// Обслуживание сообщений</p>
+<p class=textpreword>LRESULT CALLBACK WindowProc (HWND hWnd, UINT uMsg, WPARAM 
+  wParam, LPARAM lParam)</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  . . .</p>
+<p class=textpreword>  // Сообщения от мыши для ArcBall</p>
+<p class=textpreword>  case WM_MOUSEMOVE:</p>
+<p class=textpreword>    MousePt.s.X = (GLfloat)LOWORD(lParam);</p>
+<p class=textpreword>    MousePt.s.Y = (GLfloat)HIWORD(lParam);</p>
+<p class=textpreword>    isClicked   = (LOWORD(wParam) &amp; MK_LBUTTON) ? true 
+  : false;</p>
+<p class=textpreword>    isRClicked  = (LOWORD(wParam) &amp; MK_RBUTTON) ? true 
+  : false;</p>
+<p class=textpreword>    break;</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  case WM_LBUTTONUP:   isClicked  = false; break;</p>
+<p class=textpreword>  case WM_RBUTTONUP:   isRClicked = false; break;</p>
+<p class=textpreword>  case WM_LBUTTONDOWN: isClicked  = true;  break;</p>
+<p class=textpreword>  case WM_RBUTTONDOWN: isRClicked = true;  break;</p>
+<p class=textpreword>  . . .</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Теперь самое время для того, чтобы вставить код клика. Всё это 
+  очевидно, если понять написанное выше.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>if (isRClicked) // Если правая клавиша мыши нажата, сбросить 
+  все вращения</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  // Сброс вращения</p>
+<p class=textpreword>  Matrix3fSetIdentity(&amp;LastRot);</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // Сброс вращения</p>
+<p class=textpreword>  Matrix3fSetIdentity(&amp;ThisRot);</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // Сброс вращения</p>
+<p class=textpreword>  Matrix4fSetRotationFromMatrix3f(&amp;Transform, &amp;ThisRot);</p>
+<p class=textpreword>}</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>if (!isDragging)             // Нет перетаскивания</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  if (isClicked)             // Первый клик</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    isDragging = true;       // Начать перетаскивание</p>
+<p class=textpreword>    LastRot = ThisRot;       // Присвоить последнему статическому 
+  вращению</p>
+<p class=textpreword>                             // значение последнего динамического 
+  вращения</p>
+<p class=textpreword>    ArcBall.click(&amp;MousePt); 
+  // Обновить начальный вектор и выполнить перетаскивание</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>}</p>
+<p class=textpreword>else</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  if (isClicked)  // Все еще клик, по этому и перетаскивание</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    Quat4fT     ThisQuat;</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>    ArcBall.drag(&amp;MousePt, &amp;ThisQuat); // Обновить 
+  окончательный вектор</p>
+<p class=textpreword>                                       // и получить вращение 
+  как кватернион</p>
+<p class=textpreword>    Matrix3fSetRotationFromQuat4f(&amp;ThisRot, &amp;ThisQuat); 
+  // Конвертировать кватернион в Matrix3fT</p>
+<p class=textpreword>    Matrix3fMulMatrix3f(&amp;ThisRot, &amp;LastRot); // Добавить 
+  текущее вращение в последнее вращение</p>
+<p class=textpreword>    Matrix4fSetRotationFromMatrix3f(&amp;Transform, &amp;ThisRot); 
+  // Вычислить нашу финальную трансформацию</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>  else // Больше нет перетаскивания</p>
+<p class=textpreword>    isDragging = false;</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Это всё что нам необходимо. Осталось только сделать так, чтобы 
+  положение моделей постоянно обновлялось. Это достаточно просто:</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>  glPushMatrix();             // 
+  Выполнить динамическую трансформацию</p>
+<p class=textpreword>  glMultMatrixf(Transform.M); 
+  // Применить динамическую трансформацию</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  glBegin(GL_TRIANGLES);      
+  // Начать рисовать модели</p>
+<p class=textpreword>  . . .</p>
+<p class=textpreword>  glEnd();                    // 
+  Завершить рисование моделей</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  glPopMatrix();              // 
+  Сбросить динамическую трансформацию </p>
+<p class=textpreword>&nbsp; </p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Я сделал пример, демонстрирующий всё вышеописанное. Вы можете 
+  использовать не только мой код, но и встраивать туда какие-то свои конструкции. 
+  Программы созданные с помощью этой библиотеки могут работать сами по себе и 
+  не требуют ничего дополнительного.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Теперь, когда вы видите насколько это всё просто, вы можете 
+  спокойно добавлять класс ArcBall в свои приложения!</p>
+<p class=textword>&nbsp;  </p>
+
+<p class="textnoalign" align="right">
+<font color="#0000A0"><a href="mailto:tjgrant@tatewake.com"><b> © Terence J. Grant </b></a></b></font>
+</p>  
+
+</div>
+<div id="end">
+
+          <p><a href="http://pmg.org.ru/"
+			onmouseover=" return event_over(this,'Программирование магических игр')  "
+			onmouseout=" return event_out(this) "><font class="link"><b>PMG</b></font></a> 
+            <font class="comment">&nbsp;27 апреля 2004&nbsp;(c)&nbsp;</font> 
+        <a href="mailto:dva-probela@bk.ru"
+	onmouseover=" return event_over(this,'Почта переводчику')  " 
+	onmouseout=" return event_out(this) "> <font class="link"><b>snegovick</b></font></a> 
+          </p>
+</div>
+</center>
+
+<script language="JavaScript">
+<!--
+form_print();
+//-->
+</script>
+
+</body>
+</html>

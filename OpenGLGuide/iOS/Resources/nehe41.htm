@@ -1,0 +1,501 @@
+<!doctype html public "-//w3c//dtd html 3.2 final//ru">
+<html>
+
+<head>
+<meta http-equiv="Content-Type"
+content="text/html; charset=windows-1251">
+<meta name="description"
+content="Переводы по OpenGL, трехмерная графика, игры, мультимедия
+Translations Russian OpenGL
+">
+<meta name="keyword"
+content="Программирование,игры,3D,трехмерная графика,OpenGL,NeHe">
+<meta name="keyword"
+content="programming,C,C++,game,graphics">
+<title>Урок 46. Полноэкранное сглаживание.</title>
+<link rel="stylesheet" href="pmg.css" type="text/css">
+</head>
+
+<body bgcolor="#b2d3e1" link="#800080" vlink="#800080">
+<script src='nehe.js' language="javascript">
+<!--
+//-->
+</script>
+
+<center>
+<div id="top">
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+        <td width="20%" align="center" valign="center">
+        <img src="nehelogo.jpg" align="left" hspace="0" width="125" height="50" alt="NeHe Tutorials">
+        </td>
+        <td width="60%" align="center">
+	<a href="index.html"
+	onmouseover=" return event_over(this,'NeHe Ru.')  "
+        onmouseout=" return event_out(this) ">
+        <font class="linksbig">
+        Народный учебник по OpenGL</font></a><br>
+        </td>
+        <td width="20%" align="center" valign="center">
+        <img src="nehe46.jpg" align="right" hspace="0" width="80" height="60" alt="Урок 46. OpenGL">
+        </td>
+    </tr>
+</table>
+</div>
+
+<div id="head">
+<p class="head1">
+Урок 46. Полноэкранное сглаживание.</p>
+</div>
+<div id="main" bgcolor="#ADADFF">
+<p class="textnoalign" align="left">
+
+<a href="http://nehe.gamedev.net/data/lessons/lesson.asp?lesson=46" target="_blank"
+onmouseover=" return event_over(this,this)  "
+onmouseout=" return event_out(this) ">
+<font class="link"><b>Fullscreen AntiAliasing</b></font></a>
+<br>
+</p>
+
+<p class=textword>Привет всем, дружелюбный соседский таракан (the 
+  Friendly Neighborhood Roach) 
+  здесь с интересным примером, который поможет вашим приложениям достигнуть небывалых 
+  вершин. Мы все сталкиваемся с большой проблемой, когда хотим чтобы наши программы 
+  на OpenGL лучше выглядели. Этот эффект называется «пикселизация» 
+  (или зубчатость или ступенчатость - aliasing), и представляет 
+  из себя квадратные зубцы на диагональных гранях относительно квадратных пикселей 
+  на вашем экране. Решение проблемы – Anti-Aliasing 
+  (Сглаживание граней) используется для размытия таких зубцов, что позволяет создавать 
+  более гладкие грани объектов. Один из способов, позволяющих получить сглаживание, 
+  называется “Multisampling” (мультисэмплинг, или мультиопрос, 
+  или мультивыборка, или далее переводится как метод множественной выборки). Идея 
+  состоит в том, чтобы для каждого пикселя выбрать окружающие его пиксели (или 
+  субпиксели) с целью определить, нуждается ли данная грань в сглаживании (если 
+  пиксель не принадлежит грани, то сглаживать его не надо), но обычно мы избавляемся 
+  от ступенчатости при помощи &quot;размазывания&quot; самого пикселя.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Fullscreen AntiAliasing (полноэкранное сглаживание) 
+  – это то, в чем программы визуализации, не в масштабах реального времени, всегда 
+  имели преимущество. Однако с сегодняшним аппаратным обеспечением мы способны 
+  добиться схожего эффекта в реальном времени. Расширение <b>ARB_</b><b>MULTISAMPLE</b> позволяет нам это сделать. По существу, каждый 
+  пиксель представлен своими соседями для определения оптимального сглаживания. 
+  Как бы то ни было этот процесс дорого обходится и может замедлить производительность. 
+  Например, требуется больше видеопамяти:</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>Vid_mem = sizeof(Front_buffer) +</p>
+<p class=textpreword>          sizeof(Back_buffer) +</p>
+<p class=textpreword>          num_samples * (sizeof(Front_buffer) 
+  +sizeof(Z_buffer))</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Более подробную информацию относительно сглаживания, также как 
+  о том, что я собираюсь рассказать, можно найти по этим адресам:</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>GDC2002 -- OpenGL Multisample (http://developer.nvidia.com/attach/3464)</p>
+<p class=textword>OpenGL Pixel Formats and Multisample Antialiasing 
+  (http://developer.nvidia.com/attach/2064)</p>
+<p class=textword>Антиалиасинг сегодня (http://www.nvworld.ru/docs/fsaa2.html)</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Вот краткий обзор того, как наш метод будет работать, с учетом 
+  вышесказанного. В отличие от других расширений, касающихся визуализации OpenGL, расширение <b>ARB_</b><b>MULTISAMPLE</b> включается 
+  в работу при создании окна визуализации.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Наш процесс выглядит следующим образом:</p>
+<p class=textword style='margin-left:54.0pt;text-indent:-18.0pt;tab-stops:list 54.0pt'> 
+  ·&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+   Создается обычное окно</p>
+<p class=textword style='margin-left:54.0pt;text-indent:-18.0pt;tab-stops:list 54.0pt'> 
+  ·&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+   Собираем возможные значения форматов пикселей для последующего 
+  сглаживания (<b>InitMultisample</b>)</p>
+<p class=textword style='margin-left:54.0pt;text-indent:-18.0pt;tab-stops:list 54.0pt'> 
+  ·&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+   Если сглаживание возможно, то уничтожаем окно и создаем его заново, 
+  с новым форматом пикселя.</p>
+<p class=textword style='margin-left:54.0pt;text-indent:-18.0pt;tab-stops:list 54.0pt'> 
+  ·&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+   Для частей, которые мы хотим сгладить, просто вызываем функцию 
+  <b>glEnable(</b><b>GL_</b><b>ARB_</b><b>MULTISAMPLE)</b>.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Начнем с начала и поговорим о нашем исходном файле – arbMultiSample.cpp. Начинаем со стандартного включения заголовочных файлов 
+  gl.h и glu.h, а 
+  также windows.h. О arb_multisample.h 
+  мы поговорим позже.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>#include &lt;windows.h&gt;</p>
+<p class=textpreword>#include &lt;gl/gl.h&gt;</p>
+<p class=textpreword>#include &lt;gl/glu.h&gt;</p>
+<p class=textpreword>#include &quot;arb_multisample.h&quot;</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Две строчки ниже определяют точки входа в список строк WGL. Мы будем их использовать при доступе к атрибутам формата 
+  пикселя для определения формата нашего типа. Две другие переменные нужны для 
+  доступа к нашим данным.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>// Объявления, которые мы будем использовать</p>
+<p class=textpreword>#define WGL_SAMPLE_BUFFERS_ARB  0x2041</p>
+<p class=textpreword>#define WGL_SAMPLES_ARB         0x2042</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>bool arbMultisampleSupported = false;</p>
+<p class=textpreword>int  arbMultisampleFormat 
+  = 0;</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Следующей функцией, о которой мы поговорим, является <b>WGLisExtensionSupported</b>, которая будет использована для 
+  сбора информации о WGL расширениях для определения поддерживаемого 
+  формата на нашей системе. Мы будем давать описания кода по мере продвижения 
+  по нему, так как это легче чем прыгать по странице туда сюда.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Примечание: <i>Код внизу написан Генри Гоффином. Его изменения 
+  внесли: Улучшенный разбор расширений </i><i>GL и решили 
+  проблему с выпаданием кода, если первая проверка была не успешной.</i></p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>bool WGLisExtensionSupported(const char 
+  *extension)</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  const size_t extlen = strlen(extension);</p>
+<p class=textpreword>  const char *supported = NULL;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // попытка использовать wglGetExtensionStringARB на текущем контексте, если возможно</p>
+<p class=textpreword>  PROC wglGetExtString = wglGetProcAddress(&quot;wglGetExtensionsStringARB&quot;);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  if (wglGetExtString)</p>
+<p class=textpreword>    supported = ((char*(__stdcall*)(HDC))wglGetExtString)(wglGetCurrentDC());</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Если  проверка не пройдена, то попытаемся 
+  использовать стандартное расширение OpenGL</p>
+<p class=textpreword>  if (supported == NULL)</p>
+<p class=textpreword>    supported = (char*)glGetString(GL_EXTENSIONS);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Если и это не поддерживается, тогда работаем 
+  без расширений</p>
+<p class=textpreword>  if (supported == NULL)</p>
+<p class=textpreword>    return false;</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // Начинаем проверку с начала строки, увеличиваем на 1, 
+  при false совпадение</p>
+<p class=textpreword>  for (const char* p = supported; ; p++)</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    // Продвигаем p до следующего возможного совпадения</p>
+<p class=textpreword>    p = strstr(p, extension);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>    if (p == NULL)</p>
+<p class=textpreword>      return false; // Совпадения нет</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>    //Убедимся, что есть совпадение в начале строки, </p>
+<p class=textpreword>    //или первый символ – пробел, или может быть случайное 
+</p>
+<p class=textpreword>    //совпадение &quot;wglFunkywglExtension&quot; 
+  с &quot;wglExtension&quot;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>    // Также убедимся, что текущий символ пустой 
+  или пробел</p>
+<p class=textpreword>    // или еще &quot;wglExtensionTwo&quot; 
+  может совпасть с &quot;wglExtension&quot;</p>
+<p class=textpreword>    if ((p==supported || p[-1]==' ') &amp;&amp; (p[extlen]=='\0' || p[extlen]==' 
+  '))</p>
+<p class=textpreword>      return true; // Совпадение</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp; </p>
+<p class=textword><i>Примечание переводчика:</i></p>
+<p class=textword>Работа с wglGetProcAddress описана в 
+  уроке 22. Функция const char *wglGetExtensionsStringARB(HDC hdc) возвращает 
+  строку с перечнем расширений, hdc – контекст устройства.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Следующая функция – собственно суть всей программы. В сущности, 
+  мы собираемся выяснить поддерживается ли наше arb расширение 
+  на нашей системе. По сему мы будем запрашивать контекст устройства с целью выяснить 
+  наличие метода множественной выборки. Опять… давайте просто перейдем к коду.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>bool InitMultisample(HINSTANCE hInstance,HWND 
+  hWnd,PIXELFORMATDESCRIPTOR pfd)</p>
+<p class=textpreword>{  </p>
+<p class=textpreword>  // посмотрим, есть ли строка в WGL!</p>
+<p class=textpreword>  if (!WGLisExtensionSupported(&quot;WGL_ARB_multisample 
+  &quot;))</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    arbMultisampleSupported=false;</p>
+<p class=textpreword>    return false;</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // Возьмем наш формат пикселя</p>
+<p class=textpreword>  PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB =</p>
+<p class=textpreword>    (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress(&quot;wglChoosePixelFormatARB&quot;);</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  if (!wglChoosePixelFormatARB)</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    // Мы не нашли поддержки для метода множественной выборки, 
+  выставим наш флаг и выйдем.</p>
+<p class=textpreword>    arbMultisampleSupported=false;</p>
+<p class=textpreword>    return false;</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // Получаем контекст нашего устройства. Нам это необходимо 
+  для того, что</p>
+<p class=textpreword>  // спросить у OpenGL окна, какие атрибуты у нас есть</p>
+<p class=textpreword>  HDC hDC = GetDC(hWnd);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  int pixelFormat;</p>
+<p class=textpreword>  bool valid;</p>
+<p class=textpreword>  UINT numFormats;</p>
+<p class=textpreword>  float fAttributes[] = {0,0};</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Эти атрибуты – биты, которые мы хотим протестировать 
+  в нашем типе</p>
+<p class=textpreword>  // Все довольно стандартно, только одно на чем мы хотим 
+</p>
+<p class=textpreword>  // действительно сфокусироваться - это SAMPLE BUFFERS ARB и WGL 
+  SAMPLES</p>
+<p class=textpreword>  // Они выполнят главную проверку на предмет: есть или нет</p>
+<p class=textpreword>  // у нас поддержка множественной выборки</p>
+<p class=textpreword>  int iAttributes[] = {</p>
+<p class=textpreword>    WGL_DRAW_TO_WINDOW_ARB,GL_TRUE, 
+  // Истинна, если формат пикселя может быть использован в окне</p>
+<p class=textpreword>    WGL_SUPPORT_OPENGL_ARB,GL_TRUE, 
+  // Истинна, если поддерживается OpenGL</p>
+<p class=textpreword>    WGL_ACCELERATION_ARB,WGL_FULL_ACCELERATION_ARB, // Полная аппаратная 
+  поддержка</p>
+<p class=textpreword>    WGL_COLOR_BITS_ARB,24,          // Цветность</p>
+<p class=textpreword>    WGL_ALPHA_BITS_ARB,8,           
+  // Размерность альфа-канала</p>
+<p class=textpreword>    WGL_DEPTH_BITS_ARB,16,          
+  // Глубина буфера глубины</p>
+<p class=textpreword>    WGL_STENCIL_BITS_ARB,0,         
+  // Глубина буфера шаблона</p>
+<p class=textpreword>    WGL_DOUBLE_BUFFER_ARB,GL_TRUE,  
+  // Истина, если используется двойная буферизация</p>
+<p class=textpreword>    WGL_SAMPLE_BUFFERS_ARB,GL_TRUE, // Что мы и хотим</p>
+<p class=textpreword>    WGL_SAMPLES_ARB, 
+  4 ,            // проверка на 4x тип</p>
+<p class=textpreword>    0,0};</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // Сначала посмотрим, сможем ли мы получить формат пикселя 
+  для 4x типа</p>
+<p class=textpreword>  valid = wglChoosePixelFormatARB(hDC,iAttributes,fAttributes,1,&amp;pixelFormat,&amp;numFormats);</p>
+<p class=textpreword> </p>
+<p class=textpreword>  // Если вернулось True, 
+  и наш счетчик форматов больше 1</p>
+<p class=textpreword>  if (valid &amp;&amp; numFormats &gt;= 
+  1)</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    arbMultisampleSupported  = true;</p>
+<p class=textpreword>    arbMultisampleFormat  = pixelFormat;  </p>
+<p class=textpreword>    return arbMultisampleSupported;</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // Формат пикселя с 4x выборкой 
+  отсутствует, проверяем на 2x тип</p>
+<p class=textpreword>  iAttributes[19] = 2;</p>
+<p class=textpreword>  valid = wglChoosePixelFormatARB(hDC,iAttributes,fAttributes,1,&amp;pixelFormat,&amp;numFormats);</p>
+<p class=textpreword>  if (valid &amp;&amp; numFormats &gt;= 1)</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    arbMultisampleSupported  = true;</p>
+<p class=textpreword>    arbMultisampleFormat  = pixelFormat;</p>
+<p class=textpreword>    return arbMultisampleSupported;</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>    </p>
+<p class=textpreword>  // возвращаем годный формат</p>
+<p class=textpreword>  return  arbMultisampleSupported;</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword><i>Примечание</i><i> переводчика</i><i>:</i></p>
+<p class=textword>Функция:</p>
+<p class=textword>&nbsp;  </p>
+<p class=textpreword>BOOL wglChoosePixelFormatARB(HDC hdc,</p>
+<p class=textpreword>                             const GLint *piAttribIList,</p>
+<p class=textpreword>                             const GLfloat *pfAttribFList,</p>
+<p class=textpreword>                             GLuint nMaxFormats,</p>
+<p class=textpreword>                             GLint *piFormats,</p>
+<p class=textpreword>                             GLuint *nNumFormats);</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textword>Выбирает форматы пикселя согласно запрашиваемым атрибутам. hdc – контекст устройства, piAttribIList или pfAttribFList – список желаемых атрибутов (пары {тип, значение} 
+  формате целого числа или в формате с плавающей запятой, в конце списка {0,0}, 
+  значения типов атрибутов задаются объявлениями define выше или взяты из wglext.h, значение зависит от типа). 
+  nMaxFormats – максимальное число форматов, которое будет 
+  возвращено. piFormats – массив индексов форматов пикселов, 
+  которые совпадают с запрашиваемым. Наилучший формат будет первым. nNumFormats 
+  – сколько форматов найдено при запросе.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Теперь, когда у нас есть готовый код запроса, мы должны изменить 
+  процесс создания окна. Сперва, мы должны включить наш заголовочный файл arb_multisample.h и поместить прототипы 
+  DestroyWindow и CreateWindow в начало файла.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>#include &lt;windows.h&gt;      // Заголовочный файл библиотеки Windows</p>
+<p class=textpreword>#include &lt;gl/gl.h&gt;        // Заголовочный файл  
+  библиотеки OpenGL32</p>
+<p class=textpreword>#include &lt;gl/glu.h&gt;       // Заголовочный файл 
+  библиотеки GLu32</p>
+<p class=textpreword>#include &quot;NeHeGL.h&quot;       // Заголовочный файл NeHeGL 
+  основного кода</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>// ЗДЕСЬ ПРОБЕЖАЛ ТАРАКАН</p>
+<p class=textpreword>#include &quot;ARB_MULTISAMPLE.h&quot;</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>BOOL DestroyWindowGL (GL_Window* window);</p>
+<p class=textpreword>BOOL CreateWindowGL (GL_Window* window);</p>
+<p class=textpreword>// ENDТАРАКАН</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Следующий кусок кода должен быть добавлен в функцию CreateWindowGL, код функции был оставлен без изменений, дабы 
+  вы могли вносить свои модификации. В общем, мы делаем часть «уничтожения» до 
+  конца работы. Мы не можем запросить формат пикселя, для определения типа множественной 
+  выборки, пока мы не создадим окно. Но мы не можем создать окно, пока не знаем 
+  формат пикселя, который оно поддерживает. Сродни вечному вопросу о курице и 
+  яйце. Итак, все, что я сделал – это маленькая двухпроходная система; мы создаем 
+  окно, определяем формат пикселя, затем уничтожаем (пересоздаем) окно, если метод 
+  множественной выборки поддерживается. Немного круто…</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  window-&gt;hDC 
+  = GetDC (window-&gt;hWnd); // Забираем контекст данного окна</p>
+<p class=textpreword>  if (window-&gt;hDC 
+  == 0)               // Мы получили контекст устройства?</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    // Нет</p>
+<p class=textpreword>    DestroyWindow (window-&gt;hWnd);     // Уничтожаем 
+  окно</p>
+<p class=textpreword>    window-&gt;hWnd = 0;                 
+  // Обнуляем указатель</p>
+<p class=textpreword>    return FALSE;                     // возвращаем False</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>// ЗДЕСЬ ПРОБЕЖАЛ ТАРАКАН</p>
+<p class=textpreword>  // Наш первый проход, множественная выборка пока не подключена, 
+  так что мы создаем обычное окно</p>
+<p class=textpreword>  // Если поддержка есть, тогда мы идем на второй проход</p>
+<p class=textpreword>  // это значит, что мы хотим использовать наш формат пикселя 
+  для выборки</p>
+<p class=textpreword>  // и так, установим PixelFormat 
+  в arbMultiSampleformat вместо текущего</p>
+<p class=textpreword>  if(!arbMultisampleSupported)</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    PixelFormat = ChoosePixelFormat (window-&gt;hDC, &amp;pfd); 
+  // найдем совместимый формат пикселя</p>
+<p class=textpreword>    if (PixelFormat == 0)             // 
+  мы нашли его?</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      // Нет</p>
+<p class=textpreword>      ReleaseDC (window-&gt;hWnd, 
+  window-&gt;hDC);  // Освобождаем 
+  контекст устройства</p>
+<p class=textpreword>      window-&gt;hDC = 0;                // 
+  Обнуляем контекст</p>
+<p class=textpreword>      DestroyWindow (window-&gt;hWnd);   // Уничтожаем окно</p>
+<p class=textpreword>      window-&gt;hWnd 
+  = 0;               // Обнуляем указатель окна</p>
+<p class=textpreword>      return FALSE;                   // возвращаем False</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>  else</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    PixelFormat = arbMultisampleFormat;</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>// ENDТАРАКАН</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // пытаемся установить формат пикселя</p>
+<p class=textpreword>  if (SetPixelFormat (window-&gt;hDC, PixelFormat, 
+  &amp;pfd) == FALSE)</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    // Неудача</p>
+<p class=textpreword>    ReleaseDC (window-&gt;hWnd, window-&gt;hDC); 
+  // Освобождаем контекст устройства</p>
+<p class=textpreword>    window-&gt;hDC = 
+  0;                  // Обнуляем контекст</p>
+<p class=textpreword>    DestroyWindow (window-&gt;hWnd);     // Уничтожаем окно</p>
+<p class=textpreword>    window-&gt;hWnd 
+  = 0;                 // Обнуляем указатель окна</p>
+<p class=textpreword>    return FALSE;                     // возвращаем False</p>
+<p class=textpreword>  }</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Теперь окно создано и у нас есть правильный указатель, чтобы 
+  запросить поддержку множественной выборки. Если поддержка есть, то мы уничтожаем 
+  окно и опять вызываем CreateWindowGL с новым форматом 
+  пикселя.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>  // Сделаем контекст визуализации нашим текущим контекстом</p>
+<p class=textpreword>  if (wglMakeCurrent (window-&gt;hDC, window-&gt;hRC) 
+  == FALSE)</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    // Не удалось</p>
+<p class=textpreword>    wglDeleteContext (window-&gt;hRC);   // 
+  Уничтожаем контекст визуализации</p>
+<p class=textpreword>    window-&gt;hRC = 
+  0;                  // Обнуляем контекст визуализации</p>
+<p class=textpreword>    ReleaseDC (window-&gt;hWnd, 
+  window-&gt;hDC); // Освобождаем 
+  контекст устройства</p>
+<p class=textpreword>    window-&gt;hDC = 0;                  
+  // Обнуляем его</p>
+<p class=textpreword>    DestroyWindow (window-&gt;hWnd);     // Уничтожаем окно</p>
+<p class=textpreword>    window-&gt;hWnd 
+  = 0;                 // Обнуляем указатель окна</p>
+<p class=textpreword>    return FALSE;                     // возвращаем False</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  </p>
+<p class=textpreword>// ЗДЕСЬ ПРОБЕЖАЛ ТАРАКАН</p>
+<p class=textpreword>  // Теперь, когда наше окно создано, мы хотим узнать какие 
+  типы доступны.</p>
+<p class=textpreword>  // Мы вызываем нашу функцию InitMultiSample для создания окна</p>
+<p class=textpreword>  // если вернулся правильный контекст, то мы уничтожаем 
+  текущее окно</p>
+<p class=textpreword>  // и создаем новой, используя интерфейс множественной выборки.</p>
+<p class=textpreword>  if(!arbMultisampleSupported &amp;&amp; 
+  CHECK_FOR_MULTISAMPLE)</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    if(InitMultisample(window-&gt;init.application-&gt;hInstance,window-&gt;hWnd,pfd))</p>
+<p class=textpreword>    {</p>
+<p class=textpreword>      DestroyWindowGL (window);</p>
+<p class=textpreword>      return CreateWindowGL(window);</p>
+<p class=textpreword>    }</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>// ENDТАРАКАН</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  ShowWindow (window-&gt;hWnd, SW_NORMAL);  
+  // Сделаем окно видимым</p>
+<p class=textpreword>  window-&gt;isVisible = TRUE;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textword>Ок, и так настройка теперь завершена! Мы настроили наше окно 
+  для работы с методом множественной выборки. Теперь повеселимся, собственно делая 
+  это! К счастью, ARB решила сделать поддержку метода 
+  множественной выборки динамической, это позволяет нам включать и выключать ее 
+  вызовами glEnable / glDisable.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>glEnable(GL_MULTISAMPLE_ARB);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>// Визуализируем 
+  сцену</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>glDisable(GL_MULTISAMPLE_ARB);</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Вот собственно и все! Далее идет код примера, в котором простые 
+  квадраты вращаются, чтобы вы могли увидеть, как хорошо метод множественной выборки 
+  работает. НАСЛАЖДАЙТЕСЬ!</p>
+<p class="textnoalign" align="right">
+<font color="#0000A0"><b> © Colt &quot;MainRoach&quot; McAnlis</b>
+<u>( </u><u><a
+href="mailto:duhroach@hotmail.com"><b>duhroach@hotmail.com</b></a></u><u> )</u>
+</font>
+<br>
+<font color="#0000A0"><b> © Jeff Molofee (NeHe)</b></font>
+</p>  
+
+</div>
+<div id="end">
+
+          <p><a href="http://pmg.org.ru/"
+			onmouseover=" return event_over(this,'Программирование магических игр')  "
+			onmouseout=" return event_out(this) "><font class="link"><b>PMG</b></font></a> 
+            <font class="comment">&nbsp;3 ноября 2003&nbsp;(c)&nbsp;</font> 
+<a href="mailto:olegst@fromru.com"
+onmouseover=" return event_over(this,'Почта переводчику')  "
+onmouseout=" return event_out(this) ">
+<font class="link"><b>Олег Столоногов</b></font></a>
+          </p>
+</div>
+</center>
+
+<script language="JavaScript">
+<!--
+form_print();
+//-->
+</script>
+
+</body>
+</html>

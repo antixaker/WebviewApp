@@ -1,0 +1,1558 @@
+<!doctype html public "-//w3c//dtd html 3.2 final//ru">
+<html>
+
+<head>
+<meta http-equiv="Content-Type"
+content="text/html; charset=windows-1251">
+<meta name="description"
+content="Переводы по OpenGL, трехмерная графика, игры, мультимедия
+Translations Russian OpenGL
+">
+<meta name="keyword"
+content="Программирование,игры,3D,трехмерная графика,OpenGL,NeHe">
+<meta name="keyword"
+content="programming,C,C++,game,graphics">
+<title>Урок 29. Блиттер-функция и чтение не обработанных текстур.</title>
+<link rel="stylesheet" href="pmg.css" type="text/css">
+</head>
+
+<body bgcolor="#b2d3e1" link="#800080" vlink="#800080">
+<script src='nehe.js' language="javascript">
+<!--
+//-->
+</script>
+
+<center>
+<div id="top">
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+        <td width="20%" align="center" valign="center">
+        <img src="nehelogo.jpg" align="left" hspace="0" width="125" height="50" alt="NeHe Tutorials">
+        </td>
+        <td width="60%" align="center">
+	<a href="index.html"
+	onmouseover=" return event_over(this,'NeHe Ru.')  "
+        onmouseout=" return event_out(this) ">
+        <font class="linksbig">
+        Народный учебник по OpenGL</font></a><br>
+        </td>
+        <td width="20%" align="center" valign="center">
+        <img src="nehe29.jpg" align="right" hspace="0" width="80" height="60" alt="Урок 29. OpenGL">
+        </td>
+    </tr>
+</table>
+</div>
+
+<div id="head">
+<p class="head1">
+Урок 29. Блиттер-функция и чтение не обработанных текстур.</p>
+</div>
+<div id="main" bgcolor="#ADADFF">
+<p class="textnoalign" align="left">
+
+<a href="http://nehe.gamedev.net/data/lessons/lesson.asp?lesson=29" target="_blank"
+onmouseover=" return event_over(this,this)  "
+onmouseout=" return event_out(this) ">
+<font class="link"><b>Blitter Function, RAW Texture Loading</b></font></a>
+<br>
+</p><p class=textword>&nbsp;  </p>
+
+<p class=textword>Этот урок вначале был написан Андреасом Лоффлером. Он также
+написал весь оригинальный код HTML для этого урока. Через несколько дней после
+этого Роб Флетчер выслал мне Irix
+версию этого урока. Он переписал большинство кода. Так что я портировал Irix/GLUT код Роба в Visual
+C++/Win32. Затем я модифицировал код цикла обработки сообщений, и код работы в полноэкранном
+режиме. Когда программа свернута, она не будет использовать процессор. Большинство
+проблем возникавших при переключениях полноэкранного режима исчезнет (таких как
+пропадание изображения на экране). </p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textword>Так что урок Андреаса теперь лучше чем когда-либо. После того
+как был модифицирован код, так же изменился и код HTML.
+Огромное спасибо Андреасу за то, что он начал эту работу! Спасибо Робу за
+модификации!</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textword>Давайте начнем... Мы определяем структуру для хранения
+информации о режиме экрана <b>DMsaved</b>.
+Мы будем использовать эту структуру, для того чтобы сохранить информацию о видеорежиме,
+прежде чем мы переключимся в полноэкранный режим. Больше об этот позже! Заметьте,
+что мы определяем переменную для одной текстуры (texture [1]).</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textpreword>#include &lt;windows.h&gt; // заголовочный
+файл для Windows</p>
+
+<p class=textpreword>#include &lt;stdio.h&gt;   // заголовочный файл для
+стандартного ввода/вывода</p>
+
+<p class=textpreword>#include &lt;gl\gl.h&gt;   // заголовочный файл для
+библиотеки OpenGL32</p>
+
+<p class=textpreword>#include &lt;gl\glu.h&gt;  // заголовочный файл для
+библиотеки GLu32</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>HDC       hDC=NULL;        // Контекст устройства</p>
+
+<p class=textpreword>HGLRC     hRC=NULL;        // Контекст рендеринга</p>
+
+<p class=textpreword>HWND      hWnd=NULL;       // Дескриптор окна</p>
+
+<p class=textpreword>HINSTANCE hInstance;       // Экземпляр приложения</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>bool      keys[256];       // Массив для работы с клавиатурой</p>
+
+<p class=textpreword>bool      active=TRUE;     // Флаг активности приложения</p>
+
+<p class=textpreword>bool      fullscreen=TRUE; // Флаг полноэкранного режима</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>DEVMODE    DMsaved;       
+// Сохранить предыдущие настройки экрана (НОВОЕ)</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>GLfloat    xrot;                 
+// X вращение</p>
+
+<p class=textpreword>GLfloat    yrot;                 
+// Y вращение</p>
+
+<p class=textpreword>GLfloat    zrot;                  // Z вращение</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>GLuint    texture[1];                // имя 1 текстуры</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textword>Теперь об интересном. Мы создаем структуру по имени <b>TEXTURE_IMAGE</b>.
+Структура содержит информацию о ширине изображения, высоте, и формате (число байт
+на пиксель). Поле структуры <b>data</b> - указатель на данные изображения.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textpreword>typedef struct
+Texture_Image</p>
+
+<p class=textpreword>{</p>
+
+<p class=textpreword>  int width;                 // Ширина</p>
+
+<p class=textpreword>  int height;                // Высота</p>
+
+<p class=textpreword>  int format;                // Байт
+на пиксель</p>
+
+<p class=textpreword>  unsigned char *data;       // данные
+текстуры</p>
+
+<p class=textpreword>} TEXTURE_IMAGE;</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textword>Мы тогда создаем указатель по имени <b>P_TEXTURE_IMAGE</b> на
+структуру<b> TEXTURE_IMAGE</b>. Переменные <b>t1</b> и <b>t2</b> имеют тип <b>P_TEXTURE_IMAGE</b>,
+где <b>P_TEXTURE_IMAGE</b> - переопределенный тип указателя на <b>TEXTURE_IMAGE</b>.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textpreword>typedef TEXTURE_IMAGE *P_TEXTURE_IMAGE;
+// Указатель на структуру изображения</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>P_TEXTURE_IMAGE t1;                  // Указатель
+на данные текстуры</p>
+
+<p class=textpreword>P_TEXTURE_IMAGE t2;                 
+// Указатель на данные текстуры</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>LRESULT  CALLBACK WndProc(HWND, UINT,
+WPARAM, LPARAM); // Объявление WndProc</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textword>Код ниже выделяет память для текстуры. Когда мы вызовем этот
+код, мы передадим ему ширину, высоту и число байт на пиксель. Переменная <b>ti </b>– указатель на данные <b>TEXTURE_</b><b>IMAGE</b>. Переменная <b>c</b> – указатель на данные типа <b>unsigned
+char</b>.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textpreword>// Выделить память под структуру изображения
+и данных изображения</p>
+
+<p class=textpreword>P_TEXTURE_IMAGE AllocateTextureBuffer(
+GLint w, GLint h, GLint f)</p>
+
+<p class=textpreword>{</p>
+
+<p class=textpreword>  P_TEXTURE_IMAGE ti=NULL;              //
+Указатель на структуру изображения</p>
+
+<p class=textpreword>  unsigned char *c=NULL;               
+// Указатель на блок памяти для изображения</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textword>Далее, где мы распределяем память для нашей структуры
+изображения. Если все отлично, то <b>ti</b>
+укажет на распределенную память. </p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textword>После распределения памяти, и проверки, мы можем заполнять
+структуру атрибутами изображения. Сначала мы задаем ширину (<b>w</b>), затем
+высоту (<b>h</b>) и наконец формат (<b>f</b>). Имейте в виду, что формат – число
+байт на пиксель.</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>  ti = (P_TEXTURE_IMAGE)malloc(sizeof(TEXTURE_IMAGE));
+// Дайте пожалуйста одну структуру для изображения</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>  if( ti != NULL ) {</p>
+
+<p class=textpreword>    ti-&gt;width  = w;   // Ширина</p>
+
+<p class=textpreword>    ti-&gt;height = h;   // Высота</p>
+
+<p class=textpreword>    ti-&gt;format
+= f;   // Формат</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>Теперь мы
+должны распределить память для данных изображения. Для вычисления размера нужного
+куска памяти надо просто умножить ширину изображения (<b>w</b>) на высоту
+изображения (<b>h</b>) и на формат (<b>f</b> – число байт на пиксель).</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>    c = (unsigned char *)malloc( w * h *
+f);</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textword>Делаем проверку, что все прошло удачно. Если значение в <b>c</b>
+- не равно <b>NULL</b>, мы присваиваем полю <b>data</b> значение переменной <b>c</b>.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textword>Если память не выделена, то выскочит сообщение об ошибке и
+процедура вернет <b>NULL</b>.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textpreword>    if ( c != NULL ) {</p>
+
+<p class=textpreword>      ti-&gt;data = c;</p>
+
+<p class=textpreword>    }</p>
+
+<p class=textpreword>    else {</p>
+
+<p class=textpreword>      MessageBox(NULL,&quot;Не могу
+выделить память для буфера текстуры&quot;,&quot;BUFFER
+ERROR&quot;,MB_OK | MB_ICONINFORMATION);</p>
+
+<p class=textpreword>      return NULL;</p>
+
+<p class=textpreword>    }</p>
+
+<p class=textpreword>  }</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textword>Если невозможно выделить память для структуры изображения, то
+так же выскочит сообщение об ошибке и процедура вернет <b>NULL</b>.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textword>Если нет проблем, мы возвращаем <b>ti</b> - указатель на готовую структуру
+изображения. Ух... надеюсь, что все это
+понятно и имеет смысл.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textpreword>  else</p>
+
+<p class=textpreword>  {</p>
+
+<p class=textpreword>    MessageBox(NULL,&quot;Не могу выделить
+память для структуры изображения&quot;,&quot;IMAGE STRUCTURE
+ERROR&quot;,MB_OK | MB_ICONINFORMATION);</p>
+
+<p class=textpreword>    return NULL;</p>
+
+<p class=textpreword>  }</p>
+
+<p class=textpreword>  return ti; // Вернем указатель на
+структуру изображения</p>
+
+<p class=textpreword>}</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textword>Когда приходит время, то надо освободить память. Для этого
+служит код ниже, в котором происходит освобождение буфера текстуры и затем сброс
+памяти для структуры изображения. Переменная <b>t</b> -
+указатель на структуру данных <b>TEXTURE_IMAGE</b>, которую мы хотим
+освободить.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textpreword>// Освободить память</p>
+
+<p class=textpreword>void DeallocateTexture( P_TEXTURE_IMAGE t
+)</p>
+
+<p class=textpreword>{</p>
+
+<p class=textpreword>  if(t)</p>
+
+<p class=textpreword>  {</p>
+
+<p class=textpreword>    if(t-&gt;data)</p>
+
+<p class=textpreword>    {</p>
+
+<p class=textpreword>      free(t-&gt;data); // Освободить
+буфер</p>
+
+<p class=textpreword>    }</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>    free(t); // Сброс текстуры</p>
+
+<p class=textpreword>  }</p>
+
+<p class=textpreword>}</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textword>Теперь мы будем читать наше RAW изображение
+(несжатые и не форматированные данные, так называемые “сырые” данные). Мы
+передаем имя файла и указатель на структуру изображения, в которую мы хотим
+загрузить изображение. Мы определяем несколько вспомогательных переменных, и
+затем вычисляем размер строки, умножая ширину нашего изображения на формат (число
+байт на пиксель). Если бы изображение было 256 пикселей в ширину и 4 байта на
+пиксель, то ширина строки была бы 1024 байта. Мы запоминаем ширину строки в <b>stride</b>. </p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textword>Мы обнуляем указатель (<b>p</b>), и затем пытаемся открыть
+файл.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textpreword>// Чтение RAW файла
+в готовый буфер.</p>
+
+<p class=textpreword>// Поворот изображения сверху вниз. Возвращает 9, если
+сбой, или число прочитанных байт.</p>
+
+<p class=textpreword>int ReadTextureData ( char *filename,
+P_TEXTURE_IMAGE buffer)</p>
+
+<p class=textpreword>{</p>
+
+<p class=textpreword>  FILE *f;</p>
+
+<p class=textpreword>  int i,j,k,done=0;</p>
+
+<p class=textpreword>  int stride = buffer-&gt;width *
+buffer-&gt;format; // Размер строки</p>
+
+<p class=textpreword>  unsigned char *p = NULL;</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>  f = fopen(filename, &quot;rb&quot;); 
+// Открыть файл</p>
+
+<p class=textpreword>  if( f != NULL )             // Если
+файл существует</p>
+
+<p class=textpreword>  {</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textword>Если файл существует, мы запускаем три цикла, чтобы прочитать
+нашу текстуру. Начинаем с нижней строки и сдвигаемся вверх по одной строке. Так
+как цикл начинается снизу, то зеркальный поворот будет выполнен правильно. RAW изображения сохраняются инвертированными
+вниз. Необходимо установить указатель в надлежащее место в буфере изображения.
+Каждый раз, когда мы сдвигаемся на следующую строку(<b>i</b>
+уменьшается) мы устанавливаем указатель на начало новой строки. Указатель <b>data</b> – показывает начало
+изображения, и для того чтобы перейти на следующую строку изображения, надо
+умножить номер текущей строки <b>i</b> на размер строки
+<b>stride</b>. </p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textword>Во втором цикле <b>j</b> смещается слева (0) направо (ширина строки в пикселях, но не
+в байтах).</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textpreword>    for( i = buffer-&gt;height-1; i &gt;=
+0 ; i-- ) // Цикл по высоте (снизу вверх)</p>
+
+<p class=textpreword>    {</p>
+
+<p class=textpreword>      p = buffer-&gt;data + (i * stride
+);</p>
+
+<p class=textpreword>      for ( j = 0; j &lt;
+buffer-&gt;width ; j++ ) // Цикл по ширине</p>
+
+<p class=textpreword>      {</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textword>В цикле по <b>k</b> читаем
+пиксель побайтно. Если формат (байт на пиксель) - 4,то <b>k</b> меняется от 0
+до 2, где 2 равняется число байт на пиксель минус один (<b>format</b>
+-1). Так как большинство необработанных изображений не имеют альфа канала, а
+нам он нужен, то это та причина, по которой мы вычитаем единицу. Мы будем
+заполнять каждый 4-ый байт нашим значением альфа канала.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textword>Заметьте, что в цикле, мы также увеличиваем указатель (<b>p</b>)
+и переменную <b>done</b>. Больше об этом позже. </p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textword>В строке внутри цикла происходит чтение символа из нашего
+файла и запоминание его в буфере текстуры согласно текущего положения указателя.
+Если наше изображение имеет 4 байта на пиксель, первые 3 байта будут читаться из
+RAW файла (<b>format</b>-1), и 4-ый байт будет вручную установлен в 255.
+После того, как мы задаем 4-ый байт равным 255, мы сдвигаем указателя на один
+байт вперед, чтобы наш 4-ый байт не был перезаписан следующим байтом из файла.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textword>После того, как все байты прочитались в пиксель, и прочитались
+все пиксели строке, и прочитались все строки, то все сделано! Мы можем
+закрывать файл.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textpreword>        for ( k = 0 ; k &lt;
+buffer-&gt;format-1 ; k++, p++, done++ )</p>
+
+<p class=textpreword>        {</p>
+
+<p class=textpreword>          *p = fgetc(f); // Чтение
+значения из файла и сохранение его в памяти</p>
+
+<p class=textpreword>        }</p>
+
+<p class=textpreword>        *p = 255; p++; // Установить 255 в альфа канал и увеличить указатель</p>
+
+<p class=textpreword>      }</p>
+
+<p class=textpreword>    }</p>
+
+<p class=textpreword>    fclose(f); // Закрыть файл</p>
+
+<p class=textpreword>  }</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textword>Если файл не открыт, то выскочит окно сообщения, о том, что
+файл не был открыт.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textword>В конце мы возвращаем <b>done</b>.
+Если файл не был открыт, то <b>done</b> равно 0. Если все пошло удачно, то <b>done</b>
+равно числу прочитанных байтов из файла. Помните, мы увеличивались <b>done</b>,
+каждый раз, когда читали байт в цикле выше (цикл по <b>k</b>).</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textpreword>  else // Иначе</p>
+
+<p class=textpreword>  {</p>
+
+<p class=textpreword>    MessageBox(NULL,&quot;Невозможно
+открыть файл изображения &quot;,&quot;IMAGE ERROR&quot;,MB_OK
+| MB_ICONINFORMATION);</p>
+
+<p class=textpreword>  }</p>
+
+<p class=textpreword>  return done; // Возвращает число
+прочитанных байт</p>
+
+<p class=textpreword>}</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textword>This shouldn't need explaining. By now you
+should know how to build a texture. tex is the pointer to the TEXTURE_IMAGE
+structure that we want to use. We build a linear filtered texture. In this
+example, we're building mipmaps (smoother looking). We pass the width, height
+and data just like we would if we were using glaux, but this time we get the
+information from the selected TEXTURE_IMAGE structure.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textword>Далее код не нуждается в пояснениях. Вы должны знать, как создать
+текстуру. Переменная <b>tex</b>
+- указатель на структуру <b>TEXTURE_IMAGE</b>, которую мы хотим использовать.
+Мы создаем текстуру с линейной фильтрацией. В этом примере, мы задаем мипмапы (для
+улучшения изображения). Мы передаем ширину, высоту и данные изображения точно
+так же как, если мы использовали glaux,
+но на сей раз, мы получаем информацию из структуры <b>TEXTURE_IMAGE</b>.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textpreword>void BuildTexture (P_TEXTURE_IMAGE tex)</p>
+
+<p class=textpreword>{</p>
+
+<p class=textpreword>  glGenTextures(1, &amp;texture[0]);</p>
+
+<p class=textpreword>  glBindTexture(GL_TEXTURE_2D,
+texture[0]);</p>
+
+<p class=textpreword> 
+glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);</p>
+
+<p class=textpreword> 
+glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);</p>
+
+<p class=textpreword>  gluBuild2DMipmaps(GL_TEXTURE_2D,
+GL_RGB, tex-&gt;width, tex-&gt;height, GL_RGBA, GL_UNSIGNED_BYTE, tex-&gt;data);</p>
+
+<p class=textpreword>}</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textword>Теперь код блиттера (функция
+пересылки изображения). Код блиттера очень мощный. Он позволяет Вам копировать
+любую прямоугольную часть текстуру (<b>src</b>) в приемную текстуру (<b>dst</b>). Вы можете комбинировать так много
+текстур, как Вы хотите, Вы можете задать альфа значение для смешивания. </p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textword>Переменная <b>src</b> - структура <b>TEXTURE_IMAGE</b>
+используется как исходное изображение. Переменная <b>dst</b> - структура <b>TEXTURE_IMAGE</b>
+используется как приемное изображение. Переменная <b>src_xstart</b> – задает начало копирования
+данных из исходного изображения по оси X. Переменная <b>src_ystart</b> - задает начало
+копирования данных из исходного изображения по оси Y. Переменная <b>src_width</b> – задает ширину в
+пикселях области, которую Вы хотите копировать из исходного изображения. Переменная
+<b>src_height</b> - высота в
+пикселях области, которую Вы хотите скопировать из исходного изображения. Переменные
+<b>dst_xstart</b> и <b>dst_ystart</b> – задают место, куда
+вы хотите скопировать пиксели из исходного изображения в приемное изображение.
+Если <b>blend</b> – равно 1, то
+два изображения будут смешаны. Значение переменной <b>alpha</b> задает степень прозрачности изображения. Если значение 0, то
+ничего не будет скопировано, если <b>alpha</b> равно 255, то исходное изображение полностью перекроет
+приемное.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textword>Затем задаем все вспомогательные переменные циклов, наряду с
+указателями для нашего исходного изображения (<b>s</b>)
+и приемного изображения (<b>d</b>). Проверяем диапазон значения <b>alpha</b>. Если есть выход за диапазон, то исправляем его. Тоже
+и для <b>blend</b>.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textpreword>void Blit( P_TEXTURE_IMAGE src,
+P_TEXTURE_IMAGE dst, int src_xstart, int src_ystart, int src_width, int
+src_height,</p>
+
+<p class=textpreword>     int dst_xstart, int dst_ystart, int
+blend, int alpha)</p>
+
+<p class=textpreword>{</p>
+
+<p class=textpreword>  int i,j,k;</p>
+
+<p class=textpreword>  unsigned char *s, *d; // Исходное
+и приемное</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>  // Ограничиваем
+Alpha</p>
+
+<p class=textpreword>  if( alpha &gt; 255 ) alpha = 255;</p>
+
+<p class=textpreword>  if( alpha &lt; 0 ) alpha = 0;</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>  // Проверка флага Blend</p>
+
+<p class=textpreword>  if( blend &lt; 0 ) blend = 0;</p>
+
+<p class=textpreword>  if( blend &gt; 1 ) blend = 1;</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textword>Теперь мы должны задать значение указателей. Приемный указатель
+- адрес приемных данных плюс смещение начальной строки в приемном изображении,
+которое равно произведению начальной строки изображения (<b>dst_ystart</b>) на ширину приемного
+изображения и на формат изображения. </p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textword>Тоже делается и для исходного изображения. Исходный указатель
+- адрес исходных данных плюс смещение начальной строки в исходном изображении (<b>src_ystart</b>), которое равно
+произведению начальной строки изображения (<b>src_ystart</b>) на ширину исходного
+изображения и на формат изображения.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textword>Цикл по <b>i</b> от
+0 до <b>src_height</b>, копирует
+все строки из исходного изображения.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textpreword>  d = dst-&gt;data + (dst_ystart * dst-&gt;width
+* dst-&gt;format);</p>
+
+<p class=textpreword>  s = src-&gt;data + (src_ystart *
+src-&gt;width * src-&gt;format);</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>  for (i = 0 ; i &lt; src_height ; i++ )
+// Цикл по высоте</p>
+
+<p class=textpreword>  {</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textword>Мы уже задали значения указателей источника и приемника на
+нужные строки в каждом изображении. Теперь мы должны двигаться в правильном
+направлении слева направо в каждом изображении прежде, чем мы запустим блиттинг данных. Мы увеличиваем указатель на
+исходное изображение (<b>s</b>) на значение <b>src_xstart</b>, которое является началом
+по оси X исходных данных изображения умноженное на
+число байт на пиксель. Это перемещает указатель источника (<b>s</b>)
+на начальный пиксель по оси X (слева направо) в исходном изображении.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textword>Тоже и для приемного изображения. Мы увеличиваем указатель на
+приемное изображение (<b>d</b>) на значение <b>dst_xstart</b>, которое является
+началом по оси X приемных данных изображения умноженное
+на число байт на пиксель. Это перемещает указатель источника (<b>d</b>) на начальный пиксель по оси X (слева направо) в
+приемном изображении.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textword>После того, как мы вычислили, где в памяти мы хотим захватить
+наши пиксели от (<b>s</b>) и куда мы хотим переместить их в (<b>d</b>), мы
+запускаем цикл по <b>j</b>. Мы будем использовать цикл по <b>j</b>, чтобы перемещаться
+слева направо через исходное изображение.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textpreword>    s = s
++ (src_xstart * src-&gt;format); // Сдвинемся на
+начало исходных данных в строке</p>
+
+<p class=textpreword>    d = d
++ (dst_xstart * dst-&gt;format); // Сдвинемся на начало
+приемных данных в строке</p>
+
+<p class=textpreword>    for (j
+= 0 ; j &lt; src_width ; j++ )  // Цикл по ширине</p>
+
+<p class=textpreword>    {</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textword>Цикл по <b>k</b> используется для
+обработки всех байт в пикселе. Заметьте, что при увеличении <b>k</b> указатели для источника и приемника также
+увеличиваются.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textword>Внутри цикла мы проверяем, включено ли смешение. Если <b>blend</b> равно 1, то значит надо
+выполнить смешение пикселей, и мы делаем несколько причудливых операций, чтобы
+вычислить цвет наших смешанных пикселей. Значение приемника (<b>d</b>) будет
+равно исходному значению (<b>s</b>), умноженному на
+альфа-значение плюс текущее значение приемника (<b>d</b>) умноженное на 255 минус
+альфа-значение. Оператор сдвига (&gt;&gt;8) сдвигает значение в диапазон 0-255.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textword>Если смешивание выключено (0), то мы копируем данные из
+исходного изображения непосредственно в приемное изображение. При этом смешивание
+не делается, и альфа-значение игнорируется.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textpreword>      for( k = 0 ; k &lt; src-&gt;format
+; k++, d++, s++)</p>
+
+<p class=textpreword>      {</p>
+
+<p class=textpreword>        if (blend) // Смешивание</p>
+
+<p class=textpreword>         // Умножить данные Src наalpha плюс
+данные Dst *(255-alpha)</p>
+
+<p class=textpreword>         // Сохранить значение в диапазоне 0-255 с помощью
+сдвига &gt;&gt; 8</p>
+
+<p class=textpreword>         <b>*d = ( (*s * alpha) + (*d *
+(255-alpha)) ) &gt;&gt; 8;</b></p>
+
+<p class=textpreword>        else</p>
+
+<p class=textpreword>         *d
+= *s; // нет смешения, просто копируем</p>
+
+<p class=textpreword>      }</p>
+
+<p class=textpreword>    }</p>
+
+<p class=textpreword>    d = d + (dst-&gt;width - (src_width +
+dst_xstart))*dst-&gt;format; // Добавить конец строки</p>
+
+<p class=textpreword>    s = s + (src-&gt;width - (src_width +
+src_xstart))*src-&gt;format; // Добавить конец строки</p>
+
+<p class=textpreword>  }</p>
+
+<p class=textpreword>}</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textword>Код  <b>InitGL()</b>
+был изменен. Весь код ниже новый. Вначале выделяем память для изображения
+размером 256x256x4 байт. Переменная <b>t1</b> укажет на
+выделенную память, если все пошло хорошо. </p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textword>После выделения памяти для нашего изображения, мы пытаемся загрузить
+изображение. Мы передаем функции <b>ReadTextureData()</b>
+имя файла, который мы желаем открыть, вместе с указателем на нашу структуру изображения
+(<b>t1</b>). </p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textword>Если изображение не загружено, выскочит окно сообщения на
+экран, чтобы дать понять пользователю, что была проблема, при загрузке
+текстуру.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textword>Затем мы делаем тоже самое и для t2. Мы распределяем память,
+и пытаемся прочитать второе изображение. Если что-нибудь пойдет не так, как
+надо, выскочит окно сообщения.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textpreword>int InitGL(GLvoid) // Вызов происходит
+после создания окна</p>
+
+<p class=textpreword>{</p>
+
+<p class=textpreword>  t1 = AllocateTextureBuffer( 256, 256, 4
+); // Взять структуру изображения</p>
+
+<p class=textpreword>  if (ReadTextureData(&quot;Data/Monitor.raw&quot;,t1)==0)
+// Заполнить структуру данными</p>
+
+<p class=textpreword>  { // Ничего не прочитали?</p>
+
+<p class=textpreword>    MessageBox(NULL,&quot;Не могу прочитать 'Monitor.raw'&quot;,&quot;TEXTURE ERROR&quot;,MB_OK |
+MB_ICONINFORMATION);</p>
+
+<p class=textpreword>    return FALSE;</p>
+
+<p class=textpreword>  }</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>  t2 = AllocateTextureBuffer( 256, 256, 4
+); // Второе изображение</p>
+
+<p class=textpreword>  if (ReadTextureData(&quot;Data/GL.raw&quot;,t2)==0) // Заполнить структуру данными</p>
+
+<p class=textpreword>  { // Ничего не прочитали?</p>
+
+<p class=textpreword>    MessageBox(NULL,&quot;
+Не могу прочитать 'GL.raw'&quot;,&quot;TEXTURE ERROR&quot;,MB_OK | MB_ICONINFORMATION);</p>
+
+<p class=textpreword>    return FALSE;</p>
+
+<p class=textpreword>  }</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textword>Двигаемся дальше. Теперь пришло время использовать нашу функцию
+<b>Blit()</b>, чтобы объединить
+два изображения в одно.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textword>Мы передаем <b>Blit()</b>
+два указателя <b>t2</b> и <b>t1</b>, оба указатели на структуру <b>TEXTURE_IMAGE</b>
+(<b>t2</b> - второе изображение, <b>t1</b> - первое изображение).</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textword>Then we have to tell blit where to start
+grabbing data from on the source image. If you load the source image into Adobe
+Photoshop or any other program capable of loading .RAW images you will see that
+the entire image is blank except for the top right corner. The top right has a
+picture of the ball with GL written on it. The bottom left corner of the image
+is 0,0. The top right of the image is the width of the image-1 (255), the
+height of the image-1 (255). Knowing that we only want to copy 1/4 of the src
+image (top right), we tell Blit() to start grabbing from 127,127 (center of our
+source image). </p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textword>Затем надо сообщить <b>Blit</b><b>()</b>, где
+начать захватывать данные из исходного изображения. Если Вы загрузите исходное
+изображение в Adobe Photoshop, или любую другую программу, которая способна читать
+RAW изображения, то Вы увидите,
+что все изображение пустое, кроме правого верхнего угла. В нем есть изображение
+шара с надписью GL. Левый угол изображения - 0,0. Правый
+верхний угол равен ширине изображения-1 (255) и высоте изображения-1 (255). Зная,
+что мы хотим cкопировать 1/4 часть исходного изображения
+(право верх), мы сообщаем <b>Blit()</b>
+начать захват с 127,127 (центр нашего исходного изображения).</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textword>Затем мы сообщаем <b>Blit</b><b>()</b>, сколько
+пикселей мы хотим копировать из нашей исходной точки вправо и вверх. Мы хотим
+захватить четвертую часть изображения. Наше изображение равно 256x256 пикселей,
+четверть его равна 128x128 пикселей. Вся исходная информация есть. Функция <b>Blit()</b> теперь знает, что надо скопировать
+от 127 по оси X до 127+128 (255) по оси X, и от 127 по оси Y до 127+128 (255) по
+оси Y.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textword>Итак, <b>Blit()</b>
+знает, что копировать, и где получить данные для этого, но она не знает, куда
+поместить эти данные. Мы хотим вывести шар с GL, в
+середине нашего изображения монитора. Вы находите центр приемного изображения
+(256x256), который равен 128x128, и вычитаете половину ширины и высоты
+исходного изображения (128x128), что равно 64x64. Так (128-64) x (128-64) дает
+нам начальную точку 64,64.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textword>И последнее, мы сообщаем нашей блиттер-функции, что мы хотим
+смешать два изображения (единица означает смешивание, а ноль означает не
+смешивание), и насколько смешать изображения. Если последнее значение - 0, то мы
+не смешиваем изображения. Если мы используем значение 127, то изображения
+смешиваются вместе в 50% пропорции, и если Вы используете 255, то изображение,
+которое Вы копируете, будет полностью прозрачно, и не будет видно вообще.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textword>Пиксели копируются из изображения 2 (<b>t2</b>) в изображение
+1 (<b>t1</b>). Смешанное изображение будет сохранено в <b>t1</b>.</p>
+
+<p class=textword><b>&nbsp;</b></p>
+
+<p class=textpreword>  // Смешивание изображений: исходное, приемное изображение</p>
+
+<p class=textpreword>  // исходные X &amp; Y, исходные Width &amp; Height, приемные X &amp; Y, флаг смешивания</p>
+
+<p class=textpreword>  // альфа-значение</p>
+
+<p class=textpreword> 
+Blit(t2,t1,127,127,128,128,64,64,1,127); // блиттер</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textword>После того, как мы смешали два изображения (<b>t1</b> и <b>t2</b>),
+мы создаем текстуру из объединенных изображений (<b>t1</b>). </p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textword>После того, как текстура была создана, мы можем освободить
+память из двух структур <b>TEXTURE_IMAGE</b>. </p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textword>Остальная часть кода уже стала привычным стандартом. Мы разрешаем
+наложение текстуры, тест глубины, и т.д.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textpreword>  BuildTexture (t1);       // Загрузка
+текстуры в память</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>  DeallocateTexture( t1 ); // Очистка
+памяти</p>
+
+<p class=textpreword>  DeallocateTexture( t2 );</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>  glEnable(GL_TEXTURE_2D); // Разрешить
+наложение текстуры</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>  glShadeModel(GL_SMOOTH); // Разрешить
+плавное сглаживание</p>
+
+<p class=textpreword>  glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // Фоновый цвет черный</p>
+
+<p class=textpreword>  glClearDepth(1.0);       // Очистка
+буфера глубины</p>
+
+<p class=textpreword>  glEnable(GL_DEPTH_TEST); // Тест
+глубины</p>
+
+<p class=textpreword>  glDepthFunc(GL_LESS);    // Тп теста</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>  return TRUE;</p>
+
+<p class=textpreword>}</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textword>Я не буду подробно пояснять код ниже. Мы сдвигаемся на 5
+единиц в глубь экрана, выбираем текстуру, и рисуем текстурированный куб.
+Заметьте, что оба изображения теперь смешаны в одно изображение. Мы не выводим
+обе текстуры на кубе. Код блиттер делает это за нас.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textpreword>GLvoid DrawGLScene(GLvoid)</p>
+
+<p class=textpreword>{</p>
+
+<p class=textpreword>  glClear(GL_COLOR_BUFFER_BIT |
+GL_DEPTH_BUFFER_BIT); // Очистка экрана и буфера глубины</p>
+
+<p class=textpreword>  glLoadIdentity(); // Сброс
+просмотра</p>
+
+<p class=textpreword>  glTranslatef(0.0f,0.0f,-5.0f);</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>  glRotatef(xrot,1.0f,0.0f,0.0f);</p>
+
+<p class=textpreword>  glRotatef(yrot,0.0f,1.0f,0.0f);</p>
+
+<p class=textpreword>  glRotatef(zrot,0.0f,0.0f,1.0f);</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>  glBindTexture(GL_TEXTURE_2D,
+texture[0]);</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>  glBegin(GL_QUADS);</p>
+
+<p class=textpreword>    // Передняя грань</p>
+
+<p class=textpreword>    glNormal3f( 0.0f, 0.0f, 1.0f);</p>
+
+<p class=textpreword>    glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f,  1.0f,  1.0f);</p>
+
+<p class=textpreword>    glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  1.0f,  1.0f);</p>
+
+<p class=textpreword>    glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f,  1.0f);</p>
+
+<p class=textpreword>    glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f, -1.0f,  1.0f);</p>
+
+<p class=textpreword>    // Задняя грань</p>
+
+<p class=textpreword>    glNormal3f( 0.0f, 0.0f,-1.0f);</p>
+
+<p class=textpreword>    glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f,  1.0f, -1.0f);</p>
+
+<p class=textpreword>    glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f,  1.0f, -1.0f);</p>
+
+<p class=textpreword>    glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f, -1.0f, -1.0f);</p>
+
+<p class=textpreword>    glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);</p>
+
+<p class=textpreword>    // Верхняя грань</p>
+
+<p class=textpreword>    glNormal3f( 0.0f, 1.0f, 0.0f);</p>
+
+<p class=textpreword>    glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f,  1.0f, -1.0f);</p>
+
+<p class=textpreword>    glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  1.0f, -1.0f);</p>
+
+<p class=textpreword>    glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f,  1.0f,  1.0f);</p>
+
+<p class=textpreword>    glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f,  1.0f,  1.0f);</p>
+
+<p class=textpreword>    // Нижняя грань</p>
+
+<p class=textpreword>    glNormal3f( 0.0f,-1.0f, 0.0f);</p>
+
+<p class=textpreword>    glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f, -1.0f,  1.0f);</p>
+
+<p class=textpreword>    glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f,  1.0f);</p>
+
+<p class=textpreword>    glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f, -1.0f, -1.0f);</p>
+
+<p class=textpreword>    glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f, -1.0f, -1.0f);</p>
+
+<p class=textpreword>    // Правая грань</p>
+
+<p class=textpreword>    glNormal3f( 1.0f, 0.0f, 0.0f);</p>
+
+<p class=textpreword>    glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f, -1.0f, -1.0f);</p>
+
+<p class=textpreword>    glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f,  1.0f, -1.0f);</p>
+
+<p class=textpreword>    glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f,  1.0f,  1.0f);</p>
+
+<p class=textpreword>    glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f, -1.0f,  1.0f);</p>
+
+<p class=textpreword>    // Левая грань</p>
+
+<p class=textpreword>    glNormal3f(-1.0f, 0.0f, 0.0f);</p>
+
+<p class=textpreword>    glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);</p>
+
+<p class=textpreword>    glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f,  1.0f);</p>
+
+<p class=textpreword>    glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f,  1.0f,  1.0f);</p>
+
+<p class=textpreword>    glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  1.0f, -1.0f);</p>
+
+<p class=textpreword>  glEnd();</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>  xrot+=0.3f;</p>
+
+<p class=textpreword>  yrot+=0.2f;</p>
+
+<p class=textpreword>  zrot+=0.4f;</p>
+
+<p class=textpreword>}</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textword>В код <b>KillGLWindow()</b> внесено ряд
+изменений. Во-первых, код переключения из полноэкранного режима назад к видеорежиму
+вашего рабочего стола теперь вначале <b>KillGLWindow()</b>. Если пользователь запустил программу в
+полноэкранном режиме, вначале, перед тем как уничтожить окно - пробуем
+переключиться назад в видеорежим рабочего стола. Если быстрый вариант не сработает,
+мы сбрасываем экран, используя информацию, сохраненную в <b>DMsaved</b>. Это должно восстановить оригинальный
+видеорежим.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textpreword>GLvoid KillGLWindow(GLvoid) // Выполняет при
+уничтожении окна</p>
+
+<p class=textpreword>{</p>
+
+<p class=textpreword>  if (fullscreen)                 
+// Мы в полноэкранном?</p>
+
+<p class=textpreword>  {</p>
+
+<p class=textpreword>    if
+(!ChangeDisplaySettings(NULL,CDS_TEST)) { // Если это не работает</p>
+
+<p class=textpreword>      ChangeDisplaySettings(NULL,CDS_RESET);
+// Еще раз (чтобы взять значения из реестра)</p>
+
+<p class=textpreword>      ChangeDisplaySettings(&amp;DMsaved,CDS_RESET);
+// Изменить разрешение используя</p>
+
+<p class=textpreword>                                                 // сохраненные
+данные</p>
+
+<p class=textpreword>    }</p>
+
+<p class=textpreword>    else // все прошло</p>
+
+<p class=textpreword>    {</p>
+
+<p class=textpreword>     
+ChangeDisplaySettings(NULL,CDS_RESET); // Ничего не делать</p>
+
+<p class=textpreword>    }</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>    ShowCursor(TRUE);
+// Показать курсор мыши</p>
+
+<p class=textpreword>  }</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>    if (hRC)                              // Существует
+контекст рендеринга?</p>
+
+<p class=textpreword>    {</p>
+
+<p class=textpreword>        if (!wglMakeCurrent(NULL,NULL))   // Можно ли
+освободить DC и RC контексты?</p>
+
+<p class=textpreword>        {</p>
+
+<p class=textpreword>            MessageBox(NULL,&quot;Release
+Of DC And RC Failed.&quot;,&quot;SHUTDOWN ERROR&quot;, </p>
+
+<p class=textpreword>                                               
+MB_OK | MB_ICONINFORMATION);</p>
+
+<p class=textpreword>    }</p>
+
+<p class=textpreword>      if (!wglDeleteContext(hRC))        
+// Можно ли уничтожить RC?</p>
+
+<p class=textpreword>    {</p>
+
+<p class=textpreword>            MessageBox(NULL,&quot;Release
+Rendering Context Failed.&quot;,</p>
+
+<p class=textpreword>                   &quot;SHUTDOWN
+ERROR&quot;,MB_OK | MB_ICONINFORMATION);</p>
+
+<p class=textpreword>    }</p>
+
+<p class=textpreword>  hRC=NULL;                              
+// Установим RC в NULL</p>
+
+<p class=textpreword>    }</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>    if (hDC &amp;&amp;
+!ReleaseDC(hWnd,hDC))      // Можно ли уничтожить DC?</p>
+
+<p class=textpreword>    {</p>
+
+<p class=textpreword>        MessageBox(NULL,&quot;Release
+Device Context Failed.&quot;,&quot;SHUTDOWN ERROR&quot;,</p>
+
+<p class=textpreword>                                             
+MB_OK | MB_ICONINFORMATION);</p>
+
+<p class=textpreword>    hDC=NULL;                            
+// Установим DC в NULL</p>
+
+<p class=textpreword>    } </p>
+
+<p class=textpreword>    if (hWnd &amp;&amp; !DestroyWindow(hWnd))    
+// Можно ли уничтожить окно?</p>
+
+<p class=textpreword>    {</p>
+
+<p class=textpreword>        MessageBox(NULL,&quot;Could Not
+Release hWnd.&quot;,&quot;SHUTDOWN ERROR&quot;,MB_OK | </p>
+
+<p class=textpreword>                                                     
+MB_ICONINFORMATION);</p>
+
+<p class=textpreword>    hWnd=NULL;                           
+// Уствновим hWnd в NULL</p>
+
+<p class=textpreword>    }</p>
+
+<p class=textpreword>    if
+(!UnregisterClass(&quot;OpenGL&quot;,hInstance)) // Можно ли уничтожить класс?</p>
+
+<p class=textpreword>    {</p>
+
+<p class=textpreword>        MessageBox(NULL,&quot;Could Not
+Unregister Class.&quot;,&quot;SHUTDOWN ERROR&quot;,MB_OK |  </p>
+
+<p class=textpreword>                                                         
+MB_ICONINFORMATION);</p>
+
+<p class=textpreword>    hInstance=NULL;                      
+// Устанавливаем hInstance в
+NULL</p>
+
+<p class=textpreword>    }</p>
+
+<p class=textpreword>        KillFont();                      
+// Уничтожаем шрифт</p>
+
+<p class=textpreword>}</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textword>Я сделал некоторые изменения и в <b>CreateGLWindow</b>. Эти изменения помогут
+устранить множество проблем, которые возникают при переключениях видеорежимов.
+Я включил первую часть <b>CreateGLWindow()</b>,
+чтобы вам было легче разобраться.</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>BOOL CreateGLWindow(char* title, int
+width, int height, int bits, bool fullscreenflag)</p>
+
+<p class=textpreword>{</p>
+
+<p class=textpreword>  GLuint    PixelFormat; // Для хранения
+результатов поиска</p>
+
+<p class=textpreword>  WNDCLASS  wc;          // Структура
+класса окна</p>
+
+<p class=textpreword>  DWORD    dwExStyle;    // Расширенный
+стиль окна</p>
+
+<p class=textpreword>  DWORD    dwStyle;      // Стиль окна</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>  fullscreen=fullscreenflag; // Глобальный
+флаг</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>  hInstance    = GetModuleHandle(NULL);</p>
+
+<p class=textpreword>  wc.style    = CS_HREDRAW | CS_VREDRAW |
+CS_OWNDC;</p>
+
+<p class=textpreword>  wc.lpfnWndProc    = (WNDPROC) WndProc; //
+Обработчик</p>
+
+<p class=textpreword>  wc.cbClsExtra    = 0;</p>
+
+<p class=textpreword>  wc.cbWndExtra    = 0;</p>
+
+<p class=textpreword>  wc.hInstance    = hInstance;</p>
+
+<p class=textpreword>  wc.hIcon    = LoadIcon(NULL,
+IDI_WINLOGO);</p>
+
+<p class=textpreword>  wc.hCursor    = LoadCursor(NULL,
+IDC_ARROW);</p>
+
+<p class=textpreword>  wc.hbrBackground  = NULL;</p>
+
+<p class=textpreword>  wc.lpszMenuName    = NULL;</p>
+
+<p class=textpreword>  wc.lpszClassName  = &quot;OpenGL&quot;;</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textword>The big change here is that we now save the
+current desktop resolution, bit depth, etc. before we switch to fullscreen
+mode. That way when we exit the program, we can set everything back exactly how
+it was. The first line below copies the display settings into the DMsaved
+Device Mode structure. Nothing else has changed, just one new line of code.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textword>Здесь есть существенное изменение: мы сохраняем текущие
+настройки видеорежима прежде, чем переключить видеорежим. Поэтому мы можем
+восстановить все обратно, когда выходим из программы. В первой строке ниже
+копируются параметры настройки дисплея в структуру режима дисплея <b>DMsaved</b>. Далее все тоже самое.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textpreword>  // Сохранить настройки видеорежима (НОВОЕ)</p>
+
+<p class=textpreword>  EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS,
+&amp;DMsaved);</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>  if (fullscreen)
+// Попробуем перейти в полноэкранный режим?</p>
+
+<p class=textpreword>  {</p>
+
+<p class=textpreword>    DEVMODE dmScreenSettings; // Режим
+работы</p>
+
+<p class=textpreword>   
+memset(&amp;dmScreenSettings,0,sizeof(dmScreenSettings)); // Очистка для
+хранения установок</p>
+
+<p class=textpreword>    dmScreenSettings.dmSize=sizeof(dmScreenSettings);     
+// Размер структуры Devmode</p>
+
+<p class=textpreword>    dmScreenSettings.dmPelsWidth  =
+width;        // Ширина экрана</p>
+
+<p class=textpreword>    dmScreenSettings.dmPelsHeight  =
+height;        // Высота экрана</p>
+
+<p class=textpreword>    dmScreenSettings.dmBitsPerPel  =
+bits;          // Число бит на пиксель</p>
+
+<p class=textpreword>   
+dmScreenSettings.dmFields=DM_BITSPERPEL|DM_PELSWIDTH|DM_PELSHEIGHT;</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>    // Попробовать переключить режим и получить результат</p>
+
+<p class=textpreword>    // Замечание: при CDS_FULLSCREEN исчезает панель задач.</p>
+
+<p class=textpreword>    if
+(ChangeDisplaySettings(&amp;dmScreenSettings,CDS_FULLSCREEN)!=DISP_CHANGE_SUCCESSFUL)</p>
+
+<p class=textpreword>    {</p>
+
+<p class=textpreword>      // Если не прошло, то запросить разрешение на работу
+в видеорежиме рабочего стола.</p>
+
+<p class=textpreword>      if (MessageBox(NULL,&quot;The
+Requested Fullscreen Mode Is Not Supported By\nYour Video Card. Use Windowed
+Mode Instead?&quot;,&quot;NeHe GL&quot;,MB_YESNO|MB_ICONEXCLAMATION)==IDYES)</p>
+
+<p class=textpreword>      {</p>
+
+<p class=textpreword>        fullscreen=FALSE; // Выбран
+оконный режим</p>
+
+<p class=textpreword>      }</p>
+
+<p class=textpreword>      else</p>
+
+<p class=textpreword>      {</p>
+
+<p class=textpreword>        // Сообщение о том, что работа программы завершается.</p>
+
+<p class=textpreword>        MessageBox(NULL,&quot;Program
+Will Now Close.&quot;,&quot;ERROR&quot;,MB_OK|MB_ICONSTOP);</p>
+
+<p class=textpreword>        return FALSE;            //
+Return FALSE</p>
+
+<p class=textpreword>      }</p>
+
+<p class=textpreword>    }</p>
+
+<p class=textpreword>  }</p>
+
+<p class=textword><b>&nbsp;</b></p>
+
+<p class=textword>Функция <b>WinMain()</b> начинается так же.
+Спросим у пользователя разрешение на работу в полноэкранном режиме.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textpreword>int WINAPI WinMain(</p>
+
+<p class=textpreword>      HINSTANCE  hInstance,</p>
+
+<p class=textpreword>      HINSTANCE  hPrevInstance,</p>
+
+<p class=textpreword>      LPSTR      lpCmdLine,</p>
+
+<p class=textpreword>      int        nCmdShow)</p>
+
+<p class=textpreword>{</p>
+
+<p class=textpreword>  MSG  msg; // Структура обработки
+сообщений</p>
+
+<p class=textpreword>  BOOL  done=FALSE; // Переменная выхода
+из цикла</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>  // Спросить у пользователя какой режим он предпочитает</p>
+
+<p class=textpreword>  if (MessageBox(NULL,&quot;Would You
+Like To Run In Fullscreen Mode?&quot;,</p>
+
+<p class=textpreword>      &quot;Start
+FullScreen?&quot;,MB_YESNO|MB_ICONQUESTION)==IDNO)</p>
+
+<p class=textpreword>  {</p>
+
+<p class=textpreword>    fullscreen=FALSE; // Оконный
+режим</p>
+
+<p class=textpreword>  }</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>  // Создать окно</p>
+
+<p class=textpreword>  if (!CreateGLWindow(&quot;Andreas Lцffler, Rob Fletcher &amp; NeHe's Blitter &amp; Raw Image Loading
+Tutorial&quot;, 640, 480, 32, fullscreen))</p>
+
+<p class=textpreword>  {</p>
+
+<p class=textpreword>    return 0; // Выход, если окно не создано</p>
+
+<p class=textpreword>  }</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>  while(!done) // Цикл пока done=FALSE</p>
+
+<p class=textpreword>  {</p>
+
+<p class=textpreword>    if (PeekMessage(&amp;msg,NULL,0,0,PM_REMOVE))
+// Ждем сообщений?</p>
+
+<p class=textpreword>    {</p>
+
+<p class=textpreword>      if (msg.message==WM_QUIT)
+// Получили сообщение о выходе?</p>
+
+<p class=textpreword>      {</p>
+
+<p class=textpreword>        done=TRUE; // тогда done=TRUE</p>
+
+<p class=textpreword>      }</p>
+
+<p class=textpreword>      else // Нет - обработать сообщений</p>
+
+<p class=textpreword>      {</p>
+
+<p class=textpreword>        TranslateMessage(&amp;msg); // Транслировать</p>
+
+<p class=textpreword>        DispatchMessage(&amp;msg);  // Переслать</p>
+
+<p class=textpreword>      }</p>
+
+<p class=textpreword>    }</p>
+
+<p class=textword><b>&nbsp;</b></p>
+
+<p class=textword>Я сделал некоторые изменения в коде ниже. Если программа - не
+активна (свернута), мы ждем первого сообщения программе с помощью команды <b>WaitMessage()</b>.
+Все останавливается, пока программа не получит сообщения (обычно это сообщение
+о развертывании окна). Спасибо Джиму Стронгу за это предложение.</p>
+
+<p class=textword>&nbsp;</p>
+
+<p class=textpreword>    if (!active)
+// Программа не активна?</p>
+
+<p class=textpreword>    {</p>
+
+<p class=textpreword>      WaitMessage(); // Ожидать
+сообщения/Ничего не делать (НОВОЕ)</p>
+
+<p class=textpreword>    }</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>    if (keys[VK_ESCAPE]) // Нажата
+Escape?</p>
+
+<p class=textpreword>    {</p>
+
+<p class=textpreword>      done=TRUE;
+// ESC сигнал на выход</p>
+
+<p class=textpreword>    }</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>    if (keys[VK_F1]) // F1 нажата?</p>
+
+<p class=textpreword>    {</p>
+
+<p class=textpreword>      keys[VK_F1]=FALSE;</p>
+
+<p class=textpreword>      KillGLWindow();</p>
+
+<p class=textpreword>      fullscreen=!fullscreen;</p>
+
+<p class=textpreword>      if (!CreateGLWindow(&quot;Andreas Lцffler, Rob Fletcher &amp; NeHe's Blitter &amp; Raw Image Loading
+Tutorial&quot;,640,480,16,fullscreen))</p>
+
+<p class=textpreword>      {</p>
+
+<p class=textpreword>        return 0;</p>
+
+<p class=textpreword>      }</p>
+
+<p class=textpreword>    }</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>    DrawGLScene();</p>
+
+<p class=textpreword>    SwapBuffers(hDC);</p>
+
+<p class=textpreword>  }</p>
+
+<p class=textpreword>&nbsp;</p>
+
+<p class=textpreword>  // Выход</p>
+
+<p class=textpreword>  KillGLWindow();</p>
+
+<p class=textpreword>  return (msg.wParam);</p>
+
+<p class=textpreword>}</p>
+
+<p class=textword><b>&nbsp;</b></p>
+
+<p class=textword>Отлично! Теперь вы можете создавать крутые эффекты с
+применением смешивания. Используя текстурные буферы, как в этом уроке, вы
+можете создавать крутые эффекты, такие как плазма или вода. При объединении
+этих эффектов вместе Вы можете сделать почти фотореалистический ландшафт. Если что-то
+не работает в этом уроке, или у вас есть
+предложения, как улучшить урок, пошлите мне сообщение по электронной почте.
+Спасибо за то, что прочитали этот урок! Удачи Вам в создании ваших собственных интересных
+эффектов! </p>
+
+<p class=textword>&nbsp;</p>
+
+<p class="textnoalign" align="right">
+
+<font color="#0000A0"><b>Andreas </b><b>Lцffler &amp; </b><br><b>Rob </b><b>Fletcher
+</b><br><b>Jeff Molofee (NeHe)</b></font>
+
+</div>
+<div id="end">
+
+          <p><a href="http://pmg.org.ru/"
+			onmouseover=" return event_over(this,'Программирование магических игр')  "
+			onmouseout=" return event_out(this) "><font class="link"><b>PMG</b></font></a> 
+            <font class="comment">&nbsp;5 марта 2005&nbsp;(c)&nbsp;</font> 
+        <a href="mailto:anis@pmg.org.ru"
+	onmouseover=" return event_over(this,'Почта переводчику')  " 
+	onmouseout=" return event_out(this) "> <font class="link"><b>Сергей Анисимов</b></font></a> 
+          </p>
+</div>
+</center>
+
+<script language="JavaScript">
+<!--
+form_print();
+//-->
+</script>
+
+</body>
+</html>

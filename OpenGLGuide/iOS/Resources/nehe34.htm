@@ -1,0 +1,1134 @@
+<!doctype html public "-//w3c//dtd html 3.2 final//ru">
+<html>
+
+<head>
+<meta http-equiv="Content-Type"
+content="text/html; charset=windows-1251">
+<meta name="description"
+content="Переводы по OpenGL, трехмерная графика, игры, мультимедия
+Translations Russian OpenGL
+">
+<meta name="keyword"
+content="Программирование,игры,3D,трехмерная графика,OpenGL,NeHe">
+<meta name="keyword"
+content="programming,C,C++,game,graphics">
+<title>Урок 35. Проигрывание AVI файлов в OpenGL.</title>
+<link rel="stylesheet" href="pmg.css" type="text/css">
+</head>
+
+<body bgcolor="#b2d3e1" link="#800080" vlink="#800080">
+<script src='nehe.js' language="javascript">
+<!--
+//-->
+</script>
+
+<center>
+<div id="top">
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+        <td width="20%" align="center" valign="center">
+        <img src="nehelogo.jpg" align="left" hspace="0" width="125" height="50" alt="NeHe Tutorials">
+        </td>
+        <td width="60%" align="center">
+	<a href="index.html"
+	onmouseover=" return event_over(this,'NeHe Ru.')  "
+        onmouseout=" return event_out(this) ">
+        <font class="linksbig">
+        Народный учебник по OpenGL</font></a><br>
+        </td>
+        <td width="20%" align="center" valign="center">
+        <img src="nehe35.jpg" align="right" hspace="0" width="80" height="60" alt="Урок 35. OpenGL">
+        </td>
+    </tr>
+</table>
+</div>
+
+<div id="head">
+<p class="head1">
+Урок 35. Проигрывание AVI файлов в OpenGL.</p>
+</div>
+<div id="main" bgcolor="#ADADFF">
+<p class="textnoalign" align="left">
+
+<a href="http://nehe.gamedev.net/data/lessons/lesson.asp?lesson=35" target="_blank"
+onmouseover=" return event_over(this,this)  "
+onmouseout=" return event_out(this) ">
+<font class="link"><b>Playing AVI Files In OpenGL</b></font></a>
+<br>
+</p>
+
+<p class=textword>Я хотел бы начать с того, что я очень горжусь своей обучающей 
+  программой. Когда Джонатан де Блок подкинул мне идею сделать AVI 
+  проигрыватель в OpenGL, я не имел понятия о том, как 
+  открыть видео-файл, не говоря уже о проигрывателе их. Я начал с того, что заглянул 
+  в мою коллекцию книг по программированию. Но не в одной из них не было информации 
+  об AVI. Тогда я начал читать все, что можно было прочитать 
+  об AVI  в MSDN. В MSDN много полезной информации, но мне нужно было больше.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>После нескольких часов поиска примеров проигрывания AVI, я нашел два сайта. Я не хочу сказать, что я великолепный 
+  следопыт, но я обычно всегда нахожу, что ищу. Я был неприятно поражен, когда 
+  я увидел, как немного примеров было в Web. Большинство файлов, которые я нашел, не компилировались. 
+  Часть примеров была сложна (по крайней мере, для меня), и они делали то, что 
+  надо, но исходники были написаны на VB, Delphi, и т.д. (но не VC++).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Вначале отметим статью, написанную Джонатаном Никсом и озаглавленную 
+  &quot;Работа с AVI файлами&quot; 
+  (&quot;Working with AVI Files&quot;). Вы можете найти ее по адресу: http://www.gamedev.net/reference/programming/features/avifile/</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Я очень уважаю Джонатана за написание такой блестящей статьи 
+  про формат AVI. Хотя я решил написать код по-другому, 
+  отрывки из его кода и комментарии сделали процесс обучения намного проще! Вторым 
+  сайтом был &quot;Краткий обзор по AVI&quot; (&quot;The AVI Overview&quot;) Джона Ф. МакГоуана. Я мог бы рассказывать и 
+  рассказывать об этой удивительной странице Джона, но проще, если вы сами посмотрите 
+  на нее. Вот адрес:</p>
+<p class=textword>http://www.jmcgowan.com/avi.html</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Его сайт в значительной степени покрывает все, что нужно знать 
+  об AVI формате. Спасибо Джону за создание такой замечательной 
+  и доступной всем страницы.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Последнее, что я хотел упомянуть то, что НЕ ОДИН отрывок кода 
+  не был скопирован или заимствован. Весь код к уроку был написан за три дня, 
+  используя информацию с указанных сайтов и статей. Я хотел бы обратить ваше внимание 
+  на то, что этот код не является ЛУЧШИМ способом проигрывания видео-файлов. Это 
+  может быть даже неправильный способ проигрывания AVI 
+  файлов. Если вам не нравится мой код, или мой стиль программирования, или вы 
+  чувствуете, что я порчу программистское сообщество, выпуская этот урок, у вас 
+  есть несколько вариантов:</p>
+<p class=textword>  1) Поискать в сети альтернативные статьи.</p>
+<p class=textword>  2) Написать ваш собственный AVI проигрыватель.</p>
+<p class=textword>  3) Или написать ваш собственный урок!</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Каждый, кто посетит мой сайт должен знать, что я средний программист 
+  со средними способностями (я упоминал об этом на многочисленных страницах этого 
+  сайта)! Я кодирую ради ЗАБАВЫ! Цель этого сайта в том, чтобы сделать жизнь проще 
+  для начинающих программистов, которые начинают изучение OpenGL. Эти уроки просто примеры того, как сделать тот или иной 
+  эффект. Не больше и не меньше!</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Приступим…</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Первое что вы заметите это то, что мы подключили библиотеку 
+  Видео для Windows. Большое спасибо Microsoft 
+  (я не могу поверить, что только сказал это!). Эта библиотека открывает и проигрывает 
+  AVI файлы. Всё, что вам надо знать это то, что вы ДОЛЖНЫ 
+  подключить файл vfw.h и прилинковать 
+  vfw32.lib, если вы хотите, чтобы этот код скомпилировался.</p>
+<p class=textword>&nbsp; </p>
+<p class=textpreword>#include &lt;windows.h&gt;         // Заголовочный файл 
+  Windows</p>
+<p class=textpreword>#include &lt;gl\gl.h&gt;           // Заголовочный файл библиотеки 
+  OpenGL32</p>
+<p class=textpreword>#include &lt;gl\glu.h&gt;          // Заголовочный файл библиотеки 
+  Glu32</p>
+<p class=textpreword>#include &lt;vfw.h&gt;             // Заголовочный файл для «Видео для Windows»</p>
+<p class=textpreword>#include &quot;NeHeGL.h&quot;          // Заголовочный файл NeHeGL.h</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>#pragma comment( lib, &quot;opengl32.lib&quot; 
+  ) // Искать OpenGL32.lib при линковке</p>
+<p class=textpreword>#pragma comment( lib, &quot;glu32.lib&quot; )    // Искать 
+  GLu32.lib при линковке</p>
+<p class=textpreword>#pragma comment( lib, &quot;vfw32.lib&quot; )    // Искать 
+  VFW32.lib при линковке</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>#ifndef CDS_FULLSCREEN        // CDS_FULLSCREEN 
+  не определяется некоторыми</p>
+<p class=textpreword>#define CDS_FULLSCREEN 4      // компиляторами. Определяем эту константу</p>
+<p class=textpreword>#endif                        // 
+  Таким образом мы можем избежать ошибок </p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>GL_Window*  g_window;</p>
+<p class=textpreword>Keys*      g_keys;</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Теперь мы объявим переменные. Переменная <b>angle</b> 
+  используется, для того чтобы вращать объекты, основываясь на прошедшем времени. 
+  Мы будем использовать эту переменную везде, где есть вращение для простоты.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword><b>Next</b> – целая переменная которая 
+  будет использована для того чтобы узнать сколько времени прошло (в миллисекундах). 
+  Она будет использована для сохранения начальной частоты кадров. Мы поговорим 
+  об этом позже.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Переменная <b>frame</b>…Конечно это 
+  текущий кадр анимации, который мы хотим отобразить. Мы начинаем с 0 (первый 
+  кадр). Я думаю безопасно (для программы) предположить что видео, которое мы 
+  открыли ДОЛЖНО ИМЕТЬ хотя бы один кадр :).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Переменная <b>effect</b> текущий эффект 
+  видимый на экране (объекты: Куб, Сфера, Цилиндр, Ничто). <b>Env</b> - булевская переменная. Если она равна Истине, то тогда 
+  наложение окружения включено, если Ложь, то окружение не будет отображено. Если 
+  <b>bg</b> Истина, то вы будете видеть полноэкранное 
+  видео за объектом. Если Ложь, вы будете видеть только объект (никакого фона).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword><b>sp</b>, <b>ep</b> and <b>bp</b> используются чтобы быть уверенным 
+  в том, что пользователь не удерживает нажатой соответствующую клавишу.</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>// Пользовательские переменные</p>
+<p class=textpreword>float  angle;              
+  // Для вращения</p>
+<p class=textpreword>int    next;               
+  // Для анимации</p>
+<p class=textpreword>int    frame=0;            // Счётчик кадров</p>
+<p class=textpreword>int    effect;             // Текущий эффект</p>
+<p class=textpreword>bool   sp;                 
+  // Пробел нажат?</p>
+<p class=textpreword>bool   env=TRUE;           
+  // Показ среды</p>
+<p class=textpreword>(По умолчанию включен)</p>
+<p class=textpreword>bool   ep;                 // 'E' нажато?</p>
+<p class=textpreword>bool   bg=TRUE;            
+  // Фон(по умолчанию включен)</p>
+<p class=textpreword>bool   bp;                 // 'B' нажато?</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>В структуре <b>psi</b> будет сохранена 
+  информация о нашем AVI файле далее в коде. <b>pavi</b> – указатель на буфер, который получает новый дескриптор 
+  потока, как только AVI файл будет открыт. <b>pgf</b> - это указатель на объект <b>GetFrame</b>. 
+  <b>bmih</b> будет использована потом в коде для конвертирования 
+  кадра анимации в формат, который мы захотим (содержит заголовок растра, описывающий, 
+  что мы хотим). <b>Lastframe</b> будет содержать номер последнего файла AVI 
+  анимации. <b>width</b> и <b>height</b> 
+  будут содержать размеры видео потока и наконец… <b>pdata</b> 
+  будет указателем на содержимое изображения возвращенного после получения кадра 
+  анимации из AVI! <b>Mpf</b> 
+  будет использован для подсчёта, сколько миллисекунд каждый кадр отображается 
+  на экране. Мы поговорим об этом чуть позже.</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>AVISTREAMINFO    psi;       
+  // Указатель на структуру содержащую информацию о потоке</p>
+<p class=textpreword>PAVISTREAM       pavi;      
+  // Дескриптор для открытия потока</p>
+<p class=textpreword>PGETFRAME        pgf;       
+  // Указатель на объект GetFrame</p>
+<p class=textpreword>BITMAPINFOHEADER bmih;      // Заголовочная информация 
+  для DrawDibDraw декодирования</p>
+<p class=textpreword>long             lastframe; 
+  // Последний кадр анимации</p>
+<p class=textpreword>int              width;     
+  // Ширина видео</p>
+<p class=textpreword>int              height;    
+  // Высота видео</p>
+<p class=textpreword>char             *pdata;    
+  // Указатель на данные текстуры</p>
+<p class=textpreword>int              mpf;       
+  // Сколько миллисекунд отображен кадр</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>В этом уроке мы создадим 2 разных квадратичных объекта (сферу 
+  и цилиндр) используя библиотеку GLU. Переменная <b>quadratic</b> 
+  - это указатель на наши квадратичные объекты.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword><b>hdd</b> - это дескриптор контекста 
+  устройства DrawDib . <b>hdc</b> 
+  - дескриптор контекста устройства.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword><b>hBitmap</b> - это дескриптор устройства 
+  вывода аппаратно-независимого растра (будет использован потом в процессе конвертирования 
+  растра).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword><b>data </b>- указатель который укажет на данные нашего конвертированного 
+  изображения. Будет иметь смысл позже. Продолжайте читать :).</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>GLUquadricObj *quadratic; 
+  // Хранилище для наших квадратичных объектов</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>HDRAWDIB      hdd;        
+  // Дескриптор для нашего рисунка</p>
+<p class=textpreword>HBITMAP       hBitmap;    
+  // Дескриптор устройства растра</p>
+<p class=textpreword>HDC hdc = CreateCompatibleDC(0); 
+  // Создание совместимого контекста устройства</p>
+<p class=textpreword>unsigned char* data 
+  = 0;         // Указатель на наше измененное в размерах изображение</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Теперь немного ассемблера. Тем из вас, которые до этого никогда 
+  не пользовались ассемблером, не стоит бояться. Это может выглядеть загадочно, 
+  но это просто!</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Пока я сочинял этот урок, я обнаружил весьма большую проблему. 
+  Первое видео, которое я получил, проигрывалось прекрасно, но при этом цвета 
+  отображались неверно. Везде, где должен быть красный цвет был синий, а где должен 
+  быть синий был красный. Я начал СХОДИТЬ С УМА. Я был убежден, что я сделал, 
+  где-то ошибку в коде. После просмотра всего кода, я не смог найти ошибку! Тогда 
+  я начал снова читать MSDN. Почему красные и голубые 
+  байты переставлены местами!? В MSDN говорилось, что 24 битные изображения в формате RGB!!! 
+  После более углубленного изучения я нашел, в чем состоит проблема. В Windows данные RGB (в картинках) фактически хранятся наоборот (BGR). 
+  В OpenGL, RGB это по настоящему… RGB.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>После нескольких жалоб от фанатов Microsoft’а 
+  :) я решил добавить небольшое замечание! Я не ругаю Microsoft 
+  за то, что RGB данные сохраняются наоборот. Мне только 
+  очень непонятно, когда-то, что называется RGB в действительности является BGR!</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Техническая заметка: есть “little 
+  endian” стандарт, а есть “big 
+  endian”. Intel и аналоги 
+  Intel используют “little endian”, где наименее значимый байт 
+  (LSB) идет первым. OpenGL пришел 
+  из SGI, где распространен «big endian», и OpenGL 
+  требует растровый формат в своем стандарте.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Замечательно! Так вот я тут с проигрывателем, который напоминает 
+  мне абсолютное дерьмо! Моим первым решением было поменять байты вручную в следующем 
+  цикле. Это работало, но очень медленно. Сытый по горло, я модифицировал код 
+  генерации текстур, чтобы он использовал GL_BGR_EXT 
+  вместо GL_RGB. Огромное увеличение скорости и цвета, все выглядело прекрасно! 
+  Так моя проблема была решена… или я так думал. Некоторые OpenGL 
+  драйверы имели проблемы с GL_BGR_EXT… . Назад к рисовальной доске 
+  :(.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>После разговора с моим хорошим другом Максвелом Сэйлом, он посоветовал 
+  мне поменять местами байты, используя asm-код. Минуту 
+  позже был готов код, который я привел ниже! Может быть он не оптимизирован, 
+  но он работает и быстро работает!</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Каждый кадр анимации сохраняется в буфере. Рисунок всегда будет 
+  иметь 256 пикселей в ширину, 256 пикселей в высоту и 1 байт на цвет (3 байта 
+  на пиксель). Код ниже будет проходить по буферу, и переставлять красные и синие 
+  байты. Красный хранится в ebx+0, а голубой в ebx+2. 
+  Мы двигаемся через буфер, обрабатывая по три байта за раз (пиксель состоит из 
+  трёх байтов). Мы будем делать это, пока все данные не будут переставлены.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>У некоторых из вас были проблемы с использованием ASM кода, я полагаю, что я объясню, почему я использую его в 
+  своем уроке. Сначала я планировал использовать GL_BGR_EXT поскольку это работает. Но не 
+  на всех платах! Тогда я решил использовать метод перестановки с последнего урока 
+  (очень опрятный код перестановки методом XOR). Перестановка 
+  работала на всех машинах, но она не была быстрой. В прошлом уроке это хорошо 
+  работало. Но сейчас мы имеем дело с ВИДЕО В РЕАЛЬНОМ ВРЕМЕНИ. Вы хотите иметь 
+  самую быструю перестановку. Взвесив всё, ASM по моему мнению наилучший выбор!</p>
+<p class=textword>Если у вас есть лучший путь чтобы сделать эту работу, пожалуйста… 
+  ИСПОЛЬЗУЙТЕ ЕГО! Я не говорю вам, как делать эти вещи. Я показываю, как я сделал 
+  это. Я также подробно объясняю свой код. Если вы хотите написать лучший код, 
+  то вы знаете, как устроен мой код, сделайте его проще и найдите альтернативный 
+  метод, если вы хотите написать ваш код!</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>void flipIt(void* buffer) // Функция меняющая красный 
+  и синий цвет</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  void* b 
+  = buffer;     // Указатель на буфер</p>
+<p class=textpreword>__asm                   // Начало 
+  asm кода</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    mov ecx, 256*256    // Установка счётчика (Размер блока памяти)</p>
+<p class=textpreword>    mov ebx, b          // Указатель ebx 
+  на наши данные (b)</p>
+<p class=textpreword>    label:              // Метка для цикла</p>
+<p class=textpreword>      mov al,[ebx+0]    // Загружаем значение 
+  из ebx в регистр al</p>
+<p class=textpreword>      mov ah,[ebx+2]    // Загружаем значение 
+  из ebx+2 в регистр ah</p>
+<p class=textpreword>      mov [ebx+2],al    
+  // Сохраняем данные в al из ebx+2</p>
+<p class=textpreword>      mov [ebx+0],ah    
+  // Сохраняем данные в ah из ebx</p>
+<p class=textpreword>      </p>
+<p class=textpreword>      add ebx,3         // Перемещаем указатель на три байта</p>
+<p class=textpreword>      dec ecx           // Уменьшаем наш счётчик</p>
+<p class=textpreword>  jnz label             // Если не равно нулю перемещаемся назад</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Код ниже открывает AVI файл в режиме 
+  чтения. <b>SzFile</b> - это название файла который мы 
+  хотим открыть. <b>title</b>[100] будет использован чтобы модифицировать заголовок 
+  окна (чтобы показать информацию об AVI файле).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Первое что нам надо сделать это вызвать <b>AVIFileInit()</b>. 
+  Она инициализирует библиотеку по работе с файлами AVI.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Есть много способов, чтобы открыть AVI 
+  файл. Я решил использовать функцию <b>AVIStreamOpenFromFile(…)</b>. 
+  Она открывает единственный поток из AVI файла (AVI 
+  файлы могут содержать несколько потоков).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Параметры следующие: <b>pavi</b> - это 
+  указатель на буфер, который получает новый дескриптор потока. <b>szFile</b> - это имя файла, который мы желаем открыть (полный путь). Третий 
+  параметр - это тип потока. В нашей программе мы заинтересованы только в видео 
+  потоке (<b>streamtypeVIDEO</b>). Четвертый параметр 
+  обозначает номер потока (мы хотим только первый). <b>OF_</b><b>READ</b> обозначает то, что 
+  мы хотим открыть файл ТОЛЬКО для чтения. Последний параметр - это указатель 
+  на класс идентификатора дескриптора, который мы хотим использовать. Если честно, 
+  то я не знаю для чего он. Позволим Windows выбрать его, 
+  послав NULL в последнем параметре.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Если возникнут, какие-то ошибки при открытии файла, то выскочит 
+  окно и даст вам знать о том, что поток не может быть открыт. Я не сделал так, 
+  чтобы при этой ошибке программа вызывала какую-то секцию кода. Если будет ошибка, 
+  программа будет пробовать проиграть файл. Добавление проверки потребовало бы 
+  усилий, а я очень ленивый :).</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>void OpenAVI(LPCSTR szFile)  // Вскрытие AVI файла (szFile)</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  TCHAR  title[100];         
+  // Будет содержать заголовок</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  AVIFileInit();             // Открывает 
+  файл</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // Открытие AVI потока</p>
+<p class=textpreword>  if (AVIStreamOpenFromFile(&amp;pavi, szFile, 
+  streamtypeVIDEO, 0, OF_READ, NULL) !=0)</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    // Если ошибка</p>
+<p class=textpreword>    MessageBox (HWND_DESKTOP, &quot;Failed To 
+  Open The AVI Stream&quot;,</p>
+<p class=textpreword>                &quot;Error&quot;, MB_OK | MB_ICONEXCLAMATION);</p>
+<p class=textpreword>  }</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Если мы сделали это, то можно считать что файл был открыт и 
+  данные потока локализованы! После этого мы получаем немного информации от AVI файла с помощью <b>AVIStreamInfo(…)</b>.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Ранее мы создали структуру <b>psi</b>, 
+  которая будет содержать информацию о нашем AVI потоке. 
+  Эта структура заполнится информацией с помощью первой строки кода ниже. Всё 
+  от ширины потока (в пикселях) до частоты кадров анимации сохранено в <b>psi</b>. Для тех, кто хочет добиться точной скорости воспроизведения 
+  сделайте, как я сказал. Более подробную информацию ищите об <b>AVIStreamInfo</b> 
+  в MSDN.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Мы можем вычислить ширину кадра отняв левую границу окна из 
+  правой. Это будет точная ширина в пикселях. Высота кадра получается, когда мы 
+  вычитаем верхнюю границу из нижней. Это даст нам высоту в пикселях.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Затем мы находим номер последнего кадра из AVI 
+  файла используя <b>AVIStreamLength(…)</b>. Она возвращает 
+  число кадров анимации в AVI файле. Результат сохранен 
+  в lastframe.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Вычисление частоты кадров довольно просто. Кадры в секунду = 
+  <b>psi.</b><b>dwRate </b>/ 
+  <b>psi.</b><b>dwScale</b>. Это значение 
+  совпадает со значением, которое можно получить в свойствах AVI-файла, 
+  если щелкнуть по нему правой кнопкой мыши в Проводнике. Так почему же мы используем 
+  <b>mpf</b> спросите вы? Когда я впервые написал этот 
+  код, я попробовал использовать этот метод чтобы выбрать правильный кадр анимации. 
+  Я столкнулся с проблемой… У меня есть файл face2.avi 
+  продолжительностью 3.36 секунды. Частота кадров 29.974 кадров в секунду. Видео 
+  имеет 91 кадр. Если вы умножите 3.36 на 29.974 вы получите 100 кадров. Очень 
+  странно!</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Я решил переписать код немного по-другому. Вместо вычисления 
+  частоты кадров в секунду, я посчитал, как долго каждый кадр показывается на 
+  экране. <b>AVIStreamSampleToTime()</b> конвертирует 
+  позицию анимацию в «сколько миллисекунд требуется чтобы добраться до этой позиции».Таким 
+  образом мы вычисляем сколько миллисекунд имеет все видео с помощью получения 
+  времени (в миллисекундах) последнего кадра. Тогда мы делим результат на общее 
+  количество кадров анимации (lastframe). Это даёт нам 
+  время необходимое для показа одного кадра. Мы сохраняем полученный результат 
+  в переменной <b>mpf</b> (millisecond per frame – число миллисекунд на кадр). Вы также можете посчитать, 
+  сколько отводится миллисекунд на кадр посредством получения времени первого 
+  кадра анимации с помощью вот этого кода: <b>AVIStreamSampleToTime(</b><b>pavi,1)</b>. Простой и отлично работающий способ! Большое спасибо 
+  Альберту Чаулку за эту идею!</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Причина, по которой я говорю приблизительное число миллисекунд 
+  на кадр та, что <b>mpf</b> целое и любое дробное значение 
+  будет округлено!</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  AVIStreamInfo(pavi, 
+  &amp;psi, sizeof(psi));   
+  // Записываем информацию о потоке в psi</p>
+<p class=textpreword>  width=psi.rcFrame.right-psi.rcFrame.left; 
+  // Ширина = правая граница минус левая</p>
+<p class=textpreword>  height=psi.rcFrame.bottom-psi.rcFrame.top;// 
+  Высота равна верх минус низ</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  lastframe=AVIStreamLength(pavi);        
+    // Последний кадр потока</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // Вычисление приблизительных миллисекунд на кадр</p>
+<p class=textpreword>  mpf=AVIStreamSampleToTime(pavi,lastframe)/lastframe;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textword>Поскольку OpenGL требует, чтобы данные 
+  в текстуре были кратны двум, и потому что большинство видео размеров 160x120, 
+  320x240 и некоторые другие странные размеры, нам нужен быстрый способ на лету 
+  изменить размеры видео в формат, который мы можем использовать как текстуру. 
+  Чтобы сделать это мы воспользуемся преимуществом Windows 
+  DIB функций.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Первую вещь, которую мы сделаем это опишем тип нужного нам изображения. 
+  Чтобы сделать это мы заполняем структур <b>bmih</b> 
+  типа <b>BitmapInfoHeader</b> нужными данными. Мы начнём 
+  с изменения размера структуры. Тогда мы установим <b>bitplanes</b> 
+  в 1. Три байта данных это 24 битовый цвет (RGB). Мы 
+  хотим изображение 256х256 пикселей и, наконец, мы хотим, чтобы данные возвращались 
+  как UNCOMPRESSED RGB (BI_RGB).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Функция <b>CreateDIBSection</b> создает 
+  изображение, в которое мы и запишем рисунок. Если всё прошло нормально <b>hBitmap</b> укажет нам на значения битов изображения. <b>Hdc</b> 
+  - это дескриптор контекста устройства (DC). Второй параметр 
+  - это указатель на структуру <b>BitmapInfo</b>. Это структура содержит информацию об изображении 
+  как было сказано выше. Третий параметр (<b>DIB_</b><b>RGB_</b><b>COLORS</b>) 
+  определяет, что данные в формате <b>RGB.</b><b>data</b> - это указатель на переменную, которая получает указатель 
+  на DIB данные. Если мы укажем в качестве пятого параметра 
+  NULL, память будет выделена под наш рисунок. Наконец последний 
+  параметр может быть игнорирован (установлен в NULL).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Цитата из MSDN: Функция <b>SelectObject</b> 
+  выбирает объект для контекста устройства (DC).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Теперь мы создали DIB, который мы можем 
+  непосредственно выводить на экран. Вау :).</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  bmih.biSize        
+  = sizeof (BITMAPINFOHEADER); // Размер 
+  BitmapInfoHeader’а</p>
+<p class=textpreword>  bmih.biPlanes      
+  = 1;       // Размер</p>
+<p class=textpreword>  bmih.biBitCount    
+  = 24;      // Формат битов</p>
+<p class=textpreword>  bmih.biWidth       
+  = 256;     // Ширина(256 пикселов)</p>
+<p class=textpreword>  bmih.biHeight      
+  = 256;     // Высота(256 пикселов)</p>
+<p class=textpreword>  bmih.biCompression = BI_RGB;  // Цветовой режим (RGB)</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  hBitmap = CreateDIBSection (hdc, (BITMAPINFO*)(&amp;bmih),</p>
+<p class=textpreword>                              DIB_RGB_COLORS, 
+  (void**)(&amp;data), NULL, NULL);</p>
+<p class=textpreword>  SelectObject (hdc, hBitmap)   // Выбор 
+  hBitmap в наш контекст устройства (hdc)</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Ещё несколько вещей мы должны сделать, чтобы быть готовыми к 
+  чтению кадров из AVI. Следующее что нам надо сделать, 
+  это подготовить нашу программу к извлечению кадров из файла с видео-фильмом. 
+  Для этого мы используем <b>AVIStreamGetFrameOpen(…)</b>.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Вы можете передавать структуру подобно тому, как мы выше передавали 
+  второй параметр, чтобы получить заданный видео формат. К сожалению, единственное, 
+  что мы можем изменять при этом ширину и высоту возвращаемого изображения.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Если всё прошло хорошо, объект GETFRAME 
+  возвращен (он нужен нам, для того чтобы читать кадры). Если есть какие-нибудь 
+  проблемы, окно выскочит и сообщит вам об ошибке.</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  pgf=AVIStreamGetFrameOpen(pavi, 
+  NULL); // Создание PGETFRAME 
+  с нужными нам параметрами</p>
+<p class=textpreword>  if (pgf==NULL)</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    // Если ошибка</p>
+<p class=textpreword>    MessageBox (HWND_DESKTOP, &quot;Failed To 
+  Open The AVI Frame&quot;,</p>
+<p class=textpreword>                &quot;Error&quot;, MB_OK | MB_ICONEXCLAMATION);</p>
+<p class=textpreword>  }</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Код ниже выводит ширину, высоту и количество кадров в заголовок. 
+  Мы показываем заголовок с помощью функции <b>SetWindowText(…)</b>. 
+  Запустите программу в оконном режиме, чтобы увидеть, что делает этот код.</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // Информация для заголовка (Ширина/Высота/Кол-во кадров)</p>
+<p class=textpreword>  wsprintf (title, &quot;NeHe's AVI Player: 
+  Width: %d, Height: %d, Frames: %d&quot;,</p>
+<p class=textpreword>                   width, height, lastframe);</p>
+<p class=textpreword>  SetWindowText(g_window-&gt;hWnd, title);  
+  // Изменение заголовка</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Теперь интересное…мы захватываем кадр из AVI 
+  и конвертируем его к используемым размерам изображения и разрядности цвета. 
+  <b>lpbi</b> будет содержать информацию <b>BitmapInfoHeader</b> 
+  для кадра анимации. Во второй строчке кода мы выполняем сразу несколько вещей. 
+  Сначала мы захватываем кадр анимации. Кадр, который мы хотим, задан <b>frame</b>. 
+  Это считает кадр анимации и заполнит <b>lpbi</b> информацией 
+  для этого кадра.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Еще интересного ... нам необходим указатель на данные изображения. 
+  Чтобы сделать это мы должны опустить информацию заголовка (<b>lpbi-&gt;</b><b>biSize</b>). Одну вещь я не делал пока не сел писать этот урок. 
+  Она состоит в том, что мы должны также опустить любую информацию о цвете. Чтобы 
+  сделать это мы должны сложить цвета, умноженные на размер RGBQUAD 
+  (biClrUsed*sizeof(RGBQUAD)). После выполнения ВСЕГО, 
+  что мы хотели :) мы оставлены один на один с указателем на данные (pdata).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Сейчас нам надо конвертировать кадр анимации к размеру используемой 
+  текстуры также, мы должны преобразовать данные в RGB 
+  формат. Чтобы сделать это мы используем <b>DrawDibDraw(…)</b>.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Краткое замечание. Мы можем рисовать непосредственно в наш DIB. Это делает <b>DrawDibDraw(…)</b>. Первый параметр - это дескриптор нашего 
+  DrawDib DC. 
+  Второй - это дескриптор на наш DC. Следующие параметры - это верхний левый угол (0,0) и правый 
+  нижний угол (256,256) результирующего прямоугольника.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword><b>lpbi</b> – указатель на <b>BitmapInfoHeader</b> 
+  информацию для кадра который мы сейчас читаем. <b>pdata</b> 
+  – указатель на данные изображения для этого кадра.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Теперь у нас есть верхний левый угол (0,0) исходного изображения 
+  (текущий кадр) и правый нижний угол кадра (ширина и высота кадра). Последний 
+  параметр пусть будет нуль.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Таким образом, мы преобразуем изображение любого размера и разрядности 
+  цвета к 256*256*24.</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>void GrabAVIFrame(int frame) // Захват 
+  кадра</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  LPBITMAPINFOHEADER lpbi;  // Содержит BitmapInfoHeader</p>
+<p class=textpreword>  // Получение данных из потока</p>
+<p class=textpreword>  lpbi = (LPBITMAPINFOHEADER)AVIStreamGetFrame(pgf, 
+  frame);</p>
+<p class=textpreword>  // Указатель на данные возвращенные AVIStreamGetFrame</p>
+<p class=textpreword>  // (Пропуск заголовка для получения указателя на данные)</p>
+<p class=textpreword>  pdata=(char *)lpbi+lpbi-&gt;biSize+lpbi-&gt;biClrUsed 
+  * sizeof(RGBQUAD);</p>
+<p class=textpreword>  // Преобразование информации в нужный нам 
+  формат</p>
+<p class=textpreword>  DrawDibDraw (hdd, hdc, 0, 0, 256, 256, 
+  lpbi, pdata, 0, 0, width, height, 0);</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Теперь у нас есть наш кадр анимации, но красные и голубые байты 
+  переставлены. Чтобы решить эту проблему мы переходим к нашему быстрому <b>flipIt(…)</b> коду. Помните, <b>data</b> – это указатель на переменную, которая получает указатель 
+  на расположения битовых значений DIB’а. Это означает то, что после того как мы вызовем DrawDibDraw, 
+  <b>data</b> укажет на наши изменённые (256*256*24) растровые данные.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Первоначально я создавал текстуру для каждого кадра анимации. 
+  Я получил несколько писем предлагающих мне использовать <b>glTexSubImage2</b><b>D()</b>. 
+  После чтения «Красной книги по OpenGL», я наткнулся на следующую  цитату: «Создание текстуры 
+  может быть в вычислительном отношении более дорогостоящим, чем изменить существующую. 
+  В OpenGL версии 1.1 есть подпрограммы для замены всей 
+  площади или части текстуры на новую информацию. Это может быть полезно для некоторых 
+  приложений, которые делаю анимацию в реальном времени, и захвата видео изображений 
+  в текстуры. Для этих приложений имеет смысл создавать одну текстуру и использовать 
+  <b>glTexSubImage2</b><b>D()</b> чтобы потом неоднократно заменять данные текстуры новыми 
+  видео изображениями».</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Лично я не замечал огромного увеличения скорости, но если у 
+  вас слабая видеокарта вы могли бы стать свидетелем этого. Параметры для <b>glTexSubImage2</b><b>D()</b> следующие: наша цель - двухмерная текстура (<b>GL_</b><b>TEXTURE_2</b><b>D</b>). Уровень детализации (0), который используется для мипмэпинга. 
+  Смещения x(0) и y(0) которые 
+  показывают функции, где начать копирование (0,0 нижний левый угол текстуры). 
+  У нас есть размеры изображения, которое мы хотим копировать (256*256). <b>GL_</b><b>RGB</b> 
+  - это формат данных. Мы копируем беззнаковые данные. Очень просто.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Заметка Кевина Рогерса: я только хотел указать на другую причину 
+  использования <b>glTexSubImage2</b><b>D</b>. Это не только будет быстрее для большинства приложений 
+  OpenGL, но целевая область может быть по размеру не 
+  обязательно кратной степени 2. Это особенно удобно для воспроизведения, так 
+  как типичные размеры кадра редко кратные степени 2 (часто 320*200 или подобные). 
+  Это даёт вам достаточную гибкость, чтобы запустить видео поток в его первоначальном 
+  варианте, чем искажать и отсекать каждый кадр, для того чтобы приспособить его 
+  к вашим размерам.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Важно обратить ваше на то, что вы не можете обновлять текстуру, 
+  если вы до этого её не создали! Мы создаем текстуру в <b>Initialize()</b>.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Я также хотел упомянуть… Если вы планируете использовать больше 
+  одной текстуры в вашем проекте удостоверьтесь, что вы связываете текстуру (<b>glBindTexture()</b>) 
+  . Если вы не свяжете текстуру она не будет обновлена!</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  flipIt(data); 
+  // Перестановка красных и синих байтов</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  // Обновление текстуры</p>
+<p class=textpreword>  glTexSubImage2D (GL_TEXTURE_2D, 0, 0, 0, 256, 
+  256, GL_RGB, GL_UNSIGNED_BYTE, data);</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Следующая секция кода вызывается, когда программа завершается. 
+  Мы закрываем DC, и ресурсы освобождаются. Тогда мы разблокируем 
+  ресурсы AVI <b>GetFrame</b>. Наконец мы завершаем поток и закрываем файл.</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>void CloseAVI(void)             // Функция закрытия</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  DeleteObject(hBitmap);        
+  // Уничтожение устройства растра</p>
+<p class=textpreword>  DrawDibClose(hdd);            
+  // Закрытие контекста DrawDib устройства </p>
+<p class=textpreword>  AVIStreamGetFrameClose(pgf);  
+  // Закрытие объекта GetFrame</p>
+<p class=textpreword>  AVIStreamRelease(pavi);       
+  // Завершение потока</p>
+<p class=textpreword>  AVIFileExit();                // 
+  Закрытие файла</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Инициализация довольно проста. Мы устанавливаем угол в 0. Далее 
+  мы открываем DrawDib библиотеку (которая получает DC). 
+  Если все хорошо, hdd становится дескриптором на только что созданный контекст 
+  устройства.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Наш экран черный, включается тестирование глубины, и т.д..</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Затем мы создаем новый квадратичный объект. <b>quadratic</b> - это указатель на наш новый объект. Мы устанавливаем 
+  сглаженные нормали, и включаем автогенерацию текстурных координат для нашего 
+  квадратичного объекта.</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>BOOL Initialize (GL_Window* window, Keys* 
+  keys) //Инициализация</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  g_window  = window;</p>
+<p class=textpreword>  g_keys    = keys;</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Начало инициализации</p>
+<p class=textpreword>  angle = 0.0f;                             
+  // Установка угла в ноль</p>
+<p class=textpreword>  hdd = DrawDibOpen();                      
+  // Получение контекста устройства</p>
+<p class=textpreword>  glClearColor (0.0f, 0.0f, 0.0f, 0.5f);    // Черный фон</p>
+<p class=textpreword>  glClearDepth (1.0f);                      
+  // Установка буфера глубины</p>
+<p class=textpreword>  glDepthFunc (GL_LEQUAL);           
+         // Тип тестирования глубины (Less или Equal)</p>
+<p class=textpreword>  glEnable(GL_DEPTH_TEST);                  
+  // Включение теста глубины</p>
+<p class=textpreword>  glShadeModel (GL_SMOOTH);                 // Выбор гладкости</p>
+<p class=textpreword>  // Очень аккуратная установка перспективы</p>
+<p class=textpreword>  glHint (GL_PERSPECTIVE_CORRECTION_HINT, 
+  GL_NICEST);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  quadratic=gluNewQuadric();                
+  // Создание нового квадратичного объекта</p>
+<p class=textpreword>  gluQuadricNormals(quadratic, 
+  GLU_SMOOTH); // Сглаженные нормали</p>
+<p class=textpreword>  gluQuadricTexture(quadratic, 
+  GL_TRUE);    // Создание текстурных 
+  координат</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>В следующем кусочке кода, мы включаем отображение двухмерных 
+  текстур, и мы устанавливаем фильтры текстур в <b>GL_</b><b>NEAREST</b> 
+  (быстро, но грубо) и мы устанавливаем сферическое наложение (чтобы создать эффект 
+  наложения окружения). Проиграйтесь с фильтрами. Если у вас мощный компьютер, 
+  попробуйте <b>GL_</b><b>LINEAR</b> для более гладкой 
+  анимации.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>После установки нашей текстуры и сферического наложения мы открываем 
+  .AVI файл. Файл называется face2.avi и он расположен в каталоге 'data'.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Последнее, что мы должны сделать – это создать нашу первоначальную 
+  текстуру. Мы должны сделать это чтобы использовать <b>glTexSubImage2</b><b>D()</b> для модификации нашей текстуры в GrabAVIFrame().</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  glEnable(GL_TEXTURE_2D); 
+  // Включение двухмерных текстур</p>
+<p class=textpreword>  // Установка фильтра увеличения текстуры</p>
+<p class=textpreword>  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);</p>
+<p class=textpreword>  // Установка фильтра уменьшения текстуры</p>
+<p class=textpreword>  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);</p>
+<p class=textpreword>  // Включение автогенерации текстурных координат 
+  по координате S сферического наложения</p>
+<p class=textpreword>  glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);</p>
+<p class=textpreword>  // Включение автогенерации текстурных координат 
+  по координате T сферического наложения</p>
+<p class=textpreword>  glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  OpenAVI(&quot;data/face2.avi&quot;);          
+  // Откроем видео-файл</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  // Создание текстуры</p>
+<p class=textpreword>  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 256, 
+  256, 0, GL_RGB, GL_UNSIGNED_BYTE, data);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  return TRUE; //Возвращение true (инициализация успешна)</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>При завершении мы вызываем <b>CloseAVI()</b>. 
+  Это корректно закроет AVI файл и все используемые ресурсы.</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>void Deinitialize (void) 
+  //Вся деиницилизация здесь</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  CloseAVI();            // Закрываем 
+  AVI</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Далее мы проверяем клавиши и обновляем наше вращение (<b>angle</b>) относительно прошедшего времени. Сейчас я не буду 
+  подробно объяснять код. Мы проверяем, нажат ли пробел. Если это так, то мы выполняем 
+  следующий по списку эффект. У нас есть три эффекта (куб, сфера, цилиндр) и когда 
+  выбран четвёртый эффект (effect=3) ничего не рисуется…показывается лишь сцена! 
+  Когда выбран четвёртый эффект и нажат пробел, то мы возвращаемся к первому эффекту 
+  (effect = 0). Да, я знаю, я должен был назвать это ОБЬЕКТОМ 
+  :).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Затем мы проверяем, нажата ли клавиша ‘B’ 
+  если это так, то мы переключаем фон (<b>bg</b>) от включенного состояния в выключенное или наоборот.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Для отображения окружения мы проделаем то же самое. Мы проверяем, 
+  нажата ли ‘E’. Если это так, то мы переключаем <b>env</b> 
+  от TRUE к FALSE и наоборот. 
+  То есть, включено наложение окружения или нет.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Угол увеличивается на крошечную долю каждый раз при вызове <b>Update()</b>. Я делю время на 60.0f, 
+  чтобы немного замедлить скорость вращения.</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>void Update (DWORD 
+  milliseconds) // Движение обновляется тут</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  if (g_keys-&gt;keyDown [VK_ESCAPE] == TRUE) 
+  // Если ESC нажат</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    TerminateApplication (g_window); // Завершение 
+  приложения</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  if (g_keys-&gt;keyDown [VK_F1] == TRUE) // 
+  Если F1 нажата</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    ToggleFullscreen (g_window); // Включение полноэкранного 
+  режима</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  if ((g_keys-&gt;keyDown [' ']) &amp;&amp; !sp) // Пробел нажат и не удерживается</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    sp=TRUE;      // Установка sp 
+  в истину</p>
+<p class=textpreword>    effect++;     // Изменение эффекта (увеличение effect)</p>
+<p class=textpreword>    if (effect&gt;3) // Превышен лимит?</p>
+<p class=textpreword>      effect=0;   // Возвращаемся к нулю</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  if (!g_keys-&gt;keyDown[' ']) // Если пробел отпущен</p>
+<p class=textpreword>    sp=FALSE; // Установка sp 
+  в False</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  if ((g_keys-&gt;keyDown ['B']) &amp;&amp; !bp) 
+  // ‘B’ нажат и не удерживается</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    bp=TRUE; // Установка bp 
+  в True</p>
+<p class=textpreword>    bg=!bg;  // Включение фона Off/On</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  if (!g_keys-&gt;keyDown['B']) // Если ‘B’ 
+  отпущен</p>
+<p class=textpreword>    bp=FALSE; //Установка bp 
+  в False</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  if ((g_keys-&gt;keyDown ['E']) &amp;&amp; !ep) 
+  // Если ‘E’ нажат и не удерживается</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    ep=TRUE;  // Установка ep 
+  в True</p>
+<p class=textpreword>    env=!env; // Включение отображения среды 
+  Off/On</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  if (!g_keys-&gt;keyDown['E']) // Если 'E' 
+  отпущен?</p>
+<p class=textpreword>    ep=FALSE;                
+  // Установка ep в False</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  angle += (float)(milliseconds) 
+  / 60.0f; // Обновление angle 
+  на основе времени</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>В первоначальном варианте урока, все AVI 
+  файлы проигрывались с одинаковой скоростью. После этого программа была переписана, 
+  чтобы запустить видео с правильной скоростью. <b>next</b> 
+  - увеличивает число миллисекунд, которое прошло после вызова этой секции кода 
+  в последний раз. Если ранее в уроке мы вычисляли, как долго каждый кадр должен 
+  быть отображен (<b>mpf</b>). Чтобы вычислить текущий кадр, мы берём прошедшее 
+  время и делим его на <b>mpf</b>.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>После этого нам надо удостовериться в том, что номер текущего 
+  кадра анимации не больше общего числа кадров. Если это так, то анимация будет 
+  сброшена в нуль и начата заново.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Код ниже пропустит кадры, если ваш компьютер тормозит или другое 
+  приложение занимает процессор. Если вы хотите, чтобы каждый кадр был отображен 
+  независимо от того тормозит ли компьютер, вы можете проверить является ли <b>next</b> 
+  больше <b>mpf</b> и, если это так, то сбросьте <b>next</b> 
+  и увеличьте <b>frame</b> на единицу. Любой способ сработает, 
+  но код ниже больше подходит для более мощных машин.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Если вы чувствуете силы, попробуйте добавить перемотку, быструю 
+  перемотку, паузу или обратный ход проигрывания!</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  next+= milliseconds;  
+  // Увеличение next основанное на таймере (миллисекундах)</p>
+<p class=textpreword>  frame=next/mpf;       
+  // Вычисление текущего кадра</p>
+<p class=textpreword>  if (frame&gt;=lastframe) 
+  // Не пропустили ли мы последний кадр?</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    frame=0;            // Сбрасываем frame 
+  назад в нуль (начало анимации)</p>
+<p class=textpreword>    next=0;             // Сбрасываем таймер анимации (next)</p>
+<p class=textpreword>  }</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Теперь код рисования. Мы очищаем буфер глубины и экрана. Затем 
+  мы получаем кадр анимации. Снова, я постараюсь сделать код простым!</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Вы передаете требуемый кадр (<b>frame</b>) 
+  функции <b>GrabAVIFrame()</b>. Довольно просто! Конечно, 
+  если бы хотели воспроизводить многопотоковый AVI вы 
+  должны были бы передать текстурный идентификатор.</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>void Draw (void)         
+  // Прорисовка сцены</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  // Очистка экрана и буфера глубины</p>
+<p class=textpreword>  glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);</p>
+<p class=textpreword>&nbsp;  </p>
+<p class=textpreword>  GrabAVIFrame(frame);   // Захват кадра анимации</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Код ниже проверяет, хотим ли мы видеть фоновое изображение. 
+  Если <b>bg</b> равен TRUE, мы сбрасываем матрицу и прорисовываем одну текстуру в 
+  форме квадрата (отображает кадр AVI) достаточно большую 
+  чтобы заполнить экран. Квадрат нарисован на 20 единиц вглубь экрана (-20), поэтому 
+  он всегда показывается позади объекта.</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  if (bg)                
+  // Фоновое изображение показывать?</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    glLoadIdentity();    // Сброс матрицы просмотра</p>
+<p class=textpreword>    glBegin(GL_QUADS);   
+  // Начало прорисовки фонового рисунка</p>
+<p class=textpreword>      // Передняя грань</p>
+<p class=textpreword>      glTexCoord2f(1.0f, 
+  1.0f); glVertex3f( 11.0f,  8.3f, 
+  -20.0f);</p>
+<p class=textpreword>      glTexCoord2f(0.0f, 1.0f); glVertex3f(-11.0f,  8.3f, 
+  -20.0f);</p>
+<p class=textpreword>      glTexCoord2f(0.0f, 0.0f); glVertex3f(-11.0f, 
+  -8.3f, -20.0f);</p>
+<p class=textpreword>      glTexCoord2f(1.0f, 0.0f); glVertex3f( 
+  11.0f, -8.3f, -20.0f);</p>
+<p class=textpreword>    glEnd();             // Конец рисования</p>
+<p class=textpreword>  }</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>После прорисовки фона (или не прорисовки), мы сбрасываем матрицу 
+  (это переводит нас в центр экрана по всем трём измерениям). Далее мы сдвигаем 
+  матрицу на 10 единиц вглубь экрана (-10).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>После этого мы проверяем, равна ли переменная <b>env</b> значению TRUE. Если это так, то мы включаем сферическое наложение для 
+  создания эффекта наложения окружения.</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  glLoadIdentity ();     // Сброс 
+  матрицы</p>
+<p class=textpreword>  glTranslatef (0.0f, 
+  0.0f, -10.0f); // На десять 
+  единиц в экран </p>
+<p class=textpreword>  if (env)               
+  // Включено отображение эффектов</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    glEnable(GL_TEXTURE_GEN_S); // Вкл. автогенерация координат текстуры по S 
+  (Новое)</p>
+<p class=textpreword>    glEnable(GL_TEXTURE_GEN_T); // Вкл. автогенерация координат текстуры по T 
+  (Новое)</p>
+<p class=textpreword>  }</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Я добавил следующий код в последнюю минуту. Он вращает сцену 
+  по оси x и оси y (основываясь на значении <b>angle</b>) и, наконец, сдвигает сцену на две единицы по оси 
+  z. Это переместит все вглубь экрана. Если вы удалите 
+  эти три строки кода ниже, объект будет  просто крутиться в середине экрана. 
+  С этими тремя строками, объекты будут немного двигаться и одновременно вращаться 
+  :).</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Если вы не понимаете, как делается вращение и передвижение… 
+  этот урок для вас слишком сложный :).</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  glRotatef(angle*2.3f,1.0f,0.0f,0.0f); // Немного вращает объекты по оси x</p>
+<p class=textpreword>  glRotatef(angle*1.8f,0.0f,1.0f,0.0f); // Делает то же самое только по оси y</p>
+<p class=textpreword>  glTranslatef(0.0f,0.0f,2.0f); 
+  // После вращения перемещение</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Код ниже проверяет, какой из эффектов мы хотим прорисовать. 
+  Если значение <b>effect</b> равно 0, мы делаем небольшое 
+  вращение и рисуем куб. Поворот вращает куб по x,y и z осям. 
+  К настоящему времени вы должны иметь код, чтобы создать куб, родивший в вашей 
+  голове :).</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>switch (effect) // Какой эффект?</p>
+<p class=textpreword>{</p>
+<p class=textpreword>  case 0: // Эффект  0 - Куб</p>
+<p class=textpreword>    glRotatef (angle*1.3f, 1.0f, 0.0f, 0.0f); 
+  // Вращение по оси x</p>
+<p class=textpreword>    glRotatef (angle*1.1f, 
+  0.0f, 1.0f, 0.0f); 
+  // Вращение по оси y</p>
+<p class=textpreword>    glRotatef (angle*1.2f, 
+  0.0f, 0.0f, 1.0f); 
+  // Вращение по оси z</p>
+<p class=textpreword>    glBegin(GL_QUADS); 
+  // Начало рисования куба</p>
+<p class=textpreword>      //Передняя грань</p>
+<p class=textpreword>      glNormal3f( 0.0f, 
+  0.0f, 0.5f);</p>
+<p class=textpreword>      glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f,  
+  1.0f);</p>
+<p class=textpreword>      glTexCoord2f(1.0f, 0.0f); glVertex3f( 
+  1.0f, -1.0f,  1.0f);</p>
+<p class=textpreword>      glTexCoord2f(1.0f, 1.0f); glVertex3f( 
+  1.0f,  1.0f,  1.0f);</p>
+<p class=textpreword>      glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  
+  1.0f,  1.0f);</p>
+<p class=textpreword>      //Задняя грань</p>
+<p class=textpreword>      glNormal3f( 0.0f, 0.0f,-0.5f);</p>
+<p class=textpreword>      glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, 
+  -1.0f, -1.0f);</p>
+<p class=textpreword>      glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f,  
+  1.0f, -1.0f);</p>
+<p class=textpreword>      glTexCoord2f(0.0f, 1.0f); glVertex3f( 
+  1.0f,  1.0f, -1.0f);</p>
+<p class=textpreword>      glTexCoord2f(0.0f, 0.0f); glVertex3f( 
+  1.0f, -1.0f, -1.0f);</p>
+<p class=textpreword>      //Верхняя грань</p>
+<p class=textpreword>      glNormal3f( 0.0f, 0.5f, 0.0f);</p>
+<p class=textpreword>      glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  
+  1.0f, -1.0f);</p>
+<p class=textpreword>      glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f,  
+  1.0f,  1.0f);</p>
+<p class=textpreword>      glTexCoord2f(1.0f, 0.0f); glVertex3f( 
+  1.0f,  1.0f,  1.0f);</p>
+<p class=textpreword>      glTexCoord2f(1.0f, 1.0f); glVertex3f( 
+  1.0f,  1.0f, -1.0f);</p>
+<p class=textpreword>      // Нижняя грань</p>
+<p class=textpreword>      glNormal3f( 0.0f,-0.5f, 0.0f);</p>
+<p class=textpreword>      glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f, 
+  -1.0f, -1.0f);</p>
+<p class=textpreword>      glTexCoord2f(0.0f, 1.0f); glVertex3f( 
+  1.0f, -1.0f, -1.0f);</p>
+<p class=textpreword>      glTexCoord2f(0.0f, 0.0f); glVertex3f( 
+  1.0f, -1.0f,  1.0f);</p>
+<p class=textpreword>      glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, 
+  -1.0f,  1.0f);</p>
+<p class=textpreword>      // Правая грань</p>
+<p class=textpreword>      glNormal3f( 0.5f, 
+  0.0f, 0.0f);</p>
+<p class=textpreword>      glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f, -1.0f, -1.0f);</p>
+<p class=textpreword>      glTexCoord2f(1.0f, 1.0f); glVertex3f( 
+  1.0f,  1.0f, -1.0f);</p>
+<p class=textpreword>      glTexCoord2f(0.0f, 1.0f); glVertex3f( 
+  1.0f,  1.0f,  1.0f);</p>
+<p class=textpreword>      glTexCoord2f(0.0f, 0.0f); glVertex3f( 
+  1.0f, -1.0f,  1.0f);</p>
+<p class=textpreword>      // Левая грань</p>
+<p class=textpreword>      glNormal3f(-0.5f, 0.0f, 0.0f);</p>
+<p class=textpreword>      glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, 
+  -1.0f, -1.0f);</p>
+<p class=textpreword>      glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, 
+  -1.0f,  1.0f);</p>
+<p class=textpreword>      glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f,  
+  1.0f,  1.0f);</p>
+<p class=textpreword>      glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  
+  1.0f, -1.0f);</p>
+<p class=textpreword>    glEnd();            // Конец рисования нашего 
+  куба</p>
+<p class=textpreword>    break;              // Конец нулевого эффекта</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Теперь мы выводим сферу. Мы начинаем с небольшого вращения по 
+  всем осям. Далее мы рисуем сферу. Сфера будет иметь радиус 1.3f 
+  из 20 ломтиков и 20 срезов. Я выбрал значение двадцать, потому что я не хотел, 
+  чтобы сфера была совершенно гладкой. При использовании меньшого количества кусков 
+  сфера будет грубой (не гладкой) и будет не совсем очевидно, что сфера вращается, 
+  когда сферическое наложение включено. Проиграйтесь с этими значениями. Важно 
+  обратить ваше внимание на то, что большая детализация требует больше процессорного 
+  времени.</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>case 1: // Эффект 1 - сфера</p>
+<p class=textpreword>    glRotatef(angle*1.3f, 
+  1.0f, 0.0f, 0.0f); 
+  // Вращение по оси x</p>
+<p class=textpreword>    glRotatef(angle*1.1f, 
+  0.0f, 1.0f, 0.0f); 
+  // Вращение по оси y</p>
+<p class=textpreword>    glRotatef(angle*1.2f, 
+  0.0f, 0.0f, 1.0f); 
+  // Вращение по оси z</p>
+<p class=textpreword>    gluSphere(quadratic,1.3f,20,20); // Прорисовка сферы</p>
+<p class=textpreword>    break; //Конец прорисовки сферы</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Сейчас мы нарисуем цилиндр. Мы начнём с простого вращения по 
+  x, y, z осям. 
+  Наш цилиндр будет иметь одинаковый верхний и нижний радиус равный 1 единице. 
+  Цилиндр будет иметь в высоту 3 единицы, и состоять из 32 ломтиков и 32 срезов. 
+  Если вы уменьшаете число кусков, цилиндр будет составлен из меньшого количества 
+  полигонов и будет казаться менее округленным.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Перед тем как рисовать цилиндр мы сдвинемся на –1.5 единиц по 
+  оси z. С помощью этого мы заставим наш цилиндр вращаться 
+  вокруг центра экрана. Общее правило к центрированию цилиндра: надо разделить 
+  на 2 его высоту и сдвинуться на полученный результат в отрицательном направлении 
+  по оси z. Если вы понятия не имеете о том, что я говорю, 
+  удалите строчку с <b>translatef(…)</b>. Цилиндр будет 
+  двигаться вокруг своей оси, вместо центральной точки.</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>case 2: // Эффект 2 - цилиндр</p>
+<p class=textpreword>    glRotatef (angle*1.3f, 
+  1.0f, 0.0f, 0.0f);    
+  // Вращение по оси x</p>
+<p class=textpreword>    glRotatef (angle*1.1f, 
+  0.0f, 1.0f, 0.0f);    
+  // Вращение по оси y</p>
+<p class=textpreword>    glRotatef (angle*1.2f, 
+  0.0f, 0.0f, 1.0f);    
+  // Вращение по оси z</p>
+<p class=textpreword>    glTranslatef(0.0f,0.0f,-1.5f);               
+  // Центр цилиндра</p>
+<p class=textpreword>    gluCylinder(quadratic,1.0f,1.0f,3.0f,32,32); 
+  // Прорисовка цилиндра</p>
+<p class=textpreword>    break; //Конец прорисовки цилиндра</p>
+<p class=textpreword>  }</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Затем мы проверяем, является ли <b>env</b> 
+  TRUE. Если это так, то мы отключаем сферическое наложение. Мы 
+  вызываем <b>glFlush()</b> чтобы сбросить конвейер визуализации 
+  (чтобы быть уверенными, что прорисовка текущего кадра полностью завершена до 
+  начала прорисовки следующего кадра).</p>
+<p class=textpreword>&nbsp; </p>
+<p class=textpreword>  if (env) 
+  // Включено наложение окружения?</p>
+<p class=textpreword>  {</p>
+<p class=textpreword>    glDisable(GL_TEXTURE_GEN_S); // Вкл. автогенерация координат текстуры по S 
+  (Новое)</p>
+<p class=textpreword>    glDisable(GL_TEXTURE_GEN_T); // Вкл. автогенерация координат текстуры по T 
+  (Новое)</p>
+<p class=textpreword>  }</p>
+<p class=textpreword>  </p>
+<p class=textpreword>  glFlush ();              // Визуализация</p>
+<p class=textpreword>}</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Я надеюсь, что Вам понравился этот урок. Сейчас 2 часа ночи… 
+  Я работал над этим уроком последние шесть часов. Звучит безумно, но описать 
+  вещи так, чтобы это имело смысл, это нелегкая задача. Я прочитал урок три раза, 
+  и всё ещё пробую сделать его проще. Верите вы мне или нет, но для меня это очень 
+  важно, чтобы вы понимали, как работает код и почему он работает. Именно поэтому 
+  я нескончаемо повторяюсь, чрезмерно комментирую и т.д..</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>В любом случае. Мне бы хотелось услышать комментарии по поводу 
+  этого урока. Если вы найдете ошибки или вы хотели бы помочь мне сделать урок 
+  лучше, пожалуйста, войдите со мной в контакт, поскольку я сказал, что это моя 
+  первая попытка с AVI. Обычно я не пишу урок по теме, 
+  которую я только что изучил, но мое волнение извлекло всё самое лучшее из меня, 
+  плюс факт, что по этой теме очень мало информации обеспокоил меня. Я надеюсь, 
+  что я открою дверь потоку высококачественных демок с проигрыванием AVI 
+  и исходного кода. Может случиться… может нет. В любом случае вы можете использовать 
+  этот код тогда когда пожелаете нужным.</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Огромное спасибо Фредстеру за его AVI 
+  файл с изображением лица. Лицо было одним из шести AVI, 
+  которые он послал мне для моего урока. Ни один мой вопрос не остался без ответа. 
+  Я посылал ему письма, и он выручил меня… Большое спасибо.</p>
+<p class=textword>&nbsp;  </p>
+<p class=textword>Большое спасибо, Джонатану Блоку. Если бы не он этого урока 
+  не существовало бы. Он заинтересовал меня AVI форматом 
+  высылая кусочки кода из его персонального AVI проигрывателя. Он также ответил мне на все вопросы относительно 
+  его кода. Важно то, что я ничего не заимствовал из его кода, его код был использован 
+  только для того чтобы понять, как проигрыватель работает. Мой проигрыватель 
+  открывает, декодирует и запускает AVI файлы, используя 
+  совершенно другой код!</p>
+<p class=textword>&nbsp; </p>
+<p class=textword>Большое спасибо, каждому посетителю сайта. Без Вас этого сайта 
+  не было бы!</p>
+
+<p class="textnoalign" align="right">
+<font color="#0000A0"><b> © Jeff Molofee (NeHe)</b></font>
+</p>  
+
+</div>
+<div id="end">
+
+          <p><a href="http://pmg.org.ru/"
+			onmouseover=" return event_over(this,'Программирование магических игр')  "
+			onmouseout=" return event_out(this) "><font class="link"><b>PMG</b></font></a> 
+            <font class="comment">&nbsp;3 ноября 2003&nbsp;(c)&nbsp;</font> 
+<a href="mailto:chipset3@mail.ru"
+onmouseover=" return event_over(this,'Почта переводчику')  "
+onmouseout=" return event_out(this) ">
+<font class="link"><b>СhipSet</b></font></a>
+          </p>
+</div>
+</center>
+
+<script language="JavaScript">
+<!--
+form_print();
+//-->
+</script>
+
+</body>
+</html>
