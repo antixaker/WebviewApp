@@ -206,6 +206,7 @@
     <BundleResource Include="Resources\nehe46.jpg" />
     <BundleResource Include="Resources\nehe47.jpg" />
     <BundleResource Include="Resources\nehe48.jpg" />
+    <BundleResource Include="Resources\lab1.html" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Services\" />

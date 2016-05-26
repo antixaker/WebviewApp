@@ -206,5 +206,6 @@
     <AndroidAsset Include="Assets\nehe41.htm" />
     <AndroidAsset Include="Assets\nehe42.htm" />
     <AndroidAsset Include="Assets\pmg.css" />
+    <AndroidAsset Include="Assets\lab1.html" />
   </ItemGroup>
 </Project>

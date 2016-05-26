@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using FreshMvvm;
 using PropertyChanged;
+using System.Linq;
 
 namespace OpenGLGuide.ViewModels
 {
@@ -29,6 +30,17 @@ namespace OpenGLGuide.ViewModels
                     return list;
                 }
             );
+
+            _lazyLabWorksSubItems = new Lazy<List<MenuItemViewModel>>(() =>
+                {
+                    var list = new List<MenuItemViewModel>();
+                    for (int i = 1; i <= 1; i++)
+                        list.Add(new MenuItemViewModel(string.Format("Лабораторная работа {0}", i), null, string.Format("lab{0}.html", i)));
+
+                    return list;
+                }
+            );
+
         }
 
         private string IntToStringConverter(int value)
@@ -72,6 +84,34 @@ namespace OpenGLGuide.ViewModels
                         MenuItems = new ObservableCollection<MenuItemViewModel>(tmpList);
                         itemViewModel.IsDropDownOpened = false;
                     }
+                }
+                else if (itemViewModel.ItemText == "Лабораторные работы")
+                {
+                    if (!itemViewModel.IsDropDownOpened)
+                    {
+                        var startindex = MenuItems.IndexOf(MenuItems.First(v => v.ItemText == "Лабораторные работы"));
+                        foreach (var itemValue in _lazyLabWorksSubItems.Value)
+                        {
+                            MenuItems.Insert(++startindex, itemValue);
+                        }
+                        itemViewModel.IsDropDownOpened = true;
+                    }
+                    else
+                    {
+                        var tmp = new MenuItemViewModel[MenuItems.Count];
+                        MenuItems.CopyTo(tmp, 0);
+                        var tmpList = new List<MenuItemViewModel>(tmp);
+
+                        foreach (var itemValue in _lazyLabWorksSubItems.Value)
+                        {
+                            if (tmpList.Contains(itemValue))
+                                tmpList.Remove(itemValue);
+                        }
+
+                        MenuItems = new ObservableCollection<MenuItemViewModel>(tmpList);
+                        itemViewModel.IsDropDownOpened = false;
+                    }
+
                 }
             }
             else if (itemViewModel.ItemType == OpenGLGuide.Enums.MenuItemTypes.DefaultItem)
