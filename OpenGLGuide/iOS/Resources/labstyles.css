@@ -1,0 +1,28 @@
+.text  {
+ font-family : Tahoma, Arial;
+ font-size : 10pt;
+ color : #000000;
+ text-align : justify;
+ text-indent  : 12pt;
+ letter-spacing : 1px;
+ word-wrap: break-word;
+}
+
+#main
+{
+width: auto;
+background: #c0dbe4;
+padding-top: 5px;
+padding-bottom: 5px;
+padding-left: 10px;
+padding-right: 10px;
+text-align : justify;
+}
+
+table, th, td
+{
+border-style:solid;
+border-width:1px;
+border-collapse:collapse;
+padding:2px;
+}

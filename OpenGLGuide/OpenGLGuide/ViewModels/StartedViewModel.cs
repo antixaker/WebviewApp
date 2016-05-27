@@ -34,8 +34,8 @@ namespace OpenGLGuide.ViewModels
             _lazyLabWorksSubItems = new Lazy<List<MenuItemViewModel>>(() =>
                 {
                     var list = new List<MenuItemViewModel>();
-                    for (int i = 1; i <= 1; i++)
-                        list.Add(new MenuItemViewModel(string.Format("Лабораторная работа {0}", i), null, string.Format("lab{0}.html", i)));
+                    for (int i = 1; i <= 5; i++)
+                        list.Add(new MenuItemViewModel(string.Format("Лабораторная работа {0}", i), null, string.Format("laba{0}.html", i)));
 
                     return list;
                 }
