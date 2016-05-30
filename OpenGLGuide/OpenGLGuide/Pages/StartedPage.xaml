@@ -1,18 +1,28 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
-<ContentPage xmlns="http://xamarin.com/schemas/2014/forms" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" x:Class="OpenGLGuide.Pages.StartedPage">
+<ContentPage Title="Руководство по OpenGL" xmlns="http://xamarin.com/schemas/2014/forms" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" x:Class="OpenGLGuide.Pages.StartedPage" xmlns:helpers="clr-namespace:OpenGLGuide.Helpers;assembly=OpenGLGuide" xmlns:converter="clr-namespace:OpenGLGuide.Converters;assembly=OpenGLGuide">
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <DataTemplate x:Key="DafaultTemplate">
+                <ViewCell>
+                    <StackLayout Orientation="Horizontal" VerticalOptions="Center" Padding="16,0,21,0" Spacing="9" HeightRequest="62">
+                        <Image Source="{Binding ImageSource}" HeightRequest="18" WidthRequest="18" HorizontalOptions="Start" VerticalOptions="Center" />
+                        <Label Text="{Binding ItemText}" HorizontalOptions="Start" VerticalOptions="Center" VerticalTextAlignment="Center" />
+                    </StackLayout>
+                </ViewCell>
+            </DataTemplate>
+            <DataTemplate x:Key="AccordionTemplate">
+                <ViewCell>
+                    <StackLayout Orientation="Horizontal" VerticalOptions="Center" Padding="16,0,21,0" Spacing="9" HeightRequest="62">
+                        <Label Text="{Binding ItemText}" HorizontalOptions="Start" VerticalOptions="Center" VerticalTextAlignment="Center" />
+                        <Label HorizontalOptions="EndAndExpand" VerticalTextAlignment="Center" Text="{Binding IsDropDownOpened,Converter={StaticResource BoolToArrowTypeConverter}}" FontSize="20" TextColor="White" />
+                    </StackLayout>
+                </ViewCell>
+            </DataTemplate>
+            <helpers:MenuItemTemplateSelector x:Key="MenuItemTemplateSelector" DefaultDataTemplate="{StaticResource DafaultTemplate}" AccordionDataTemplate="{StaticResource AccordionTemplate}" />
+            <converter:BoolToArrowTypeConverter x:Key="BoolToArrowTypeConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
     <StackLayout>
-        <ListView x:Name="_mainMenuView" ItemsSource="{Binding MenuItems}" CachingStrategy="RecycleElement">
-            <ListView.ItemTemplate>
-                <DataTemplate>
-                    <ViewCell>
-                        <StackLayout Orientation="Horizontal" VerticalOptions="Center" Padding="16,0,21,0" Spacing="9" HeightRequest="62">
-                            <Image Source="{Binding ImageSource}" HeightRequest="18" WidthRequest="18" HorizontalOptions="Start" VerticalOptions="Center" />
-                            <Label Text="{Binding ItemText}" HorizontalOptions="Start" VerticalOptions="Center" VerticalTextAlignment="Center" />
-                            <!--                            <Label HorizontalOptions="EndAndExpand" VerticalTextAlignment="Center" Text="{Binding IsAccordionOpened,Converter={StaticResource BoolToArrowTypeConverter}}" TextColor="White" FontFamily="fontawesome" />-->
-                        </StackLayout>
-                    </ViewCell>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
+        <ListView BackgroundColor="Transparent" x:Name="_mainMenuView" ItemTemplate="{StaticResource MenuItemTemplateSelector}" ItemsSource="{Binding MenuItems}" CachingStrategy="RecycleElement" />
     </StackLayout>
 </ContentPage>

@@ -1,5 +1,6 @@
 ﻿using Xamarin.Forms;
 using OpenGLGuide.ViewModels;
+using OpenGLGuide.Effects;
 
 namespace OpenGLGuide.Pages
 {
@@ -9,6 +10,13 @@ namespace OpenGLGuide.Pages
         {
             InitializeComponent();
             _mainMenuView.ItemSelected += OnMainMenuViewItemSelected;
+
+            GradientEffectExtentions.SetHasGradient(this.Content, true);
+            GradientEffectExtentions.SetTypeOfGradient(this.Content, GradientType.Radial);
+            GradientEffectExtentions.SetGradientCenter(this.Content, new Point(0, 0));
+            GradientEffectExtentions.SetGradientRadius(this.Content, 1000);
+            GradientEffectExtentions.SetFirstColor(this.Content, Color.FromHex("#31A38E"));
+            GradientEffectExtentions.SetSecondColor(this.Content, Color.FromHex("#0E579B"));
         }
 
         private void OnMainMenuViewItemSelected(object sender, SelectedItemChangedEventArgs e)
