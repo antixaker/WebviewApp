@@ -2,11 +2,11 @@
 using Xamarin.Forms.Platform.Android;
 using Xamarin.Forms;
 using Android.Graphics.Drawables;
-using TakedaEntivyo.Effects;
-using TakedaEntivyo.Droid.Effects;
+using OpenGLGuide.Droid.Effects;
+using OpenGLGuide.Effects;
 
 [assembly: ExportEffect(typeof(GradientEffect), "GradientEffect")]
-namespace TakedaEntivyo.Droid.Effects
+namespace OpenGLGuide.Droid.Effects
 {
     public class GradientEffect : PlatformEffect
     {
@@ -27,20 +27,19 @@ namespace TakedaEntivyo.Droid.Effects
 
             using (var gDrawable = new GradientDrawable())
             {
-                gDrawable.SetColors(new int[]
-                    {
-                        ViewEffectExtentions.GetFirstColor(elem).ToAndroid().ToArgb(), 
-                        ViewEffectExtentions.GetSecondColor(elem).ToAndroid().ToArgb()
+                gDrawable.SetColors(new int[] {
+                        GradientEffectExtentions.GetFirstColor(elem).ToAndroid().ToArgb(), 
+                        GradientEffectExtentions.GetSecondColor(elem).ToAndroid().ToArgb()
                     });
-                var gradType = ViewEffectExtentions.GetTypeOfGradient(elem);
-                if (gradType == TakedaEntivyo.Effects.GradientType.Radial)
+                var gradType = GradientEffectExtentions.GetTypeOfGradient(elem);
+                if (gradType == OpenGLGuide.Effects.GradientType.Radial)
                 {
-                    var centerPoint = ViewEffectExtentions.GetGradientCenter(elem);
+                    var centerPoint = GradientEffectExtentions.GetGradientCenter(elem);
                     gDrawable.SetGradientCenter((float)centerPoint.X, (float)centerPoint.Y);
-                    gDrawable.SetGradientRadius(ViewEffectExtentions.GetGradientRadius(elem));
+                    gDrawable.SetGradientRadius(GradientEffectExtentions.GetGradientRadius(elem));
                     gDrawable.SetGradientType(Android.Graphics.Drawables.GradientType.RadialGradient);
                 }
-                else if (gradType == TakedaEntivyo.Effects.GradientType.Linear)
+                else if (gradType == OpenGLGuide.Effects.GradientType.Linear)
                 {
                     throw new NotImplementedException();
                 }

@@ -7,7 +7,9 @@ using Android.Runtime;
 using Android.Views;
 using Android.Widget;
 using Android.OS;
+using Xamarin.Forms;
 
+[assembly: ResolutionGroupName("OpenGLGuide")]
 namespace OpenGLGuide.Droid
 {
     [Activity(Label = "OpenGLGuide.Droid", Icon = "@drawable/icon", MainLauncher = true, ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation)]

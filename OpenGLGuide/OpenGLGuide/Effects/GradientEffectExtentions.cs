@@ -4,19 +4,19 @@ using System.Collections.Generic;
 
 namespace OpenGLGuide.Effects
 {
-    public class GradientEffect
+    public class GradientEffectExtentions
     {
         #region Gradient effect
 
         public static readonly BindableProperty HasGradientProperty =
-            BindableProperty.CreateAttached("HasGradient", typeof(bool), typeof(GradientEffect), false, propertyChanged: OnHasGradientChanged);
+            BindableProperty.CreateAttached("HasGradient", typeof(bool), typeof(GradientEffectExtentions), false, propertyChanged: OnHasGradientChanged);
 
         private static void OnHasGradientChanged(BindableObject bindable, object oldValue, object newValue)
         {
             var view = bindable as View;
             if (view == null)
                 return;
-            var gradientEffect = Effect.Resolve("Takeda.GradientEffect");
+            var gradientEffect = Effect.Resolve("OpenGLGuide.GradientEffect");
 
             var hasBorder = (bool)newValue;
             if (hasBorder)
@@ -41,7 +41,7 @@ namespace OpenGLGuide.Effects
         }
 
         public static readonly BindableProperty FirstColorProperty =
-            BindableProperty.CreateAttached("FirstColor", typeof(Color), typeof(GradientEffect), Color.Black);
+            BindableProperty.CreateAttached("FirstColor", typeof(Color), typeof(GradientEffectExtentions), Color.Black);
 
         public static void SetFirstColor(BindableObject view, Color newColor)
         {
@@ -54,7 +54,7 @@ namespace OpenGLGuide.Effects
         }
 
         public static readonly BindableProperty SecondColorProperty =
-            BindableProperty.CreateAttached("SecondColor", typeof(Color), typeof(GradientEffect), Color.Black);
+            BindableProperty.CreateAttached("SecondColor", typeof(Color), typeof(GradientEffectExtentions), Color.Black);
 
         public static void SetSecondColor(BindableObject view, Color newColor)
         {
@@ -67,7 +67,7 @@ namespace OpenGLGuide.Effects
         }
 
         public static readonly BindableProperty TypeOfGradientProperty =
-            BindableProperty.CreateAttached("TypeOfGradient", typeof(GradientType), typeof(GradientEffect), GradientType.Radial);
+            BindableProperty.CreateAttached("TypeOfGradient", typeof(GradientType), typeof(GradientEffectExtentions), GradientType.Radial);
 
         public static void SetTypeOfGradient(BindableObject view, GradientType type)
         {
@@ -81,7 +81,7 @@ namespace OpenGLGuide.Effects
 
 
         public static readonly BindableProperty StartPointProperty =
-            BindableProperty.CreateAttached("StartPoint", typeof(Point), typeof(GradientEffect), new Point(0, 0));
+            BindableProperty.CreateAttached("StartPoint", typeof(Point), typeof(GradientEffectExtentions), new Point(0, 0));
 
         public static void SetStartPoint(BindableObject view, Point point)
         {
@@ -94,7 +94,7 @@ namespace OpenGLGuide.Effects
         }
 
         public static readonly BindableProperty EndPointProperty =
-            BindableProperty.CreateAttached("EndPoint", typeof(Point), typeof(GradientEffect), new Point(0, 0));
+            BindableProperty.CreateAttached("EndPoint", typeof(Point), typeof(GradientEffectExtentions), new Point(0, 0));
 
         public static void SetEndPoint(BindableObject view, Point point)
         {
@@ -107,7 +107,7 @@ namespace OpenGLGuide.Effects
         }
 
         public static readonly BindableProperty GradientCenterProperty =
-            BindableProperty.CreateAttached("GradientCenter", typeof(Point), typeof(GradientEffect), new Point(0, 0));
+            BindableProperty.CreateAttached("GradientCenter", typeof(Point), typeof(GradientEffectExtentions), new Point(0, 0));
 
         public static void SetGradientCenter(BindableObject view, Point center)
         {
@@ -120,7 +120,7 @@ namespace OpenGLGuide.Effects
         }
 
         public static readonly BindableProperty GradientRadiusProperty =
-            BindableProperty.CreateAttached("GradientRadius", typeof(int), typeof(GradientEffect), 0);
+            BindableProperty.CreateAttached("GradientRadius", typeof(int), typeof(GradientEffectExtentions), 0);
 
         public static void SetGradientRadius(BindableObject view, int radius)
         {
@@ -134,7 +134,7 @@ namespace OpenGLGuide.Effects
 
 
         public static readonly BindableProperty ColorListProperty =
-            BindableProperty.CreateAttached("ColorList", typeof(IList<Color>), typeof(GradientEffect), null);
+            BindableProperty.CreateAttached("ColorList", typeof(IList<Color>), typeof(GradientEffectExtentions), null);
 
         public static void SetColorList(BindableObject view, IList<Color> colors)
         {
@@ -147,7 +147,7 @@ namespace OpenGLGuide.Effects
         }
 
         public static readonly BindableProperty LocationsListProperty =
-            BindableProperty.CreateAttached("LocationsList", typeof(IList<double>), typeof(GradientEffect), null);
+            BindableProperty.CreateAttached("LocationsList", typeof(IList<double>), typeof(GradientEffectExtentions), null);
 
         public static void SetLocationsList(BindableObject view, IList<double> points)
         {

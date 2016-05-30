@@ -4,7 +4,9 @@ using System.Linq;
 
 using Foundation;
 using UIKit;
+using Xamarin.Forms;
 
+[assembly: ResolutionGroupName("OpenGLGuide")]
 namespace OpenGLGuide.iOS
 {
     [Register("AppDelegate")]
