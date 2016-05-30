@@ -3,7 +3,9 @@
 using Xamarin.Forms;
 using FreshMvvm;
 using OpenGLGuide.ViewModels;
+using Xamarin.Forms.Xaml;
 
+[assembly: XamlCompilation(XamlCompilationOptions.Compile)]
 namespace OpenGLGuide
 {
     public class App : Application
