@@ -214,5 +214,27 @@
     <AndroidAsset Include="Assets\laba3.html" />
     <AndroidAsset Include="Assets\laba4.html" />
     <AndroidAsset Include="Assets\laba5.html" />
+    <AndroidAsset Include="Assets\curve1.jpg" />
+    <AndroidAsset Include="Assets\curve2.jpg" />
+    <AndroidAsset Include="Assets\curve3.jpg" />
+    <AndroidAsset Include="Assets\foo_foo.gif" />
+    <AndroidAsset Include="Assets\free.gif" />
+    <AndroidAsset Include="Assets\image001.jpg" />
+    <AndroidAsset Include="Assets\image002.jpg" />
+    <AndroidAsset Include="Assets\image003.jpg" />
+    <AndroidAsset Include="Assets\image004.jpg" />
+    <AndroidAsset Include="Assets\nehe19-1.jpg" />
+    <AndroidAsset Include="Assets\nehe20-1.jpg" />
+    <AndroidAsset Include="Assets\nehe20-2.jpg" />
+    <AndroidAsset Include="Assets\nehe20-3.jpg" />
+    <AndroidAsset Include="Assets\nehe20-4.jpg" />
+    <AndroidAsset Include="Assets\nehe21-1.jpg" />
+    <AndroidAsset Include="Assets\nehe30-1.jpg" />
+    <AndroidAsset Include="Assets\nehe30-2.jpg" />
+    <AndroidAsset Include="Assets\nehe30-3.jpg" />
+    <AndroidAsset Include="Assets\nehe30-4.jpg" />
+    <AndroidAsset Include="Assets\pass11.png" />
+    <AndroidAsset Include="Assets\pass21.png" />
+    <AndroidAsset Include="Assets\wgl.gif" />
   </ItemGroup>
 </Project>
