@@ -1,10 +1,11 @@
 ﻿using System;
 using Xamarin.Forms;
 using System.Collections.Generic;
+using OpenGLGuide.Enums;
 
 namespace OpenGLGuide.Effects
 {
-    public class GradientEffectExtentions
+    public static class GradientEffectExtentions
     {
         #region Gradient effect
 
@@ -161,12 +162,5 @@ namespace OpenGLGuide.Effects
 
         #endregion
     }
-
-    public enum GradientType
-    {
-        Linear,
-        Radial
-    }
-
 }
 

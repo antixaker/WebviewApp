@@ -1,6 +1,7 @@
 ﻿using Xamarin.Forms;
 using OpenGLGuide.ViewModels;
 using OpenGLGuide.Effects;
+using OpenGLGuide.Enums;
 
 namespace OpenGLGuide.Pages
 {

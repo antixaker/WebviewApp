@@ -6,6 +6,7 @@ using CoreGraphics;
 using UIKit;
 using OpenGLGuide.Effects;
 using System.Collections.Generic;
+using OpenGLGuide.Enums;
 
 [assembly: ExportEffect(typeof(GradientEffect), "GradientEffect")]
 namespace OpenGLGuide.iOS.Effects
