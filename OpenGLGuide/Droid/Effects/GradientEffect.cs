@@ -32,14 +32,14 @@ namespace OpenGLGuide.Droid.Effects
                         GradientEffectExtentions.GetSecondColor(elem).ToAndroid().ToArgb()
                     });
                 var gradType = GradientEffectExtentions.GetTypeOfGradient(elem);
-                if (gradType == OpenGLGuide.Effects.GradientType.Radial)
+                if (gradType == OpenGLGuide.Enums.GradientType.Radial)
                 {
                     var centerPoint = GradientEffectExtentions.GetGradientCenter(elem);
                     gDrawable.SetGradientCenter((float)centerPoint.X, (float)centerPoint.Y);
                     gDrawable.SetGradientRadius(GradientEffectExtentions.GetGradientRadius(elem));
-                    gDrawable.SetGradientType(Android.Graphics.Drawables.GradientType.RadialGradient);
+                    gDrawable.SetGradientType(GradientType.RadialGradient);
                 }
-                else if (gradType == OpenGLGuide.Effects.GradientType.Linear)
+                else if (gradType == OpenGLGuide.Enums.GradientType.Linear)
                 {
                     throw new NotImplementedException();
                 }
