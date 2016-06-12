@@ -221,6 +221,28 @@
     <BundleResource Include="Resources\laba3.html" />
     <BundleResource Include="Resources\laba4.html" />
     <BundleResource Include="Resources\laba5.html" />
+    <BundleResource Include="Resources\curve1.jpg" />
+    <BundleResource Include="Resources\curve2.jpg" />
+    <BundleResource Include="Resources\curve3.jpg" />
+    <BundleResource Include="Resources\foo_foo.gif" />
+    <BundleResource Include="Resources\free.gif" />
+    <BundleResource Include="Resources\image001.jpg" />
+    <BundleResource Include="Resources\image002.jpg" />
+    <BundleResource Include="Resources\image003.jpg" />
+    <BundleResource Include="Resources\image004.jpg" />
+    <BundleResource Include="Resources\nehe19-1.jpg" />
+    <BundleResource Include="Resources\nehe20-1.jpg" />
+    <BundleResource Include="Resources\nehe20-2.jpg" />
+    <BundleResource Include="Resources\nehe20-3.jpg" />
+    <BundleResource Include="Resources\nehe20-4.jpg" />
+    <BundleResource Include="Resources\nehe21-1.jpg" />
+    <BundleResource Include="Resources\nehe30-1.jpg" />
+    <BundleResource Include="Resources\nehe30-2.jpg" />
+    <BundleResource Include="Resources\nehe30-3.jpg" />
+    <BundleResource Include="Resources\nehe30-4.jpg" />
+    <BundleResource Include="Resources\pass11.png" />
+    <BundleResource Include="Resources\pass21.png" />
+    <BundleResource Include="Resources\wgl.gif" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Services\" />
